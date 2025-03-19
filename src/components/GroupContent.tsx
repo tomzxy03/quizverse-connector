@@ -1,5 +1,7 @@
+
 import { useState } from 'react';
 import { Bell, FileText, Users, PlusCircle, Search, UserPlus, Share2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import QuizCard, { QuizCardProps } from './QuizCard';
 import { Button } from './ui/button';
 
@@ -215,10 +217,12 @@ const GroupContent = ({ group }: GroupContentProps) => {
                   />
                 </div>
                 {group.isOwned && (
-                  <Button className="flex items-center space-x-2">
-                    <PlusCircle className="h-4 w-4" />
-                    <span>Add Quiz</span>
-                  </Button>
+                  <Link to="/groups/add-quiz">
+                    <Button className="flex items-center space-x-2">
+                      <PlusCircle className="h-4 w-4" />
+                      <span>Add Quiz</span>
+                    </Button>
+                  </Link>
                 )}
               </div>
             </div>

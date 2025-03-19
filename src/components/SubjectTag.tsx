@@ -1,5 +1,7 @@
 
 import { MouseEvent } from 'react';
+import { Button } from './ui/button';
+import { cn } from '@/lib/utils';
 
 interface SubjectTagProps {
   subject: string;
@@ -14,12 +16,16 @@ const SubjectTag = ({ subject, isSelected, onClick }: SubjectTagProps) => {
   };
 
   return (
-    <button
-      className={`subject-tag ${isSelected ? 'tag-selected' : 'tag-unselected'}`}
+    <Button
+      variant={isSelected ? "default" : "outline"}
+      className={cn(
+        "text-sm rounded-full",
+        isSelected ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"
+      )}
       onClick={handleClick}
     >
       {subject}
-    </button>
+    </Button>
   );
 };
 
