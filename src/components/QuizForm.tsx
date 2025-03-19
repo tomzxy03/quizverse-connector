@@ -5,13 +5,6 @@ import GeneralInfo from "./QuizSections/GeneralInfo";
 import AdvancedSettings from "./QuizSections/AdvancedSettings";
 import QuestionsSection from "./QuizSections/QuestionsSection";
 
-interface Question {
-  id: string;
-  text: string;
-  options: { id: string; text: string; isCorrect: boolean }[];
-  points: number;
-}
-
 const QuizForm = () => {
   const [quizData, setQuizData] = useState({
     title: "",
@@ -30,7 +23,7 @@ const QuizForm = () => {
     maxAttempts: 100,
   });
 
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questions, setQuestions] = useState<any[]>([]);
 
   const handleQuizDataChange = (field: string, value: any) => {
     setQuizData({
@@ -39,7 +32,7 @@ const QuizForm = () => {
     });
   };
 
-  const addQuestion = (question: Question) => {
+  const addQuestion = (question: any) => {
     setQuestions([...questions, question]);
   };
 
