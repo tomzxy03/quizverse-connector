@@ -10,6 +10,7 @@ import { Textarea } from "../ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Separator } from "../ui/separator";
 import { Card } from "../ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 interface Question {
   id: string;
@@ -32,6 +33,7 @@ interface QuestionsSectionProps {
 }
 
 const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => {
+  const { toast } = useToast();
   const [sections, setSections] = useState<Section[]>([
     {
       id: `section-${Date.now()}`,
@@ -96,6 +98,11 @@ const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => 
     
     setSelectedOption(undefined);
     setIsAddingQuestion(false);
+    
+    toast({
+      title: "Thêm câu hỏi thành công",
+      description: "Câu hỏi đã được thêm vào phần",
+    });
   };
 
   const handleSectionUpdate = (sectionId: string, field: string, value: string) => {
@@ -138,6 +145,42 @@ const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => 
     }
   };
 
+  const handleDeleteQuestion = (sectionId: string, questionId: string) => {
+    const updatedSections = sections.map(section => {
+      if (section.id === sectionId) {
+        return {
+          ...section,
+          questions: section.questions.filter(q => q.id !== questionId)
+        };
+      }
+      return section;
+    });
+    
+    setSections(updatedSections);
+    setSelectedQuestionId(null);
+    
+    toast({
+      title: "Xóa câu hỏi thành công",
+      description: "Câu hỏi đã được xóa khỏi bài kiểm tra",
+    });
+  };
+
+  const handleUpdateQuestion = (sectionId: string, questionId: string, updatedQuestion: Partial<Question>) => {
+    const updatedSections = sections.map(section => {
+      if (section.id === sectionId) {
+        return {
+          ...section,
+          questions: section.questions.map(q => 
+            q.id === questionId ? { ...q, ...updatedQuestion } : q
+          )
+        };
+      }
+      return section;
+    });
+    
+    setSections(updatedSections);
+  };
+
   const renderSectionEditor = (section: Section) => {
     if (isEditingSection && activeSection === section.id) {
       return (
@@ -177,6 +220,16 @@ const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => 
     if (selectedQuestionId === questionId) {
       setSelectedQuestionId(null);
     } else {
+      // Tìm câu hỏi trong tất cả các phần để thiết lập làm câu hỏi hiện tại
+      for (const section of sections) {
+        const question = section.questions.find(q => q.id === questionId);
+        if (question) {
+          setCurrentQuestion({...question});
+          setSelectedOption(question.options.find(opt => opt.isCorrect)?.id);
+          break;
+        }
+      }
+      
       setSelectedQuestionId(questionId);
       setIsAddingQuestion(false);
     }
@@ -232,8 +285,15 @@ const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => 
                       <Button variant="ghost" size="icon">
                         <Copy className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon">
-                        <Trash2 className="h-4 w-4" />
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteQuestion(section.id, question.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
                   </div>
@@ -273,25 +333,71 @@ const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => 
                   <Input
                     placeholder="Nhập nội dung câu hỏi ?"
                     className="w-full"
+                    value={currentQuestion.text}
+                    onChange={(e) => {
+                      setCurrentQuestion({...currentQuestion, text: e.target.value});
+                      const section = sections.find(s => s.questions.some(q => q.id === selectedQuestionId));
+                      if (section) {
+                        handleUpdateQuestion(section.id, selectedQuestionId, {text: e.target.value});
+                      }
+                    }}
                   />
                   
                   <div className="space-y-3">
-                    {[1, 2, 3, 4].map((num) => (
-                      <div key={num} className="flex items-center gap-2">
+                    {currentQuestion.options.map((option, index) => (
+                      <div key={option.id} className="flex items-center gap-2">
                         <RadioGroupItem
-                          value={`edit-option-${num}`}
-                          id={`edit-option-${num}`}
+                          value={option.id}
+                          id={`edit-option-${option.id}`}
+                          checked={option.isCorrect}
+                          onClick={() => {
+                            const updatedOptions = currentQuestion.options.map(opt => ({
+                              ...opt,
+                              isCorrect: opt.id === option.id
+                            }));
+                            setCurrentQuestion({...currentQuestion, options: updatedOptions});
+                            
+                            const section = sections.find(s => s.questions.some(q => q.id === selectedQuestionId));
+                            if (section) {
+                              handleUpdateQuestion(section.id, selectedQuestionId, {options: updatedOptions});
+                            }
+                          }}
                         />
                         <div className="flex gap-2 items-center flex-1">
-                          <Label htmlFor={`edit-option-${num}`} className="font-medium">
-                            {String.fromCharCode(64 + num)}.
+                          <Label htmlFor={`edit-option-${option.id}`} className="font-medium">
+                            {String.fromCharCode(65 + index)}.
                           </Label>
                           <Input
                             placeholder="Câu trả lời..."
                             className="flex-1"
+                            value={option.text}
+                            onChange={(e) => {
+                              const updatedOptions = [...currentQuestion.options];
+                              updatedOptions[index].text = e.target.value;
+                              setCurrentQuestion({...currentQuestion, options: updatedOptions});
+                              
+                              const section = sections.find(s => s.questions.some(q => q.id === selectedQuestionId));
+                              if (section) {
+                                handleUpdateQuestion(section.id, selectedQuestionId, {options: updatedOptions});
+                              }
+                            }}
                           />
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => {
+                              if (currentQuestion.options.length <= 2) return;
+                              
+                              const updatedOptions = currentQuestion.options.filter(opt => opt.id !== option.id);
+                              setCurrentQuestion({...currentQuestion, options: updatedOptions});
+                              
+                              const section = sections.find(s => s.questions.some(q => q.id === selectedQuestionId));
+                              if (section) {
+                                handleUpdateQuestion(section.id, selectedQuestionId, {options: updatedOptions});
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
                       </div>
@@ -302,6 +408,20 @@ const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => 
                     <Button 
                       variant="outline" 
                       className="flex items-center gap-1"
+                      onClick={() => {
+                        const newOption = {
+                          id: `opt-${currentQuestion.options.length + 1}-${Date.now()}`,
+                          text: "",
+                          isCorrect: false,
+                        };
+                        const updatedOptions = [...currentQuestion.options, newOption];
+                        setCurrentQuestion({...currentQuestion, options: updatedOptions});
+                        
+                        const section = sections.find(s => s.questions.some(q => q.id === selectedQuestionId));
+                        if (section) {
+                          handleUpdateQuestion(section.id, selectedQuestionId, {options: updatedOptions});
+                        }
+                      }}
                     >
                       <Plus className="h-4 w-4" />
                       Thêm câu trả lời
@@ -313,15 +433,19 @@ const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => 
                         id="edit-points"
                         type="number"
                         min="0"
-                        defaultValue="1"
+                        value={currentQuestion.points}
+                        onChange={(e) => {
+                          const points = parseInt(e.target.value) || 0;
+                          setCurrentQuestion({...currentQuestion, points});
+                          
+                          const section = sections.find(s => s.questions.some(q => q.id === selectedQuestionId));
+                          if (section) {
+                            handleUpdateQuestion(section.id, selectedQuestionId, {points});
+                          }
+                        }}
                         className="w-16 h-8 text-sm"
                       />
                     </div>
-                  </div>
-                  
-                  <div className="flex justify-end gap-2 mt-4">
-                    <Button variant="outline">Hủy</Button>
-                    <Button>Lưu</Button>
                   </div>
                 </Card>
               ) : null}
@@ -373,7 +497,7 @@ const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => 
                             size="icon"
                             onClick={() => handleDeleteOption(option.id)}
                           >
-                            <MoreVertical className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
                       </div>
@@ -465,6 +589,20 @@ const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => 
                       setIsAddingQuestion(true);
                       setActiveSection(section.id);
                       setSelectedQuestionId(null);
+                      
+                      // Reset current question
+                      setCurrentQuestion({
+                        id: `q-${Date.now()}`,
+                        text: "",
+                        options: [
+                          { id: `opt-1-${Date.now()}`, text: "", isCorrect: false },
+                          { id: `opt-2-${Date.now()}`, text: "", isCorrect: false },
+                          { id: `opt-3-${Date.now()}`, text: "", isCorrect: false },
+                          { id: `opt-4-${Date.now()}`, text: "", isCorrect: false },
+                        ],
+                        points: 1,
+                      });
+                      setSelectedOption(undefined);
                     }}
                     className="flex items-center gap-1 bg-primary text-white"
                   >
