@@ -36,6 +36,12 @@ const QuizForm = () => {
     setQuestions([...questions, question]);
   };
 
+  const updateQuestion = (index: number, question: any) => {
+    const updatedQuestions = [...questions];
+    updatedQuestions[index] = question;
+    setQuestions(updatedQuestions);
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <Accordion type="single" collapsible defaultValue="general" className="w-full">
@@ -54,7 +60,7 @@ const QuizForm = () => {
         </AccordionItem>
       </Accordion>
 
-      <QuestionsSection questions={questions} addQuestion={addQuestion} />
+      <QuestionsSection questions={questions} addQuestion={addQuestion} updateQuestion={updateQuestion} />
     </div>
   );
 };

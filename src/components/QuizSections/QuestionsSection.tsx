@@ -17,10 +17,12 @@ interface Question {
 interface QuestionsSectionProps {
   questions: Question[];
   addQuestion: (question: Question) => void;
+  updateQuestion: (index: number, question: Question) => void;
 }
 
-const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => {
+const QuestionsSection = ({ questions, addQuestion, updateQuestion }: QuestionsSectionProps) => {
   const [sectionTitle, setSectionTitle] = useState("Phần 1");
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<Question>({
     id: `q-${Date.now()}`,
     text: "",
@@ -44,8 +46,16 @@ const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => 
     setCurrentQuestion({ ...currentQuestion, options: updatedOptions });
   };
 
-  const handleAddQuestion = () => {
-    addQuestion(currentQuestion);
+  const handleSaveQuestion = () => {
+    if (editingIndex !== null) {
+      // Update existing question
+      updateQuestion(editingIndex, currentQuestion);
+    } else {
+      // Add new question
+      addQuestion(currentQuestion);
+    }
+    
+    // Reset form
     setCurrentQuestion({
       id: `q-${Date.now()}`,
       text: "",
@@ -58,6 +68,32 @@ const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => 
       points: 1,
     });
     setSelectedOption(undefined);
+    setEditingIndex(null);
+  };
+
+  const handleEditQuestion = (index: number) => {
+    const question = questions[index];
+    setCurrentQuestion(question);
+    setEditingIndex(index);
+    // Find the correct option
+    const correctOption = question.options.find(opt => opt.isCorrect);
+    setSelectedOption(correctOption?.id);
+  };
+
+  const handleCancelEdit = () => {
+    setCurrentQuestion({
+      id: `q-${Date.now()}`,
+      text: "",
+      options: [
+        { id: `opt-1-${Date.now()}`, text: "", isCorrect: false },
+        { id: `opt-2-${Date.now()}`, text: "", isCorrect: false },
+        { id: `opt-3-${Date.now()}`, text: "", isCorrect: false },
+        { id: `opt-4-${Date.now()}`, text: "", isCorrect: false },
+      ],
+      points: 1,
+    });
+    setSelectedOption(undefined);
+    setEditingIndex(null);
   };
 
   const questionNumber = questions.length + 1;
@@ -80,16 +116,21 @@ const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => 
       </div>
 
       {questions.map((q, index) => (
-        <div key={q.id} className="border rounded-xl p-6 shadow-sm">
+        <div 
+          key={q.id} 
+          className="border rounded-xl p-6 shadow-sm cursor-pointer hover:border-primary transition-colors"
+          onClick={() => handleEditQuestion(index)}
+        >
           <div className="flex justify-between mb-4">
             <h4 className="font-medium">Câu {index + 1}:</h4>
+            <span className="text-sm text-muted-foreground">{q.points} điểm</span>
           </div>
-          <p>{q.text}</p>
-          <div className="mt-4 space-y-2">
+          <p className="mb-4">{q.text}</p>
+          <div className="space-y-2">
             {q.options.map((opt, optIndex) => (
               <div key={opt.id} className="flex items-center gap-2">
-                <span>{String.fromCharCode(65 + optIndex)}.</span>
-                <p>{opt.text}</p>
+                <span className="font-medium">{String.fromCharCode(65 + optIndex)}.</span>
+                <p className={opt.isCorrect ? "font-medium text-primary" : ""}>{opt.text}</p>
               </div>
             ))}
           </div>
@@ -98,7 +139,9 @@ const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => 
 
       <div className="border rounded-xl p-6 shadow-sm">
         <div className="flex justify-between mb-4">
-          <h4 className="font-medium">Câu {questionNumber}:</h4>
+          <h4 className="font-medium">
+            {editingIndex !== null ? `Chỉnh sửa câu ${editingIndex + 1}` : `Câu ${questionNumber}`}:
+          </h4>
         </div>
         <Input
           value={currentQuestion.text}
@@ -196,13 +239,24 @@ const QuestionsSection = ({ questions, addQuestion }: QuestionsSectionProps) => 
             <span>AI</span>
           </Button>
         </div>
-        <Button
-          onClick={handleAddQuestion}
-          className="flex items-center gap-1 bg-primary text-white"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Thêm câu hỏi</span>
-        </Button>
+        <div className="flex gap-2">
+          {editingIndex !== null && (
+            <Button
+              onClick={handleCancelEdit}
+              variant="outline"
+              className="flex items-center gap-1"
+            >
+              <span>Hủy</span>
+            </Button>
+          )}
+          <Button
+            onClick={handleSaveQuestion}
+            className="flex items-center gap-1 bg-primary text-white"
+          >
+            <Plus className="h-4 w-4" />
+            <span>{editingIndex !== null ? "Cập nhật câu hỏi" : "Thêm câu hỏi"}</span>
+          </Button>
+        </div>
       </div>
     </div>
   );
