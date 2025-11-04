@@ -24,13 +24,13 @@ const Header = () => {
           
           <nav className="hidden md:flex space-x-1">
             <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>
-              Home
-            </Link>
-            <Link to="/library" className={`nav-link ${isActive('/library') ? 'active' : ''}`}>
-              Quiz Library
+              Trang chủ
             </Link>
             <Link to="/groups" className={`nav-link ${isActive('/groups') ? 'active' : ''}`}>
-              Groups
+              Nhóm
+            </Link>
+            <Link to="/history" className={`nav-link ${isActive('/history') ? 'active' : ''}`}>
+              Lịch sử thi
             </Link>
           </nav>
         </div>
