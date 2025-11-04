@@ -26,50 +26,42 @@ const QuizCard = ({
   questionCount, 
   duration, 
   participants, 
-  difficulty,
-  image 
+  difficulty
 }: QuizCardProps) => {
   return (
-    <div className="quiz-card overflow-hidden flex flex-col h-full transform hover:scale-[1.02] transition-all duration-300">
-      {image && (
-        <div 
-          className="h-40 bg-cover bg-center rounded-t-xl -mx-4 -mt-4 mb-4"
-          style={{ backgroundImage: `url(${image})` }}
-        />
-      )}
-      
+    <div className="quiz-card overflow-hidden flex flex-col h-full hover:shadow-lg transition-shadow duration-300">
       <div className="flex-1">
-        <div className="flex justify-between items-start mb-2">
-          <span className={`subject-tag ${difficultyColors[difficulty]}`}>
+        <div className="flex justify-between items-start gap-2 mb-3">
+          <span className={`subject-tag text-xs ${difficultyColors[difficulty]}`}>
             {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
           </span>
-          <span className="subject-tag bg-quiz-blue text-quiz-darkBlue">
+          <span className="subject-tag text-xs bg-quiz-blue text-quiz-darkBlue">
             {subject}
           </span>
         </div>
         
-        <h3 className="text-lg font-semibold mb-2 line-clamp-2">{title}</h3>
-        <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{description}</p>
+        <h3 className="text-base font-semibold mb-2 line-clamp-2">{title}</h3>
+        <p className="text-muted-foreground text-xs mb-3 line-clamp-2">{description}</p>
         
-        <div className="flex items-center justify-between text-sm text-muted-foreground mt-auto">
+        <div className="flex items-center justify-between text-xs text-muted-foreground gap-2">
           <div className="flex items-center">
-            <FileText className="h-4 w-4 mr-1" />
-            <span>{questionCount} questions</span>
+            <FileText className="h-3.5 w-3.5 mr-1" />
+            <span>{questionCount}</span>
           </div>
           
           <div className="flex items-center">
-            <Clock className="h-4 w-4 mr-1" />
-            <span>{duration} min</span>
+            <Clock className="h-3.5 w-3.5 mr-1" />
+            <span>{duration}m</span>
           </div>
           
           <div className="flex items-center">
-            <Users className="h-4 w-4 mr-1" />
+            <Users className="h-3.5 w-3.5 mr-1" />
             <span>{participants}</span>
           </div>
         </div>
       </div>
       
-      <button className="w-full mt-4 py-2 text-center text-white bg-quiz-accent rounded-md hover:bg-quiz-darkBlue transition-colors duration-200">
+      <button className="w-full mt-3 py-2 text-sm text-center text-white bg-quiz-accent rounded-md hover:bg-quiz-darkBlue transition-colors duration-200">
         Start Quiz
       </button>
     </div>
