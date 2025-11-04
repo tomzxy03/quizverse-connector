@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Bell, FileText, Users, PlusCircle, Search, UserPlus, Share2 } from 'lucide-react';
+import { Bell, FileText, Users, PlusCircle, Search, UserPlus, Share2, Database, Trash2, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import QuizCard, { QuizCardProps } from './QuizCard';
 import { Button } from './ui/button';
@@ -100,7 +100,7 @@ const dummyQuizzes: QuizCardProps[] = [
   },
 ];
 
-type ContentTab = 'announcements' | 'quizzes' | 'members' | 'shared';
+type ContentTab = 'announcements' | 'quizzes' | 'members' | 'shared' | 'questionBank';
 
 const GroupContent = ({ group }: GroupContentProps) => {
   const [activeTab, setActiveTab] = useState<ContentTab>('announcements');
@@ -168,6 +168,18 @@ const GroupContent = ({ group }: GroupContentProps) => {
           <Share2 className="h-4 w-4" />
           <span>Shared</span>
         </button>
+        
+        {group.isOwned && (
+          <button 
+            className={`px-6 py-3 flex items-center space-x-2 text-sm font-medium transition-colors ${
+              activeTab === 'questionBank' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'
+            }`}
+            onClick={() => setActiveTab('questionBank')}
+          >
+            <Database className="h-4 w-4" />
+            <span>Ngân hàng câu hỏi</span>
+          </button>
+        )}
       </div>
       
       <div className="flex-1 overflow-y-auto p-6">
@@ -330,6 +342,97 @@ const GroupContent = ({ group }: GroupContentProps) => {
                   </Button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'questionBank' && group.isOwned && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Ngân hàng câu hỏi</h2>
+              <div className="flex space-x-2">
+                <div className="relative">
+                  <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                  <input 
+                    type="text" 
+                    placeholder="Tìm câu hỏi..." 
+                    className="pl-10 pr-4 py-2 border border-border rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+                <Button className="flex items-center space-x-2">
+                  <PlusCircle className="h-4 w-4" />
+                  <span>Thêm câu hỏi</span>
+                </Button>
+              </div>
+            </div>
+            
+            <div className="space-y-3 mt-4">
+              {[
+                { 
+                  id: '1', 
+                  text: 'Phương trình bậc hai có dạng tổng quát như thế nào?',
+                  subject: 'Toán học',
+                  difficulty: 'easy',
+                  points: 2
+                },
+                { 
+                  id: '2', 
+                  text: 'Định luật Newton thứ hai phát biểu như thế nào?',
+                  subject: 'Vật lý',
+                  difficulty: 'medium',
+                  points: 3
+                },
+                { 
+                  id: '3', 
+                  text: 'Quá trình quang hợp diễn ra ở đâu trong tế bào thực vật?',
+                  subject: 'Sinh học',
+                  difficulty: 'easy',
+                  points: 2
+                },
+              ].map((question) => (
+                <div 
+                  key={question.id} 
+                  className="bg-white p-4 rounded-xl card-shadow hover:shadow-md transition-shadow"
+                >
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          question.difficulty === 'easy' ? 'bg-green-100 text-green-700' :
+                          question.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {question.difficulty === 'easy' ? 'Dễ' : 
+                           question.difficulty === 'medium' ? 'Trung bình' : 'Khó'}
+                        </span>
+                        <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">
+                          {question.subject}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {question.points} điểm
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium">{question.text}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

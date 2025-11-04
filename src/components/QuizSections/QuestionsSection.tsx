@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Plus, FileText, UploadCloud, FolderOpen, BrainCircuit } from "lucide-react";
+import { Plus, FileText, UploadCloud, FolderOpen, BrainCircuit, Database } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
@@ -213,6 +213,14 @@ const QuestionsSection = ({ questions, addQuestion, updateQuestion }: QuestionsS
           >
             <FileText className="h-4 w-4" />
             <span>Phần</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+          >
+            <Database className="h-4 w-4" />
+            <span>Ngân hàng câu hỏi</span>
           </Button>
           <Button
             variant="outline"
