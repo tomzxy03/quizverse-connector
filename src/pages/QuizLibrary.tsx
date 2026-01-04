@@ -164,10 +164,10 @@ const QuizLibrary = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
-      <main className="flex-1 container px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Quiz Library</h1>
+      <main className="flex-1 container px-4 py-6">
+        <h1 className="text-2xl font-bold mb-4">Thư viện Quiz</h1>
         
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-1.5 mb-4">
           {subjects.map((subject) => (
             <SubjectTag
               key={subject}
@@ -178,31 +178,31 @@ const QuizLibrary = () => {
           ))}
         </div>
         
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <div className="relative w-full md:w-auto flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
+          <div className="relative w-full md:w-auto flex-1 max-w-sm">
+            <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <input
               type="text"
-              placeholder="Search quizzes..."
+              placeholder="Tìm kiếm quiz..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full pl-8 pr-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           
           <button
-            className="flex items-center space-x-2 px-4 py-2 border border-border rounded-md md:hidden w-full"
+            className="flex items-center space-x-1.5 px-3 py-1.5 text-sm border border-border rounded-md md:hidden w-full"
             onClick={() => setFiltersOpen(!filtersOpen)}
           >
-            <Filter className="h-4 w-4" />
-            <span>Filters</span>
+            <Filter className="h-3.5 w-3.5" />
+            <span>Bộ lọc</span>
           </button>
           
-          <div className={`flex flex-col md:flex-row gap-4 w-full md:w-auto ${filtersOpen ? 'block' : 'hidden md:flex'}`}>
+          <div className={`flex flex-col md:flex-row gap-2 w-full md:w-auto ${filtersOpen ? 'block' : 'hidden md:flex'}`}>
             <div className="relative group">
-              <button className="px-4 py-2 border border-border rounded-md w-full md:w-auto flex justify-between items-center">
-                <span>Difficulty: {selectedCategories.difficulty}</span>
-                <svg className="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <button className="px-3 py-1.5 text-sm border border-border rounded-md w-full md:w-auto flex justify-between items-center">
+                <span>Độ khó: {selectedCategories.difficulty}</span>
+                <svg className="h-3.5 w-3.5 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
@@ -210,7 +210,7 @@ const QuizLibrary = () => {
                 {categories.difficulty.map((value) => (
                   <button
                     key={value}
-                    className={`block px-4 py-2 text-sm text-left w-full ${
+                    className={`block px-3 py-1.5 text-xs text-left w-full ${
                       selectedCategories.difficulty === value
                         ? 'bg-primary text-white'
                         : 'hover:bg-muted'
@@ -224,9 +224,9 @@ const QuizLibrary = () => {
             </div>
             
             <div className="relative group">
-              <button className="px-4 py-2 border border-border rounded-md w-full md:w-auto flex justify-between items-center">
-                <span>Questions: {selectedCategories.questionCount}</span>
-                <svg className="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <button className="px-3 py-1.5 text-sm border border-border rounded-md w-full md:w-auto flex justify-between items-center">
+                <span>Số câu: {selectedCategories.questionCount}</span>
+                <svg className="h-3.5 w-3.5 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
@@ -234,7 +234,7 @@ const QuizLibrary = () => {
                 {categories.questionCount.map((value) => (
                   <button
                     key={value}
-                    className={`block px-4 py-2 text-sm text-left w-full ${
+                    className={`block px-3 py-1.5 text-xs text-left w-full ${
                       selectedCategories.questionCount === value
                         ? 'bg-primary text-white'
                         : 'hover:bg-muted'
@@ -248,9 +248,9 @@ const QuizLibrary = () => {
             </div>
             
             <div className="relative group">
-              <button className="px-4 py-2 border border-border rounded-md w-full md:w-auto flex justify-between items-center">
-                <span>Duration: {selectedCategories.duration}</span>
-                <svg className="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <button className="px-3 py-1.5 text-sm border border-border rounded-md w-full md:w-auto flex justify-between items-center">
+                <span>Thời gian: {selectedCategories.duration}</span>
+                <svg className="h-3.5 w-3.5 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
@@ -258,7 +258,7 @@ const QuizLibrary = () => {
                 {categories.duration.map((value) => (
                   <button
                     key={value}
-                    className={`block px-4 py-2 text-sm text-left w-full ${
+                    className={`block px-3 py-1.5 text-xs text-left w-full ${
                       selectedCategories.duration === value
                         ? 'bg-primary text-white'
                         : 'hover:bg-muted'
@@ -274,7 +274,7 @@ const QuizLibrary = () => {
         </div>
         
         {filteredQuizzes.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredQuizzes.map((quiz) => (
               <QuizCard key={quiz.id} {...quiz} />
             ))}
