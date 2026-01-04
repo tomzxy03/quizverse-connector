@@ -46,54 +46,54 @@ const QuizCard = ({
   const CtaIcon = isCompleted ? RotateCcw : undefined;
 
   return (
-    <div className="bg-card rounded-xl border border-border p-5 flex flex-col gap-4 hover:shadow-md transition-shadow duration-200">
+    <div className="bg-card rounded-lg border border-border p-4 flex flex-col gap-3 hover:shadow-md transition-shadow duration-200">
       {/* Trạng thái đã làm (nếu có) */}
       {isCompleted && (
-        <div className="flex items-center gap-2 text-sm">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
+        <div className="flex items-center gap-1.5 text-xs">
+          <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
           <span className="text-green-700 font-medium">Đã hoàn thành</span>
           {lastScore !== undefined && (
             <span className="ml-auto text-muted-foreground">
-              Điểm gần nhất: <span className="font-semibold text-foreground">{lastScore}%</span>
+              Điểm: <span className="font-semibold text-foreground">{lastScore}%</span>
             </span>
           )}
         </div>
       )}
 
       {/* Tiêu đề - Quan trọng nhất */}
-      <h3 className="text-lg font-bold text-foreground leading-tight line-clamp-2">
+      <h3 className="text-base font-bold text-foreground leading-tight line-clamp-2">
         {title}
       </h3>
       
       {/* Mô tả ngắn */}
-      <p className="text-sm text-muted-foreground line-clamp-1">
+      <p className="text-xs text-muted-foreground line-clamp-1">
         {description}
       </p>
       
       {/* Thông tin chính - 1 dòng với icon */}
-      <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-        <div className="flex items-center gap-1.5">
-          <FileText className="h-4 w-4" />
+      <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+        <div className="flex items-center gap-1">
+          <FileText className="h-3.5 w-3.5" />
           <span>{questionCount} câu</span>
         </div>
         
-        <div className="flex items-center gap-1.5">
-          <Clock className="h-4 w-4" />
+        <div className="flex items-center gap-1">
+          <Clock className="h-3.5 w-3.5" />
           <span>{duration} phút</span>
         </div>
         
         <div className={cn(
-          "flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-xs font-medium",
+          "flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-xs font-medium",
           difficultyInfo.className
         )}>
-          <Flame className="h-3.5 w-3.5" />
+          <Flame className="h-3 w-3" />
           <span>{difficultyInfo.label}</span>
         </div>
       </div>
       
       {/* Nút CTA */}
-      <button className="w-full mt-auto py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center gap-2">
-        {CtaIcon && <CtaIcon className="h-4 w-4" />}
+      <button className="w-full mt-auto py-2 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center gap-1.5">
+        {CtaIcon && <CtaIcon className="h-3.5 w-3.5" />}
         {ctaText}
       </button>
     </div>
