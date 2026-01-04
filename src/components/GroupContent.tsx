@@ -67,36 +67,35 @@ const dummyAnnouncements: Announcement[] = [
 const dummyQuizzes: QuizCardProps[] = [
   {
     id: '1',
-    title: 'Algebra Basics',
-    description: 'Test your knowledge of basic algebraic concepts and equations.',
-    subject: 'Math',
+    title: 'Đại số cơ bản',
+    description: 'Ôn tập các khái niệm đại số và phương trình cơ bản.',
+    subject: 'Toán',
     questionCount: 15,
     duration: 20,
     participants: 120,
-    difficulty: 'easy',
-    image: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+    difficulty: 'easy'
   },
   {
     id: '2',
-    title: 'Newton\'s Laws of Motion',
-    description: 'Explore the principles of classical mechanics with this physics quiz.',
-    subject: 'Physics',
+    title: 'Định luật Newton',
+    description: 'Khám phá các nguyên lý cơ học cổ điển.',
+    subject: 'Vật lý',
     questionCount: 10,
     duration: 15,
     participants: 85,
     difficulty: 'medium',
-    image: 'https://images.unsplash.com/photo-1636466497217-26a368c2f1c7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+    isCompleted: true,
+    lastScore: 78
   },
   {
     id: '3',
-    title: 'Cell Biology',
-    description: 'Test your understanding of cell structures and functions.',
-    subject: 'Biology',
+    title: 'Sinh học tế bào',
+    description: 'Kiểm tra hiểu biết về cấu trúc và chức năng tế bào.',
+    subject: 'Sinh học',
     questionCount: 20,
     duration: 25,
     participants: 67,
-    difficulty: 'hard',
-    image: 'https://images.unsplash.com/photo-1576086776739-258d7e1da372?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+    difficulty: 'hard'
   },
 ];
 

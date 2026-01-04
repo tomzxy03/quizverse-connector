@@ -24,69 +24,69 @@ const subjects = [
 const quizzes: QuizCardProps[] = [
   {
     id: '1',
-    title: 'Algebra Basics',
-    description: 'Test your knowledge of basic algebraic concepts and equations.',
-    subject: 'Math',
-    questionCount: 15,
-    duration: 20,
+    title: '2024 Practice Set TOEIC – Test 5',
+    description: 'Luyện đề TOEIC đầy đủ kỹ năng',
+    subject: 'Tiếng Anh',
+    questionCount: 200,
+    duration: 120,
     participants: 120,
-    difficulty: 'easy',
-    image: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+    difficulty: 'hard',
+    isCompleted: true,
+    lastScore: 85
   },
   {
     id: '2',
-    title: 'Newton\'s Laws of Motion',
-    description: 'Explore the principles of classical mechanics with this physics quiz.',
-    subject: 'Physics',
-    questionCount: 10,
-    duration: 15,
+    title: 'Đại số cơ bản',
+    description: 'Ôn tập các khái niệm đại số và phương trình cơ bản.',
+    subject: 'Toán',
+    questionCount: 15,
+    duration: 20,
     participants: 85,
-    difficulty: 'medium',
-    image: 'https://images.unsplash.com/photo-1636466497217-26a368c2f1c7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+    difficulty: 'easy'
   },
   {
     id: '3',
-    title: 'Cell Biology',
-    description: 'Test your understanding of cell structures and functions.',
-    subject: 'Biology',
-    questionCount: 20,
-    duration: 25,
+    title: 'Định luật Newton',
+    description: 'Khám phá các nguyên lý cơ học cổ điển.',
+    subject: 'Vật lý',
+    questionCount: 10,
+    duration: 15,
     participants: 67,
-    difficulty: 'hard',
-    image: 'https://images.unsplash.com/photo-1576086776739-258d7e1da372?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+    difficulty: 'medium',
+    isCompleted: true,
+    lastScore: 72
   },
   {
     id: '4',
-    title: 'World War II',
-    description: 'Test your knowledge about the major events and figures of World War II.',
-    subject: 'History',
-    questionCount: 25,
-    duration: 30,
+    title: 'Sinh học tế bào',
+    description: 'Kiểm tra hiểu biết về cấu trúc và chức năng tế bào.',
+    subject: 'Sinh học',
+    questionCount: 20,
+    duration: 25,
     participants: 92,
-    difficulty: 'medium',
-    image: 'https://images.unsplash.com/photo-1581591524425-c7e0978865fc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+    difficulty: 'hard'
   },
   {
     id: '5',
-    title: 'Periodic Table Elements',
-    description: 'How well do you know the periodic table of elements?',
-    subject: 'Chemistry',
-    questionCount: 18,
-    duration: 22,
+    title: 'Thế chiến thứ II',
+    description: 'Các sự kiện và nhân vật quan trọng trong WWII.',
+    subject: 'Lịch sử',
+    questionCount: 25,
+    duration: 30,
     participants: 76,
-    difficulty: 'hard',
-    image: 'https://images.unsplash.com/photo-1603126857599-f6e157fa2fe6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+    difficulty: 'medium'
   },
   {
     id: '6',
-    title: 'Shakespeare\'s Plays',
-    description: 'Test your knowledge of the Bard\'s most famous works.',
-    subject: 'Literature',
-    questionCount: 15,
-    duration: 18,
+    title: 'Bảng tuần hoàn các nguyên tố',
+    description: 'Bạn biết gì về bảng tuần hoàn?',
+    subject: 'Hóa học',
+    questionCount: 18,
+    duration: 22,
     participants: 54,
-    difficulty: 'medium',
-    image: 'https://images.unsplash.com/photo-1551818255-e6e10975bc17?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+    difficulty: 'hard',
+    isCompleted: true,
+    lastScore: 90
   },
 ];
 

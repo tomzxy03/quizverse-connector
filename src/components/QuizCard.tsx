@@ -1,5 +1,5 @@
-
-import { Clock, Users, FileText } from 'lucide-react';
+import { FileText, Clock, Flame, CheckCircle2, RotateCcw } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export interface QuizCardProps {
   id: string;
@@ -10,59 +10,91 @@ export interface QuizCardProps {
   duration: number;
   participants: number;
   difficulty: 'easy' | 'medium' | 'hard';
-  image?: string;
+  // Trạng thái người dùng
+  isCompleted?: boolean;
+  lastScore?: number;
 }
 
-const difficultyColors = {
-  easy: 'bg-green-100 text-green-800',
-  medium: 'bg-yellow-100 text-yellow-800',
-  hard: 'bg-red-100 text-red-800'
+const difficultyConfig = {
+  easy: {
+    label: 'Dễ',
+    className: 'bg-green-50 text-green-700 border-green-200'
+  },
+  medium: {
+    label: 'Trung bình',
+    className: 'bg-amber-50 text-amber-700 border-amber-200'
+  },
+  hard: {
+    label: 'Khó',
+    className: 'bg-red-50 text-red-700 border-red-200'
+  }
 };
 
 const QuizCard = ({ 
   title, 
   description, 
-  subject, 
   questionCount, 
   duration, 
-  participants, 
-  difficulty
+  difficulty,
+  isCompleted = false,
+  lastScore
 }: QuizCardProps) => {
+  const difficultyInfo = difficultyConfig[difficulty];
+  
+  // Xác định nút CTA
+  const ctaText = isCompleted ? 'Làm lại' : 'Làm bài';
+  const CtaIcon = isCompleted ? RotateCcw : undefined;
+
   return (
-    <div className="quiz-card overflow-hidden flex flex-col h-full hover:shadow-lg transition-shadow duration-300">
-      <div className="flex-1">
-        <div className="flex justify-between items-start gap-2 mb-3">
-          <span className={`subject-tag text-xs ${difficultyColors[difficulty]}`}>
-            {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
-          </span>
-          <span className="subject-tag text-xs bg-quiz-blue text-quiz-darkBlue">
-            {subject}
-          </span>
+    <div className="bg-card rounded-xl border border-border p-5 flex flex-col gap-4 hover:shadow-md transition-shadow duration-200">
+      {/* Trạng thái đã làm (nếu có) */}
+      {isCompleted && (
+        <div className="flex items-center gap-2 text-sm">
+          <CheckCircle2 className="h-4 w-4 text-green-600" />
+          <span className="text-green-700 font-medium">Đã hoàn thành</span>
+          {lastScore !== undefined && (
+            <span className="ml-auto text-muted-foreground">
+              Điểm gần nhất: <span className="font-semibold text-foreground">{lastScore}%</span>
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Tiêu đề - Quan trọng nhất */}
+      <h3 className="text-lg font-bold text-foreground leading-tight line-clamp-2">
+        {title}
+      </h3>
+      
+      {/* Mô tả ngắn */}
+      <p className="text-sm text-muted-foreground line-clamp-1">
+        {description}
+      </p>
+      
+      {/* Thông tin chính - 1 dòng với icon */}
+      <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <FileText className="h-4 w-4" />
+          <span>{questionCount} câu</span>
         </div>
         
-        <h3 className="text-base font-semibold mb-2 line-clamp-2">{title}</h3>
-        <p className="text-muted-foreground text-xs mb-3 line-clamp-2">{description}</p>
+        <div className="flex items-center gap-1.5">
+          <Clock className="h-4 w-4" />
+          <span>{duration} phút</span>
+        </div>
         
-        <div className="flex items-center justify-between text-xs text-muted-foreground gap-2">
-          <div className="flex items-center">
-            <FileText className="h-3.5 w-3.5 mr-1" />
-            <span>{questionCount}</span>
-          </div>
-          
-          <div className="flex items-center">
-            <Clock className="h-3.5 w-3.5 mr-1" />
-            <span>{duration}m</span>
-          </div>
-          
-          <div className="flex items-center">
-            <Users className="h-3.5 w-3.5 mr-1" />
-            <span>{participants}</span>
-          </div>
+        <div className={cn(
+          "flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-xs font-medium",
+          difficultyInfo.className
+        )}>
+          <Flame className="h-3.5 w-3.5" />
+          <span>{difficultyInfo.label}</span>
         </div>
       </div>
       
-      <button className="w-full mt-3 py-2 text-sm text-center text-white bg-quiz-accent rounded-md hover:bg-quiz-darkBlue transition-colors duration-200">
-        Start Quiz
+      {/* Nút CTA */}
+      <button className="w-full mt-auto py-2.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center gap-2">
+        {CtaIcon && <CtaIcon className="h-4 w-4" />}
+        {ctaText}
       </button>
     </div>
   );
