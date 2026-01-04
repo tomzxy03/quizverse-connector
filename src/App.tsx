@@ -22,8 +22,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<QuizLibrary />} />
-          <Route path="/landing" element={<LandingPage />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/library" element={<QuizLibrary />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/groups" element={<Groups />} />

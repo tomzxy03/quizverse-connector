@@ -23,11 +23,11 @@ const Header = () => {
           </Link>
           
           <nav className="hidden md:flex space-x-1">
-            <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>
-              Trang chủ
+            <Link to="/library" className={`nav-link ${isActive('/library') ? 'active' : ''}`}>
+              Thư viện quiz
             </Link>
             <Link to="/groups" className={`nav-link ${isActive('/groups') ? 'active' : ''}`}>
-              Nhóm
+              Nhóm học
             </Link>
             <Link to="/history" className={`nav-link ${isActive('/history') ? 'active' : ''}`}>
               Lịch sử thi
@@ -93,13 +93,13 @@ const Header = () => {
               to="/login" 
               className="text-foreground hover:text-primary transition-colors"
             >
-              Login
+              Đăng nhập
             </Link>
             <Link 
               to="/signup" 
               className="btn-primary"
             >
-              Sign Up
+              Đăng ký
             </Link>
           </div>
         )}
