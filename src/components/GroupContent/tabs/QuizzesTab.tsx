@@ -1,17 +1,55 @@
 // GroupContent/tabs/QuizzesTab.tsx
 import { PlusCircle, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import QuizCard from '../QuizCard';
+import QuizCard from '../../QuizCard';
 
-const dummyQuizzes = [
+type LocalQuiz = {
+  id: string;
+  title: string;
+  subject: string;
+  questionCount: number;
+  estimatedTime: number;
+  isPublic: boolean;
+  difficulty: 'easy' | 'medium' | 'hard';
+};
+
+const dummyQuizzes: LocalQuiz[] = [
   {
     id: '1',
     title: 'Đại số cơ bản',
     subject: 'Toán',
     questionCount: 15,
     estimatedTime: 20,
+    isPublic: true,
     difficulty: 'easy',
   },
+  {
+    id: '2',
+    title: 'Định luật Newton',
+    subject: 'Vật lý',
+    questionCount: 10,
+    estimatedTime: 15,
+    isPublic: true,
+    difficulty: 'medium',
+  },
+  {
+    id: '3',
+    title: 'Hóa học hữu cơ cơ bản',
+    subject: 'Hóa học',
+    questionCount: 12,
+    estimatedTime: 18,
+    isPublic: false,
+    difficulty: 'hard',
+  },
+  {
+    id: '4',
+    title: 'Lịch sử thế giới hiện đại',
+    subject: 'Lịch sử',
+    questionCount: 20,
+    estimatedTime: 25,
+    isPublic: true,
+    difficulty: 'medium',
+  }
 ];
 
 const QuizzesTab = ({ canManage }: { canManage: boolean }) => {

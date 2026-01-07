@@ -1,8 +1,8 @@
 // GroupContent/GroupContent.tsx
 import { useState } from 'react';
 import { Group, ContentTab } from './types';
-import GroupHeader from '../GroupHeader';
-import GroupTabs from './GroupTabs';
+import GroupHeader from './GroupHeader';
+import GroupTabs from './GroupTab';
 
 import AnnouncementsTab from './tabs/AnnouncementsTab';
 import QuizzesTab from './tabs/QuizzesTab';
