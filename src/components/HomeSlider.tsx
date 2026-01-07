@@ -1,146 +1,186 @@
-
-import { useEffect, useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import QuizCard, { Quiz } from './QuizCard';
 
-interface Slide {
-  id: number;
-  title: string;
-  description: string;
-  image: string;
+interface QuizSliderProps {
+  quizzes: Quiz[];
+  title?: string;
+  slidesPerView?: {
+    mobile: number;
+    tablet: number;
+    desktop: number;
+  };
 }
 
-const slides: Slide[] = [
-  {
-    id: 1,
-    title: "Master Your Knowledge",
-    description: "Test your skills with thousands of quizzes in our library",
-    image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
-  },
-  {
-    id: 2,
-    title: "Collaborate with Friends",
-    description: "Create study groups and share quizzes with your classmates",
-    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
-  },
-  {
-    id: 3,
-    title: "Learn Anywhere, Anytime",
-    description: "Access your quizzes on any device, whenever you want",
-    image: "https://images.unsplash.com/photo-1516979187457-637abb4f9353?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+const QuizSlider: React.FC<QuizSliderProps> = ({ 
+  quizzes,
+  title = 'Quiz mới nhất',
+  slidesPerView = {
+    mobile: 1,
+    tablet: 2,
+    desktop: 4
   }
-];
+}) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [slidesToShow, setSlidesToShow] = useState(slidesPerView.desktop);
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
-const HomeSlider = () => {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const intervalRef = useRef<number | null>(null);
+  // Responsive slides per view
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setSlidesToShow(slidesPerView.mobile);
+      } else if (window.innerWidth < 1024) {
+        setSlidesToShow(slidesPerView.tablet);
+      } else {
+        setSlidesToShow(slidesPerView.desktop);
+      }
+    };
 
-  const startAutoSlide = () => {
-    intervalRef.current = window.setInterval(() => {
-      goToNextSlide();
-    }, 5000);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [slidesPerView]);
+
+  const maxIndex = Math.max(0, Math.ceil(quizzes.length / slidesToShow) - 1);
+
+  const goToNext = () => {
+    setCurrentIndex(prev => Math.min(prev + 1, maxIndex));
   };
 
-  const stopAutoSlide = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+  const goToPrev = () => {
+    setCurrentIndex(prev => Math.max(prev - 1, 0));
+  };
+
+  // Touch/Mouse drag handlers
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    setIsDragging(true);
+    const pageX = 'touches' in e ? e.touches[0].pageX : e.pageX;
+    setStartX(pageX - (sliderRef.current?.offsetLeft || 0));
+    setScrollLeft(sliderRef.current?.scrollLeft || 0);
+  };
+
+  const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const pageX = 'touches' in e ? e.touches[0].pageX : e.pageX;
+    const x = pageX - (sliderRef.current?.offsetLeft || 0);
+    const walk = (x - startX) * 2;
+    if (sliderRef.current) {
+      sliderRef.current.scrollLeft = scrollLeft - walk;
     }
   };
 
-  const goToSlide = (index: number) => {
-    if (isAnimating) return;
+  const handleDragEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
     
-    setIsAnimating(true);
-    setCurrentSlide(index);
-    
-    setTimeout(() => {
-      setIsAnimating(false);
-    }, 500);
+    // Snap to nearest slide
+    if (sliderRef.current) {
+      const cardWidth = sliderRef.current.scrollWidth / quizzes.length;
+      const newIndex = Math.round(sliderRef.current.scrollLeft / (cardWidth * slidesToShow));
+      setCurrentIndex(Math.min(Math.max(newIndex, 0), maxIndex));
+    }
   };
 
-  const goToPrevSlide = () => {
-    const newIndex = currentSlide === 0 ? slides.length - 1 : currentSlide - 1;
-    goToSlide(newIndex);
-  };
-
-  const goToNextSlide = () => {
-    const newIndex = currentSlide === slides.length - 1 ? 0 : currentSlide + 1;
-    goToSlide(newIndex);
-  };
-
-  useEffect(() => {
-    startAutoSlide();
-    
-    return () => {
-      stopAutoSlide();
-    };
-  }, []);
+  // Calculate transform for current index
+  const translateX = -(currentIndex * (100 / slidesToShow));
 
   return (
-    <div className="relative h-[500px] w-full overflow-hidden rounded-xl">
-      {slides.map((slide, index) => (
-        <div
-          key={slide.id}
-          className={`absolute inset-0 transition-all duration-500 ease-in-out ${
-            index === currentSlide
-              ? "opacity-100 translate-x-0"
-              : index < currentSlide
-              ? "opacity-0 -translate-x-full"
-              : "opacity-0 translate-x-full"
-          }`}
-        >
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${slide.image})` }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
-          </div>
-          
-          <div className="absolute inset-0 flex flex-col justify-center p-8 md:p-16 text-white">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              {slide.title}
-            </h2>
-            <p className="text-lg md:text-xl max-w-lg animate-slide-up" style={{ animationDelay: '0.4s' }}>
-              {slide.description}
-            </p>
-          </div>
-        </div>
-      ))}
-      
-      <button
-        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/30 backdrop-blur-sm text-white hover:bg-white/50 transition-colors"
-        onClick={goToPrevSlide}
-        onMouseEnter={stopAutoSlide}
-        onMouseLeave={startAutoSlide}
-      >
-        <ChevronLeft className="h-6 w-6" />
-      </button>
-      
-      <button
-        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/30 backdrop-blur-sm text-white hover:bg-white/50 transition-colors"
-        onClick={goToNextSlide}
-        onMouseEnter={stopAutoSlide}
-        onMouseLeave={startAutoSlide}
-      >
-        <ChevronRight className="h-6 w-6" />
-      </button>
-      
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2">
-        {slides.map((_, index) => (
+    <div className="relative">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
+        
+        {/* Navigation Buttons - Desktop */}
+        <div className="hidden md:flex items-center gap-2">
           <button
-            key={index}
-            className={`h-2 rounded-full transition-all ${
-              index === currentSlide ? "w-8 bg-white" : "w-2 bg-white/50"
-            }`}
-            onClick={() => goToSlide(index)}
-            onMouseEnter={stopAutoSlide}
-            onMouseLeave={startAutoSlide}
-          />
-        ))}
+            onClick={goToPrev}
+            disabled={currentIndex === 0}
+            className={`
+              p-2 rounded-lg border transition-all
+              ${currentIndex === 0 
+                ? 'border-slate-200 text-slate-300 cursor-not-allowed' 
+                : 'border-slate-300 text-slate-700 hover:border-indigo-600 hover:text-indigo-600 hover:bg-indigo-50'
+              }
+            `}
+            aria-label="Previous slides"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            onClick={goToNext}
+            disabled={currentIndex === maxIndex}
+            className={`
+              p-2 rounded-lg border transition-all
+              ${currentIndex === maxIndex
+                ? 'border-slate-200 text-slate-300 cursor-not-allowed'
+                : 'border-slate-300 text-slate-700 hover:border-indigo-600 hover:text-indigo-600 hover:bg-indigo-50'
+              }
+            `}
+            aria-label="Next slides"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
       </div>
+
+      {/* Slider Container */}
+      <div className="relative overflow-hidden">
+        <div
+          ref={sliderRef}
+          className="flex transition-transform duration-500 ease-out cursor-grab active:cursor-grabbing"
+          style={{ 
+            transform: `translateX(${translateX}%)`,
+            userSelect: isDragging ? 'none' : 'auto'
+          }}
+          onMouseDown={handleDragStart}
+          onMouseMove={handleDragMove}
+          onMouseUp={handleDragEnd}
+          onMouseLeave={handleDragEnd}
+          onTouchStart={handleDragStart}
+          onTouchMove={handleDragMove}
+          onTouchEnd={handleDragEnd}
+        >
+          {quizzes.map((quiz) => (
+            <div
+              key={quiz.id}
+              className="flex-shrink-0 px-2"
+              style={{ 
+                width: `${100 / slidesToShow}%`,
+                minWidth: `${100 / slidesToShow}%`
+              }}
+            >
+              <QuizCard quiz={quiz} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Dots Indicator - Mobile */}
+      {maxIndex > 0 && (
+        <div className="flex justify-center gap-2 mt-6 md:hidden">
+          {Array.from({ length: maxIndex + 1 }).map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentIndex(index)}
+              className={`
+                h-2 rounded-full transition-all
+                ${currentIndex === index 
+                  ? 'w-6 bg-indigo-600' 
+                  : 'w-2 bg-slate-300'
+                }
+              `}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export default HomeSlider;
+export default QuizSlider;

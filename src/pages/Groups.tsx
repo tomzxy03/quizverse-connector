@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import Header from '../components/Header';
-import GroupSidebar from '../components/GroupSidebar';
+import GroupSidebar from '../components/GroupContent/GroupSidebar';
 import GroupContent from '../components/GroupContent';
 import { PlusCircle } from 'lucide-react';
 

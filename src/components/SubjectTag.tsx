@@ -1,31 +1,31 @@
-
-import { MouseEvent } from 'react';
-import { Button } from './ui/button';
-import { cn } from '@/lib/utils';
-
 interface SubjectTagProps {
   subject: string;
   isSelected: boolean;
   onClick: (subject: string) => void;
 }
 
-const SubjectTag = ({ subject, isSelected, onClick }: SubjectTagProps) => {
-  const handleClick = (e: MouseEvent) => {
-    e.preventDefault();
-    onClick(subject);
-  };
-
+const SubjectTag: React.FC<SubjectTagProps> = ({
+  subject,
+  isSelected,
+  onClick,
+}) => {
   return (
-    <Button
-      variant={isSelected ? "default" : "outline"}
-      className={cn(
-        "text-sm rounded-full",
-        isSelected ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"
-      )}
-      onClick={handleClick}
+    <button
+      onClick={() => onClick(subject)}
+      className={`
+        whitespace-nowrap
+        px-3 py-1.5 rounded-full
+        text-sm font-medium
+        border transition
+        ${
+          isSelected
+            ? 'bg-slate-200 border-slate-300 text-slate-900'
+            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+        }
+      `}
     >
       {subject}
-    </Button>
+    </button>
   );
 };
 

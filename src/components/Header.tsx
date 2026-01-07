@@ -22,7 +22,7 @@ const Header = () => {
             QuizVerse
           </Link>
           
-          <nav className="hidden md:flex space-x-1">
+          <nav className="hidden md:flex space-x-1 md:text-sm lg:text-base">
             <Link to="/library" className={`nav-link ${isActive('/library') ? 'active' : ''}`}>
               Thư viện quiz
             </Link>

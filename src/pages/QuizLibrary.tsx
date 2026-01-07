@@ -1,11 +1,14 @@
-
 import { useState } from 'react';
 import Header from '../components/Header';
 import SubjectTag from '../components/SubjectTag';
-import QuizCard, { QuizCardProps } from '../components/QuizCard';
+import QuizCard, { Quiz } from '../components/QuizCard';
 import { Search, Filter } from 'lucide-react';
+import { useRef } from 'react';
+import HoverFilter from '../components/HoverFilter';
+import Footer from '../components/Footer';
 
-// Sample data
+/* ---------------- DATA ---------------- */
+
 const subjects = [
   'All',
   'Math',
@@ -21,18 +24,17 @@ const subjects = [
   'Economics',
 ];
 
-const quizzes: QuizCardProps[] = [
+const quizzes: Quiz[] = [
   {
     id: '1',
     title: '2024 Practice Set TOEIC – Test 5',
     description: 'Luyện đề TOEIC đầy đủ kỹ năng',
     subject: 'Tiếng Anh',
     questionCount: 200,
-    duration: 120,
-    participants: 120,
+    estimatedTime: 120,
+    isPublic: true,
     difficulty: 'hard',
-    isCompleted: true,
-    lastScore: 85
+    attemptCount: 5
   },
   {
     id: '2',
@@ -40,8 +42,8 @@ const quizzes: QuizCardProps[] = [
     description: 'Ôn tập các khái niệm đại số và phương trình cơ bản.',
     subject: 'Toán',
     questionCount: 15,
-    duration: 20,
-    participants: 85,
+    estimatedTime: 20,
+    isPublic: true,
     difficulty: 'easy'
   },
   {
@@ -50,11 +52,10 @@ const quizzes: QuizCardProps[] = [
     description: 'Khám phá các nguyên lý cơ học cổ điển.',
     subject: 'Vật lý',
     questionCount: 10,
-    duration: 15,
-    participants: 67,
+    estimatedTime: 15,
+    isPublic: true,
     difficulty: 'medium',
-    isCompleted: true,
-    lastScore: 72
+    attemptCount: 67
   },
   {
     id: '4',
@@ -62,9 +63,10 @@ const quizzes: QuizCardProps[] = [
     description: 'Kiểm tra hiểu biết về cấu trúc và chức năng tế bào.',
     subject: 'Sinh học',
     questionCount: 20,
-    duration: 25,
-    participants: 92,
-    difficulty: 'hard'
+    estimatedTime: 25,
+    isPublic: true,
+    difficulty: 'hard',
+    attemptCount: 92
   },
   {
     id: '5',
@@ -72,9 +74,10 @@ const quizzes: QuizCardProps[] = [
     description: 'Các sự kiện và nhân vật quan trọng trong WWII.',
     subject: 'Lịch sử',
     questionCount: 25,
-    duration: 30,
-    participants: 76,
-    difficulty: 'medium'
+    estimatedTime: 30,
+    isPublic: true,
+    difficulty: 'medium',
+    attemptCount: 76
   },
   {
     id: '6',
@@ -82,11 +85,10 @@ const quizzes: QuizCardProps[] = [
     description: 'Bạn biết gì về bảng tuần hoàn?',
     subject: 'Hóa học',
     questionCount: 18,
-    duration: 22,
-    participants: 54,
+    estimatedTime: 22,
+    isPublic: true,
     difficulty: 'hard',
-    isCompleted: true,
-    lastScore: 90
+    attemptCount: 54
   },
 ];
 
@@ -96,200 +98,144 @@ const categories = {
   duration: ['All', '< 15 min', '15-30 min', '> 30 min'],
 };
 
+/* ---------------- COMPONENT ---------------- */
+
 const QuizLibrary = () => {
   const [selectedSubject, setSelectedSubject] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const timerRef = useRef<number | null>(null);
   const [selectedCategories, setSelectedCategories] = useState({
     difficulty: 'All',
     questionCount: 'All',
     duration: 'All',
   });
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  
-  const handleSubjectSelect = (subject: string) => {
-    setSelectedSubject(subject);
-  };
-  
+
   const handleCategorySelect = (category: string, value: string) => {
-    setSelectedCategories({
-      ...selectedCategories,
+    setSelectedCategories((prev) => ({
+      ...prev,
       [category]: value,
-    });
+    }));
   };
-  
+
+  /* ---------------- FILTER LOGIC ---------------- */
+
   const filteredQuizzes = quizzes.filter((quiz) => {
-    // Filter by subject
-    if (selectedSubject !== 'All' && quiz.subject !== selectedSubject) {
+    if (selectedSubject !== 'All' && quiz.subject !== selectedSubject) return false;
+
+    if (searchQuery && !quiz.title.toLowerCase().includes(searchQuery.toLowerCase()))
       return false;
-    }
-    
-    // Filter by search query
-    if (searchQuery && !quiz.title.toLowerCase().includes(searchQuery.toLowerCase())) {
+
+    if (
+      selectedCategories.difficulty !== 'All' &&
+      quiz.difficulty !== selectedCategories.difficulty.toLowerCase()
+    )
       return false;
-    }
-    
-    // Filter by difficulty
-    if (selectedCategories.difficulty !== 'All') {
-      if (selectedCategories.difficulty.toLowerCase() !== quiz.difficulty) {
-        return false;
-      }
-    }
-    
-    // Filter by question count
-    if (selectedCategories.questionCount !== 'All') {
-      if (selectedCategories.questionCount === '< 10' && quiz.questionCount >= 10) {
-        return false;
-      } else if (selectedCategories.questionCount === '10-20' && (quiz.questionCount < 10 || quiz.questionCount > 20)) {
-        return false;
-      } else if (selectedCategories.questionCount === '> 20' && quiz.questionCount <= 20) {
-        return false;
-      }
-    }
-    
-    // Filter by duration
-    if (selectedCategories.duration !== 'All') {
-      if (selectedCategories.duration === '< 15 min' && quiz.duration >= 15) {
-        return false;
-      } else if (selectedCategories.duration === '15-30 min' && (quiz.duration < 15 || quiz.duration > 30)) {
-        return false;
-      } else if (selectedCategories.duration === '> 30 min' && quiz.duration <= 30) {
-        return false;
-      }
-    }
-    
+
     return true;
   });
-  
-  return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Header />
-      
-      <main className="flex-1 container px-4 py-6">
-        <h1 className="text-2xl font-bold mb-4">Thư viện Quiz</h1>
-        
-        <div className="flex flex-wrap gap-1.5 mb-4">
+
+
+return (
+  <div className="min-h-screen bg-slate-100">
+    <Header />
+
+    <main className="container px-4 py-8">
+      {/* SURFACE */}
+      <div
+        className="
+          bg-white
+          rounded-xl
+          px-6 py-5
+        "
+      >
+        {/* TITLE */}
+        <h1 className="text-2xl font-semibold text-slate-900 mb-5">
+          Thư viện Quiz
+        </h1>
+
+        {/* SUBJECT TAGS */}
+        <div className="flex flex-wrap gap-2 mb-6">
           {subjects.map((subject) => (
             <SubjectTag
               key={subject}
               subject={subject}
               isSelected={selectedSubject === subject}
-              onClick={handleSubjectSelect}
+              onClick={setSelectedSubject}
             />
           ))}
         </div>
-        
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
-          <div className="relative w-full md:w-auto flex-1 max-w-sm">
-            <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+
+        {/* DIVIDER */}
+        <div className="h-px bg-slate-200 mb-6" />
+
+        {/* SEARCH + FILTER */}
+        <div className="flex flex-col md:flex-row md:items-center gap-3 mb-6">
+          {/* Search */}
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
               placeholder="Tìm kiếm quiz..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="
+                w-full pl-9 pr-3 py-2
+                text-sm
+                bg-slate-50
+                border border-slate-200
+                rounded-md
+                focus:outline-none
+                focus:ring-0
+              "
             />
           </div>
-          
-          <button
-            className="flex items-center space-x-1.5 px-3 py-1.5 text-sm border border-border rounded-md md:hidden w-full"
-            onClick={() => setFiltersOpen(!filtersOpen)}
-          >
-            <Filter className="h-3.5 w-3.5" />
-            <span>Bộ lọc</span>
-          </button>
-          
-          <div className={`flex flex-col md:flex-row gap-2 w-full md:w-auto ${filtersOpen ? 'block' : 'hidden md:flex'}`}>
-            <div className="relative group">
-              <button className="px-3 py-1.5 text-sm border border-border rounded-md w-full md:w-auto flex justify-between items-center">
-                <span>Độ khó: {selectedCategories.difficulty}</span>
-                <svg className="h-3.5 w-3.5 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div className="absolute mt-1 w-full bg-white rounded-md shadow-lg z-10 hidden group-hover:block">
-                {categories.difficulty.map((value) => (
-                  <button
-                    key={value}
-                    className={`block px-3 py-1.5 text-xs text-left w-full ${
-                      selectedCategories.difficulty === value
-                        ? 'bg-primary text-white'
-                        : 'hover:bg-muted'
-                    }`}
-                    onClick={() => handleCategorySelect('difficulty', value)}
-                  >
-                    {value}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <div className="relative group">
-              <button className="px-3 py-1.5 text-sm border border-border rounded-md w-full md:w-auto flex justify-between items-center">
-                <span>Số câu: {selectedCategories.questionCount}</span>
-                <svg className="h-3.5 w-3.5 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div className="absolute mt-1 w-full bg-white rounded-md shadow-lg z-10 hidden group-hover:block">
-                {categories.questionCount.map((value) => (
-                  <button
-                    key={value}
-                    className={`block px-3 py-1.5 text-xs text-left w-full ${
-                      selectedCategories.questionCount === value
-                        ? 'bg-primary text-white'
-                        : 'hover:bg-muted'
-                    }`}
-                    onClick={() => handleCategorySelect('questionCount', value)}
-                  >
-                    {value}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <div className="relative group">
-              <button className="px-3 py-1.5 text-sm border border-border rounded-md w-full md:w-auto flex justify-between items-center">
-                <span>Thời gian: {selectedCategories.duration}</span>
-                <svg className="h-3.5 w-3.5 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div className="absolute mt-1 w-full bg-white rounded-md shadow-lg z-10 hidden group-hover:block">
-                {categories.duration.map((value) => (
-                  <button
-                    key={value}
-                    className={`block px-3 py-1.5 text-xs text-left w-full ${
-                      selectedCategories.duration === value
-                        ? 'bg-primary text-white'
-                        : 'hover:bg-muted'
-                    }`}
-                    onClick={() => handleCategorySelect('duration', value)}
-                  >
-                    {value}
-                  </button>
-                ))}
-              </div>
-            </div>
+
+          {/* Filters */}
+          <div className="hidden md:flex gap-2">
+            <HoverFilter
+              label="Độ khó"
+              value={selectedCategories.difficulty}
+              options={categories.difficulty}
+              onSelect={(v) => handleCategorySelect('difficulty', v)}
+            />
+            <HoverFilter
+              label="Số câu"
+              value={selectedCategories.questionCount}
+              options={categories.questionCount}
+              onSelect={(v) => handleCategorySelect('questionCount', v)}
+            />
+            <HoverFilter
+              label="Thời gian"
+              value={selectedCategories.duration}
+              options={categories.duration}
+              onSelect={(v) => handleCategorySelect('duration', v)}
+            />
           </div>
         </div>
-        
+
+        {/* DIVIDER */}
+        <div className="h-px bg-slate-200 mb-6" />
+
+        {/* QUIZ GRID */}
         {filteredQuizzes.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredQuizzes.map((quiz) => (
-              <QuizCard key={quiz.id} {...quiz} />
+              <QuizCard key={quiz.id} quiz={quiz} />
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <h3 className="text-lg font-medium mb-2">No quizzes found</h3>
-            <p className="text-muted-foreground">
-              Try adjusting your filters or search query.
-            </p>
+          <div className="text-center py-16 text-slate-500">
+            Không tìm thấy quiz phù hợp
           </div>
         )}
-      </main>
-    </div>
-  );
+      </div>
+    </main>
+    <Footer />
+  </div>
+);
 };
 
+
 export default QuizLibrary;
+
