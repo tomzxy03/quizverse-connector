@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Header from '../components/Header';
 import GroupSidebar from '../components/GroupContent/GroupSidebar';
-import GroupContent from '../components/GroupContent';
+import GroupContent from '../components/GroupContent/GroupContent';
 import { PlusCircle } from 'lucide-react';
 
 interface Group {
