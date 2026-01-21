@@ -9,7 +9,7 @@ import {
   Announcement,
   CreateAnnouncementRequest,
   SharedResource
-} from '@/types';
+} from '@/domains';
 
 export class GroupRepository {
   private mockGroups: Group[] = [

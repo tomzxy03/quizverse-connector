@@ -7,7 +7,7 @@ import { useRef } from 'react';
 import HoverFilter from '../components/HoverFilter';
 import Footer from '../components/Footer';
 import { quizService } from '@/services';
-import { Quiz, QuizFilter } from '@/types';
+import { Quiz, QuizFilter } from '@/domains';
 
 /* ---------------- DATA ---------------- */
 

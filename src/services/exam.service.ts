@@ -1,7 +1,7 @@
 // Exam Service - Business logic layer
 
 import { examRepository, quizRepository } from '@/repositories';
-import { ExamAttempt, ExamAttemptDetail, CreateExamAttemptRequest, UserStatistics } from '@/types';
+import { ExamAttempt, ExamAttemptDetail, CreateExamAttemptRequest, UserStatistics } from '@/domains';
 
 export class ExamService {
   async getExamHistory(userId: string): Promise<ExamAttempt[]> {

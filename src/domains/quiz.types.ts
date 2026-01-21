@@ -1,7 +1,9 @@
 // Quiz related types and interfaces
 
-import { Difficulty, QuestionType } from './common';
+import { Difficulty, QuestionType } from './common/enum';
 import { User } from './user.types';
+import { Question } from './question.types';
+
 
 export interface Quiz {
   id: string;
@@ -35,26 +37,35 @@ export interface QuizSettings {
   timeLimit?: number;
 }
 
-export interface Question {
-  id: string;
-  quizId: string;
-  text: string;
+export interface QuizQuestionSnapshot {
+  id: string;               // snapshot id
+  questionId: string;       // reference
+  content: string;
   type: QuestionType;
   points: number;
   orderIndex: number;
-  explanation?: string;
-  options: QuestionOption[];
-  createdAt?: Date;
-  updatedAt?: Date;
+
+  options: QuizOptionSnapshot[];
+}
+export interface QuizOptionSnapshot {
+  id: string;
+  content: string;
+  orderIndex: number;
+
+  //chỉ BE dùng, FE submit không thấy
+  isCorrect?: boolean;
+}
+export interface QuizAnswerSnapshot {
+  id: string;
+  content: string;
+  orderIndex: number;
+
+  // FE Player KHÔNG được thấy
+  isCorrect?: boolean;
 }
 
-export interface QuestionOption {
-  id: string;
-  questionId: string;
-  text: string;
-  isCorrect: boolean;
-  orderIndex: number;
-}
+
+
 
 export interface CreateQuizRequest {
   title: string;
@@ -104,3 +115,5 @@ export interface QuizStatistics {
   completionRate: number;
   difficultyRating: number;
 }
+export type { Question };
+

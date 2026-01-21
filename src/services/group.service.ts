@@ -11,7 +11,7 @@ import {
   CreateAnnouncementRequest,
   SharedResource,
   GroupRole
-} from '@/types';
+} from '@/domains';
 
 export class GroupService {
   async getAllGroups(userId: string): Promise<Group[]> {

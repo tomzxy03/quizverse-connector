@@ -1,7 +1,7 @@
 // Quiz Repository - Mock implementation
 // This will be replaced with actual API calls to Spring Boot backend
 
-import { Quiz, QuizDetail, QuizFilter, CreateQuizRequest, UpdateQuizRequest } from '@/types';
+import { Quiz, QuizDetail, QuizFilter, CreateQuizRequest, UpdateQuizRequest } from '@/domains';
 
 export class QuizRepository {
   private mockQuizzes: Quiz[] = [

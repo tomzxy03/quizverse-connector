@@ -1,6 +1,6 @@
 // User Repository - Mock implementation
 
-import { User, UserProfile, LoginRequest, SignUpRequest, AuthResponse } from '@/types';
+import { User, UserProfile, LoginRequest, SignUpRequest, AuthResponse } from '@/domains';
 
 export class UserRepository {
   private mockUsers: User[] = [

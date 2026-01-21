@@ -1,6 +1,6 @@
 // Exam Attempt Repository - Mock implementation
 
-import { ExamAttempt, CreateExamAttemptRequest, ExamAttemptDetail } from '@/types';
+import { ExamAttempt, CreateExamAttemptRequest, ExamAttemptDetail } from '@/domains';
 
 export class ExamRepository {
   private mockExamHistory: ExamAttempt[] = [

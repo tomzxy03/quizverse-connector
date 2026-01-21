@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BarChart3, User } from 'lucide-react';
 import { examService } from '@/services';
-import { ExamAttempt } from '@/types';
+import { ExamAttempt } from '@/domains';
 
 const ExamHistory = () => {
   const [examHistory, setExamHistory] = useState<ExamAttempt[]>([]);

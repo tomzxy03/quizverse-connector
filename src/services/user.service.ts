@@ -1,7 +1,7 @@
 // User Service - Business logic layer
 
 import { userRepository } from '@/repositories';
-import { User, UserProfile, LoginRequest, SignUpRequest, AuthResponse } from '@/types';
+import { User, UserProfile, LoginRequest, SignUpRequest, AuthResponse } from '@/domains';
 
 export class UserService {
   async login(data: LoginRequest): Promise<AuthResponse> {

@@ -1,6 +1,8 @@
 // API Endpoints for Spring Boot backend
 // These endpoints should match your Spring Boot @RestController mappings
 
+import { SubjectReqDTO } from "@/domains/subject/subject.dto";
+
 export const API_ENDPOINTS = {
   // Authentication
   AUTH: {
@@ -14,33 +16,33 @@ export const API_ENDPOINTS = {
   // Users
   USERS: {
     BASE: '/users',
-    BY_ID: (id: string) => `/users/${id}`,
-    PROFILE: (id: string) => `/users/${id}/profile`,
-    UPDATE_PROFILE: (id: string) => `/users/${id}/profile`,
+    BY_ID: (id: number) => `/users/${id}`,
+    PROFILE: (id: number) => `/users/${id}/profile`,
+    UPDATE_PROFILE: (id: number) => `/users/${id}/profile`,
   },
 
   //Subjects
   SUBJECTS: {
     BASE: '/subjects',
-    BY_ID: (id: string) => `/subjects/${id}`,
+    BY_ID: (id: number) => `/subjects/${id}`,
     CREATE: '/subjects',
-    UPDATE: (id: string) => `/subjects/${id}`,
-    DELETE: (id: string) => `/subjects/${id}`,
+    UPDATE: (id: number) => `/subjects/${id}`,
+    DELETE: (id: number) => `/subjects/${id}`,
   },
 
   // Quizzes
   QUIZZES: {
     BASE: '/quizzes',
-    BY_ID: (id: string) => `/quizzes/${id}`,
+    BY_ID: (id: number) => `/quizzes/${id}`,
     BY_SUBJECT: (subject: string) => `/quizzes/subject/${subject}`,
     POPULAR: '/quizzes/popular',
     LATEST: '/quizzes/latest',
     SEARCH: '/quizzes/search',
     SUBJECTS: '/quizzes/subjects',
     CREATE: '/quizzes',
-    UPDATE: (id: string) => `/quizzes/${id}`,
-    DELETE: (id: string) => `/quizzes/${id}`,
-    STATISTICS: (id: string) => `/quizzes/${id}/statistics`,
+    UPDATE: (id: number) => `/quizzes/${id}`,
+    DELETE: (id: number) => `/quizzes/${id}`,
+    STATISTICS: (id: number) => `/quizzes/${id}/statistics`,
   },
 
   // Questions
@@ -55,22 +57,22 @@ export const API_ENDPOINTS = {
   // Exam Attempts
   ATTEMPTS: {
     BASE: '/attempts',
-    BY_ID: (id: string) => `/attempts/${id}`,
+    BY_ID: (id: number) => `/attempts/${id}`,
     BY_USER: (userId: string) => `/attempts/user/${userId}`,
     BY_QUIZ: (quizId: string, userId: string) => `/attempts/quiz/${quizId}/user/${userId}`,
     CREATE: '/attempts',
-    DELETE: (id: string) => `/attempts/${id}`,
+    DELETE: (id: number) => `/attempts/${id}`,
     STATISTICS: (userId: string) => `/attempts/user/${userId}/statistics`,
   },
 
   // Groups
   GROUPS: {
     BASE: '/groups',
-    BY_ID: (id: string) => `/groups/${id}`,
+    BY_ID: (id: number) => `/groups/${id}`,
     BY_USER: (userId: string) => `/groups/user/${userId}`,
     CREATE: '/groups',
-    UPDATE: (id: string) => `/groups/${id}`,
-    DELETE: (id: string) => `/groups/${id}`,
+    UPDATE: (id: number) => `/groups/${id}`,
+    DELETE: (id: number) => `/groups/${id}`,
 
     // Members
     MEMBERS: (groupId: string) => `/groups/${groupId}/members`,

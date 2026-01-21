@@ -1,7 +1,7 @@
 // Quiz Service - Business logic layer
 
 import { quizRepository } from '@/repositories';
-import { Quiz, QuizDetail, QuizFilter, CreateQuizRequest, UpdateQuizRequest } from '@/types';
+import { Quiz, QuizDetail, QuizFilter, CreateQuizRequest, UpdateQuizRequest } from '@/domains';
 
 export class QuizService {
   async getAllQuizzes(filter?: QuizFilter): Promise<Quiz[]> {
