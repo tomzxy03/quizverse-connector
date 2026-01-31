@@ -140,12 +140,12 @@ const QuizLibrary = () => {
 
             {/* Filters */}
             <div className="hidden md:flex gap-2">
-              <HoverFilter
+              {/* <HoverFilter
                 label="Độ khó"
                 value={selectedCategories.difficulty}
                 options={categories.difficulty}
                 onSelect={(v) => handleCategorySelect('difficulty', v)}
-              />
+              /> */}
               <HoverFilter
                 label="Số câu"
                 value={selectedCategories.questionCount}

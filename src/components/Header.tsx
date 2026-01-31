@@ -18,8 +18,8 @@ const Header = () => {
     <header className="w-full bg-white border-b border-border sticky top-0 z-50">
       <div className="container flex justify-between items-center h-16 px-4 md:px-6">
         <div className="flex items-center">
-          <Link to="/" className="text-xl font-semibold text-primary mr-8">
-            QuizVerse
+          <Link to="/" className="text-xl font-semibold text-indigo-600 mr-8">
+            TOMQUIZ
           </Link>
           
           <nav className="hidden md:flex space-x-1 md:text-sm lg:text-base">
