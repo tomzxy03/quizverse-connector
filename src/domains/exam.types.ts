@@ -7,6 +7,8 @@ export interface ExamAttempt {
   quizId: string;
   userId: string;
   quiz?: Quiz;
+  title?: string;
+  date?: string;
   score: string;
   totalQuestions: number;
   correctAnswers: number;

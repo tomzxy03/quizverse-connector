@@ -75,6 +75,10 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
+
+  html{
+    scroll-behavior: smooth;
+  }
 }
 
 @layer components {

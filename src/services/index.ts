@@ -4,3 +4,4 @@ export * from './quiz.service';
 export * from './exam.service';
 export * from './group.service';
 export * from './user.service';
+export * from './dashboard.service';

@@ -1,6 +1,6 @@
 // Group related types and interfaces
 
-import { GroupRole } from './common/pagination.type';
+import { GroupRole } from '@/core/types';
 import { User } from './user.types';
 import { Quiz } from './quiz.types';
 

@@ -1,4 +1,4 @@
-import { Difficulty, QuestionType } from './common/enum';
+import { Difficulty, QuestionType } from '@/core/types';
 
 export interface Question {
   id: string;

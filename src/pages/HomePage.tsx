@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
-import Header from '../components/Header';
-import QuizSlider from '../components/HomeSlider';
-import CategoryNavigation from '../components/CategoryNavigation';
-import { Quiz } from '../components/QuizCard';
 import { TrendingUp, Users, Clock, Zap } from 'lucide-react';
-import Footer from '../components/Footer';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import QuizSlider from '@/components/shared/HomeSlider';
+import CategoryNavigation from '@/components/shared/CategoryNavigation';
+import { Quiz } from '@/domains';
 
 const HomePage = () => {
   // Mock data - Replace with API call

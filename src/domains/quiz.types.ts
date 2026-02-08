@@ -1,6 +1,6 @@
 // Quiz related types and interfaces
 
-import { Difficulty, QuestionType } from './common/enum';
+import { Difficulty, QuestionType } from '@/core/types';
 import { User } from './user.types';
 import { Question } from './question.types';
 

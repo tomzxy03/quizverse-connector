@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
-import Header from '../components/Header';
-import SubjectTag from '../components/SubjectTag';
-import QuizCard from '../components/QuizCard';
+import { useState, useEffect, useRef } from 'react';
 import { Search } from 'lucide-react';
-import { useRef } from 'react';
-import HoverFilter from '../components/HoverFilter';
-import Footer from '../components/Footer';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import SubjectTag from '@/components/shared/SubjectTag';
+import QuizCard from '@/components/quiz/QuizCard';
+import HoverFilter from '@/components/shared/HoverFilter';
+import { Card, CardContent } from '@/components/ui/card';
 import { quizService } from '@/services';
 import { Quiz, QuizFilter } from '@/domains';
 
@@ -84,124 +84,96 @@ const QuizLibrary = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
 
-      <main className="container px-4 py-8">
-        {/* SURFACE */}
-        <div
-          className="
-            bg-white
-            rounded-xl
-            px-6 py-5
-          "
-        >
-          {/* TITLE */}
-          <h1 className="text-2xl font-semibold text-slate-900 mb-5">
-            Thư viện Quiz
-          </h1>
-
-          {/* SUBJECT TAGS */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            {subjects.map((subject) => (
-              <SubjectTag
-                key={subject}
-                subject={subject}
-                isSelected={selectedSubject === subject}
-                onClick={setSelectedSubject}
-              />
-            ))}
-          </div>
-
-          {/* DIVIDER */}
-          <div className="h-px bg-slate-200 mb-6" />
-
-          {/* SEARCH + FILTER */}
-          <div className="flex flex-col md:flex-row md:items-center gap-3 mb-6">
-            {/* Search */}
-            <div className="relative w-full max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm quiz..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="
-                  w-full pl-9 pr-3 py-2
-                  text-sm
-                  bg-slate-50
-                  border border-slate-200
-                  rounded-md
-                  focus:outline-none
-                  focus:ring-0
-                "
-              />
-            </div>
-
-            {/* Filters */}
-            <div className="hidden md:flex gap-2">
-              {/* <HoverFilter
-                label="Độ khó"
-                value={selectedCategories.difficulty}
-                options={categories.difficulty}
-                onSelect={(v) => handleCategorySelect('difficulty', v)}
-              /> */}
-              <HoverFilter
-                label="Số câu"
-                value={selectedCategories.questionCount}
-                options={categories.questionCount}
-                onSelect={(v) => handleCategorySelect('questionCount', v)}
-              />
-              <HoverFilter
-                label="Thời gian"
-                value={selectedCategories.duration}
-                options={categories.duration}
-                onSelect={(v) => handleCategorySelect('duration', v)}
-              />
-            </div>
-          </div>
-
-          {/* DIVIDER */}
-          <div className="h-px bg-slate-200 mb-6" />
-
-          {/* LOADING STATE */}
-          {loading && (
-            <div className="text-center py-16">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-              <p className="mt-4 text-slate-600">Đang tải...</p>
-            </div>
-          )}
-
-          {/* ERROR STATE */}
-          {error && !loading && (
-            <div className="text-center py-16">
-              <p className="text-red-600 mb-4">{error}</p>
-              <button
-                onClick={loadQuizzes}
-                className="btn-primary"
-              >
-                Thử lại
-              </button>
-            </div>
-          )}
-
-          {/* QUIZ GRID */}
-          {!loading && !error && (
-            <>
-              {quizzes.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {quizzes.map((quiz) => (
-                    <QuizCard key={quiz.id} quiz={quiz} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-16 text-slate-500">
-                  Không tìm thấy quiz phù hợp
-                </div>
-              )}
-            </>
-          )}
+      <main className="flex-1 container px-4 py-6 max-w-5xl mx-auto">
+        <div className="flex items-center gap-2 text-muted-foreground mb-6">
+          <Search className="h-5 w-5" />
+          <h1 className="text-2xl font-bold text-foreground">Thư viện Quiz</h1>
         </div>
+
+        {error && !loading && (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 text-destructive px-4 py-3 mb-6">
+            {error}
+            <button onClick={loadQuizzes} className="btn-primary ml-2 mt-2">
+              Thử lại
+            </button>
+          </div>
+        )}
+
+        <Card>
+          <CardContent className="pt-6">
+            {/* SUBJECT TAGS */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              {subjects.map((subject) => (
+                <SubjectTag
+                  key={subject}
+                  subject={subject}
+                  isSelected={selectedSubject === subject}
+                  onClick={setSelectedSubject}
+                />
+              ))}
+            </div>
+
+            <div className="h-px bg-border mb-6" />
+
+            {/* SEARCH + FILTER */}
+            <div className="flex flex-col md:flex-row md:items-center gap-3 mb-6">
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm quiz..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-muted/30 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                />
+              </div>
+              <div className="hidden md:flex gap-2">
+                <HoverFilter
+                  label="Số câu"
+                  value={selectedCategories.questionCount}
+                  options={categories.questionCount}
+                  onSelect={(v) => handleCategorySelect('questionCount', v)}
+                />
+                <HoverFilter
+                  label="Thời gian"
+                  value={selectedCategories.duration}
+                  options={categories.duration}
+                  onSelect={(v) => handleCategorySelect('duration', v)}
+                />
+              </div>
+            </div>
+
+            <div className="h-px bg-border mb-6" />
+
+            {/* LOADING STATE */}
+            {loading && (
+              <div className="text-center py-16">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+                <p className="mt-4 text-muted-foreground">Đang tải...</p>
+              </div>
+            )}
+
+            {/* QUIZ GRID */}
+            {!loading && !error && (
+              <>
+                {quizzes.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {quizzes.map((quiz) => (
+                      <QuizCard key={quiz.id} quiz={quiz} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-16 text-muted-foreground">
+                    Không tìm thấy quiz phù hợp
+                  </div>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
       </main>
       <Footer />
     </div>
