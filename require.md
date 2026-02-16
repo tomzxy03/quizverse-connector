@@ -1,68 +1,88 @@
-You are a senior product designer & frontend engineer.
+You are a senior product designer & system architect.
 
-Upgrade the Quiz Detail page for an online learning & exam platform (similar to Study4 / Quizizz / NineQuiz).
+I am building an online quiz platform similar to Study4, with public quizzes, group-based quizzes, and a shared question bank.
 
-Context:
-- Platform name: Quizory
-- Purpose: Practice quizzes, exams, and group-based learning
-- Users may attempt a quiz multiple times
-- Backend uses quiz instance & attempt model
-- Quiz supports shuffle questions/answers, time limit, max attempts
+Please redesign and refine the system with the following STRICT requirements:
 
-Requirements:
+1. QUESTION BANK
+- Question Bank is GLOBAL, shared across the whole system.
+- It must NOT appear inside any group page.
+- Access location:
+  - Either in the main header navigation
+  - Or inside a profile dropdown menu.
+- Question Bank structure:
+  - Folder + Question model.
+  - Folder must support actions: create, rename, move, delete.
+  - Question supports edit, move, delete.
+- Question Bank is used when creating quizzes (select questions from it).
 
-1. Add a clear JOIN QUIZ flow
-- Separate "Join quiz" from "Start quiz"
-- Join action validates access and creates a quiz instance
-- States:
-  - Not joined → Show "Join quiz"
-  - Joined but not started → Show "Start quiz"
-  - In progress → Show "Continue"
-  - Submitted + remaining attempts → Show "Retry"
-  - No attempts left → Disabled state
+2. GROUP LOGIC
+- Group is a permission boundary.
+- Only members of a group can:
+  - View group quizzes
+  - Access quiz detail pages
+  - Participate in group quizzes
+- Non-members:
+  - Cannot access group quizzes even via direct URL.
+- Joining a group requires confirmation:
+  - User sends join request
+  - Group owner/admin approves
+- There is NO "confirm join" step for quizzes inside a group.
 
-2. Improve quiz status visibility
-- Display quiz access type:
-  - Public quiz
-  - Group-restricted quiz (show group name)
-- Display quiz availability:
-  - Upcoming (with open time)
-  - Active
-  - Closed (with close time)
+3. QUIZ TYPES
+- Quiz has 3 visibility states:
+  - PUBLIC
+  - GROUP
+  - DRAFT
+- DRAFT quizzes are visible only to owner/admin and should be pinned to the top of quiz lists.
 
-3. Enhance information hierarchy
-- Left column:
-  - Quiz title, difficulty, subject
-  - Description
-  - Quiz overview (questions, time, max score, attempts)
-  - Quiz rules & experience notes (auto submit, resume allowed, etc.)
+4. PUBLIC QUIZ (Study4-style behavior)
+- Users can take public quizzes without logging in.
+- Score is calculated for everyone.
+- Result handling:
+  - Guest users: score is NOT saved.
+  - Logged-in users: score IS saved.
 
-- Right column (sticky action panel):
-  - Current user status (Not joined / In progress / Submitted)
-  - Remaining attempts
-  - Last attempts summary (score, date, pass/fail)
-  - Primary CTA button (Join / Start / Continue / Retry)
+5. GROUP QUIZ
+- Only accessible by group members.
+- No guest access.
+- Joining a quiz does NOT require confirmation.
+- Participation depends only on:
+  - Quiz availability
+  - maxAttempts
+  - time constraints (if any).
 
-4. Add learning-focused UX improvements
-- Highlight best attempt score
-- Show passing score requirement if exists
-- Friendly warning before starting:
-  "Time will start immediately after you begin"
+6. QUIZ DETAIL PAGE
+- Must clearly show:
+  - Quiz information
+  - Rules & settings
+  - User attempt history (if logged in)
+  - Best score
+- CTA buttons must be context-aware:
+  - Join / Start / Continue / Retry
+- CTA logic must differ correctly for:
+  - Guest user
+  - Logged-in non-member
+  - Logged-in group member
+  - Owner/admin
 
-5. UI / UX style
-- Clean, modern, education-focused
-- Clear call-to-action buttons
-- Use icons for status clarity
-- Avoid clutter, prioritize decision-making for the learner
+7. ROUTING & SECURITY
+- Frontend routing must NOT rely solely on login checks.
+- Backend must enforce:
+  - Group membership validation
+  - Quiz access permission
+- Prevent URL guessing for group quizzes.
 
-6. Technical constraints
-- React + TypeScript
-- Tailwind CSS
-- Existing structure should be reusable
-- No backend logic required, UI only
+8. UI / UX REQUIREMENTS
+- Group pages should use full-width layout (not constrained to 2/3 width).
+- Avoid overcrowding small cards with too many actions.
+- Use dropdown/context menus for edit/delete actions.
+- Ensure consistency of action placement across all pages.
 
-Output:
-- Updated page layout structure
-- CTA logic explanation
-- Suggested UI sections
-- Optional microcopy for better UX
+Deliver:
+- Clear system structure
+- Permission logic explanation
+- UI layout suggestions
+- Edge cases and trade-offs
+
+Think like a real production system, not a demo.

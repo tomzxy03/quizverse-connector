@@ -1,11 +1,5 @@
 // GroupContent/GroupTabs.tsx
-import {
-  Bell,
-  FileText,
-  Users,
-  Share2,
-  Database,
-} from 'lucide-react';
+import { Bell, FileText, Users, Share2 } from 'lucide-react';
 import { ContentTab } from './types';
 
 interface Props {
@@ -56,7 +50,7 @@ const GroupTabs = ({ activeTab, onChange, canManage }: Props) => {
         active={activeTab === 'quizzes'}
         onClick={() => onChange('quizzes')}
         icon={FileText}
-        label="Quiz"
+        label="Bài tập"
       />
       <TabButton
         active={activeTab === 'members'}
@@ -70,15 +64,6 @@ const GroupTabs = ({ activeTab, onChange, canManage }: Props) => {
         icon={Share2}
         label="Chia sẻ"
       />
-
-      {canManage && (
-        <TabButton
-          active={activeTab === 'questionBank'}
-          onClick={() => onChange('questionBank')}
-          icon={Database}
-          label="Ngân hàng câu hỏi"
-        />
-      )}
     </div>
   );
 };

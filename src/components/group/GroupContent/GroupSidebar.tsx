@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PlusCircle, Users, UserPlus } from 'lucide-react';
+import { MoreVertical, PlusCircle, Users, UserPlus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -11,25 +11,52 @@ interface Group {
 }
 
 interface GroupSidebarProps {
+  groups: Group[];
   onGroupSelect: (group: Group) => void;
   onCreateGroup: () => void;
   selectedGroup: Group | null;
+  onUpdateGroup: (group: Group) => void;
+  onDeleteGroup: (groupId: string) => void;
 }
 
-const dummyGroups: Group[] = [
-  { id: '1', name: 'Lớp Toán Cao Cấp', memberCount: 15, isOwned: true },
-  { id: '2', name: 'TOEIC Study Group', memberCount: 8, isOwned: true },
-  { id: '3', name: 'Java Programming', memberCount: 12, isOwned: false },
-  { id: '4', name: 'Biology Team', memberCount: 7, isOwned: false },
-  { id: '5', name: 'History Club', memberCount: 20, isOwned: false },
-];
-
-const GroupSidebar = ({ onGroupSelect, onCreateGroup, selectedGroup }: GroupSidebarProps) => {
+const GroupSidebar = ({
+  groups,
+  onGroupSelect,
+  onCreateGroup,
+  selectedGroup,
+  onUpdateGroup,
+  onDeleteGroup,
+}: GroupSidebarProps) => {
   const [activeTab, setActiveTab] = useState<'owned' | 'joined'>('owned');
+  const [openMenuGroupId, setOpenMenuGroupId] = useState<string | null>(null);
 
-  const ownedGroups = dummyGroups.filter((g) => g.isOwned);
-  const joinedGroups = dummyGroups.filter((g) => !g.isOwned);
+  const ownedGroups = groups.filter((g) => g.isOwned);
+  const joinedGroups = groups.filter((g) => !g.isOwned);
   const list = activeTab === 'owned' ? ownedGroups : joinedGroups;
+
+  const handleEditGroup = (group: Group) => {
+    const newName = window.prompt('Tên nhóm mới', group.name);
+
+    if (!newName) return;
+
+    const trimmedName = newName.trim();
+    if (!trimmedName) return;
+
+    onUpdateGroup({
+      ...group,
+      name: trimmedName,
+    });
+    setOpenMenuGroupId(null);
+  };
+
+  const handleDeleteGroup = (group: Group) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa nhóm này?')) {
+      return;
+    }
+
+    onDeleteGroup(group.id);
+    setOpenMenuGroupId(null);
+  };
 
   return (
     <Card className="w-full md:w-72 shrink-0 flex flex-col overflow-hidden h-fit md:min-h-[420px]">
@@ -63,28 +90,87 @@ const GroupSidebar = ({ onGroupSelect, onCreateGroup, selectedGroup }: GroupSide
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-1 min-h-[200px] max-h-[320px] md:max-h-[360px]">
-          {list.map((group) => (
-            <button
-              key={group.id}
-              type="button"
-              className={`w-full text-left p-3 rounded-lg flex items-center justify-between gap-2 transition-colors border ${
-                selectedGroup?.id === group.id
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-muted/30 hover:bg-muted/50 border-transparent'
-              }`}
-              onClick={() => onGroupSelect(group)}
-            >
-              <div className="flex items-center min-w-0">
-                {activeTab === 'owned' ? (
-                  <Users className="h-4 w-4 mr-2 shrink-0" />
-                ) : (
-                  <UserPlus className="h-4 w-4 mr-2 shrink-0" />
+          {list.map((group) => {
+            const isSelected = selectedGroup?.id === group.id;
+            const canManage = group.isOwned && activeTab === 'owned';
+            const isMenuOpen = openMenuGroupId === group.id;
+
+            return (
+              <div
+                key={group.id}
+                className={`relative w-full p-2 rounded-lg border ${
+                  isSelected
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-muted/30 hover:bg-muted/50 border-transparent'
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  <button
+                    type="button"
+                    className="flex-1 text-left flex items-start gap-2 min-w-0"
+                    onClick={() => onGroupSelect(group)}
+                  >
+                    {activeTab === 'owned' ? (
+                      <Users className="h-4 w-4 mt-0.5 shrink-0" />
+                    ) : (
+                      <UserPlus className="h-4 w-4 mt-0.5 shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{group.name}</div>
+                      <div className="text-[11px] text-muted-foreground/80 mt-0.5">
+                        {group.memberCount} thành viên
+                      </div>
+                    </div>
+                  </button>
+
+                  {canManage && (
+                    <div className="shrink-0">
+                      <button
+                        type="button"
+                        className={`p-1 rounded-md hover:bg-muted/80 transition-colors ${
+                          isSelected ? 'text-primary-foreground' : 'text-muted-foreground'
+                        }`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setOpenMenuGroupId((current) =>
+                            current === group.id ? null : group.id,
+                          );
+                        }}
+                        aria-label="Tùy chọn nhóm"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {canManage && isMenuOpen && (
+                  <div className="absolute right-2 top-9 z-10 w-36 rounded-md border border-border bg-popover shadow-md py-1 text-xs">
+                    <button
+                      type="button"
+                      className="w-full px-3 py-2 text-left hover:bg-muted transition-colors"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleEditGroup(group);
+                      }}
+                    >
+                      Chỉnh sửa
+                    </button>
+                    <button
+                      type="button"
+                      className="w-full px-3 py-2 text-left text-destructive hover:bg-muted transition-colors"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDeleteGroup(group);
+                      }}
+                    >
+                      Xóa nhóm
+                    </button>
+                  </div>
                 )}
-                <span className="truncate text-sm font-medium">{group.name}</span>
               </div>
-              <span className="text-xs shrink-0 opacity-80">{group.memberCount}</span>
-            </button>
-          ))}
+            );
+          })}
         </div>
 
         <div className="p-3 border-t border-border">

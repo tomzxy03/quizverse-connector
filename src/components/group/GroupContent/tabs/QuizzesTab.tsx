@@ -58,7 +58,7 @@ const QuizzesTab = ({ canManage }: { canManage: boolean }) => {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap justify-between items-center gap-3">
-        <h2 className="text-base font-medium text-foreground">Quiz</h2>
+        <h2 className="text-base font-medium text-foreground">Bài tập</h2>
         <div className="flex gap-2">
           <div className="relative">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />

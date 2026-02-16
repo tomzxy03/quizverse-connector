@@ -8,7 +8,6 @@ import AnnouncementsTab from './tabs/AnnouncementsTab';
 import QuizzesTab from './tabs/QuizzesTab';
 import MembersTab from './tabs/MembersTab';
 import SharedTab from './tabs/SharedTab';
-import QuestionBankTab from './tabs/QuestionBankTab';
 
 interface Props {
   group: Group;
@@ -40,9 +39,6 @@ const GroupContent = ({ group }: Props) => {
         )}
         {activeTab === 'shared' && (
           <SharedTab group={group} />
-        )}
-        {activeTab === 'questionBank' && canManage && (
-          <QuestionBankTab />
         )}
       </div>
     </div>

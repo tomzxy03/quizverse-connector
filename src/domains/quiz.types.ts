@@ -14,6 +14,7 @@ export interface Quiz {
   estimatedTime: number;
   difficulty: Difficulty;
   isPublic: boolean;
+  visibility?: 'PUBLIC' | 'GROUP' | 'DRAFT';
   attemptCount?: number;
   creatorId?: string;
   createdAt?: Date;

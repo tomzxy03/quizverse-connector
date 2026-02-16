@@ -44,11 +44,9 @@ type UserParticipationStatus =
   | 'IN_PROGRESS'
   | 'SUBMITTED';
 
-type AccessType = 'public' | 'group';
 type Availability = 'upcoming' | 'active' | 'closed';
 
 
-const MOCK_ACCESS: { type: AccessType; groupName?: string } = { type: 'public' };
 const MOCK_ACTIVE: Availability = 'active';
 const MOCK_UPCOMING: Availability = 'upcoming';
 const MOCK_CLOSED: Availability = 'closed';
@@ -138,11 +136,6 @@ const QuizDetailPage = () => {
     }
   };
 
-  const handleJoinQuiz = () => {
-    setHasJoined(true);
-    setParticipationStatus('JOINED_NOT_STARTED');
-  };
-
   const handleStartClick = () => {
     setStartConfirmOpen(true);
   };
@@ -179,6 +172,14 @@ const QuizDetailPage = () => {
     active: 'Đang mở',
     closed: 'Đã đóng',
   };
+
+  const visibility = ((quiz as any)?.visibility ?? (quiz?.isPublic ? 'PUBLIC' : 'GROUP')) as
+    | 'PUBLIC'
+    | 'GROUP'
+    | 'DRAFT';
+
+  const isGuest = !user;
+  const isGroupQuiz = visibility === 'GROUP';
 
   if (loading) {
     return (
@@ -238,6 +239,9 @@ const QuizDetailPage = () => {
 
   const getPass = (numericScore: number) =>
     passingScore != null ? numericScore >= passingScore : null;
+
+  const accessBadgeLabel =
+    visibility === 'PUBLIC' ? 'Công khai' : visibility === 'GROUP' ? 'Nhóm' : 'Bản nháp';
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -395,17 +399,12 @@ const QuizDetailPage = () => {
                 <CardContent className="pt-6">
                   <div className="space-y-3">
                     <div className="flex flex-wrap gap-2">
-                      {MOCK_ACCESS.type === 'public' ? (
-                        <Badge variant="secondary" className="gap-1">
-                          <Globe className="h-3.5 w-3.5" />
-                          Công khai
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="gap-1">
-                          <Lock className="h-3.5 w-3.5" />
-                          Nhóm: {MOCK_ACCESS.groupName ?? '—'}
-                        </Badge>
-                      )}
+                      <Badge variant="secondary" className="gap-1">
+                        {visibility === 'PUBLIC' && <Globe className="h-3.5 w-3.5" />}
+                        {visibility === 'GROUP' && <Lock className="h-3.5 w-3.5" />}
+                        {visibility === 'DRAFT' && <FileQuestion className="h-3.5 w-3.5" />}
+                        {accessBadgeLabel}
+                      </Badge>
                       <Badge
                         variant={MOCK_ACTIVE === 'active' ? 'default' : 'outline'}
                         className="gap-1"
@@ -434,47 +433,57 @@ const QuizDetailPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* User status */}
-                  <div className="flex items-center gap-2">
-                    {participationStatus === 'NOT_JOINED' && (
-                      <>
-                        <UserPlus className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium text-foreground">Chưa tham gia</span>
-                      </>
-                    )}
-                    {participationStatus === 'JOINED_NOT_STARTED' && (
-                      <>
-                        <Play className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium text-foreground">Đã tham gia, chưa làm</span>
-                      </>
-                    )}
-                    {participationStatus === 'IN_PROGRESS' && (
-                      <>
-                        <Clock className="h-4 w-4 text-amber-600" />
-                        <span className="text-sm font-medium text-foreground">Đang làm dở</span>
-                      </>
-                    )}
-                    {participationStatus === 'SUBMITTED' && (
-                      <>
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                        <span className="text-sm font-medium text-foreground">Đã nộp bài</span>
-                      </>
-                    )}
-                  </div>
+                  {!user && (
+                    <div className="flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground">
+                        Bạn đang làm với tư cách khách (kết quả sẽ không được lưu)
+                      </span>
+                    </div>
+                  )}
+                  {user && (
+                    <div className="flex items-center gap-2">
+                      {participationStatus === 'NOT_JOINED' && (
+                        <>
+                          <UserPlus className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-foreground">Chưa tham gia</span>
+                        </>
+                      )}
+                      {participationStatus === 'JOINED_NOT_STARTED' && (
+                        <>
+                          <Play className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-medium text-foreground">Đã tham gia, chưa làm</span>
+                        </>
+                      )}
+                      {participationStatus === 'IN_PROGRESS' && (
+                        <>
+                          <Clock className="h-4 w-4 text-amber-600" />
+                          <span className="text-sm font-medium text-foreground">Đang làm dở</span>
+                        </>
+                      )}
+                      {participationStatus === 'SUBMITTED' && (
+                        <>
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                          <span className="text-sm font-medium text-foreground">Đã nộp bài</span>
+                        </>
+                      )}
+                    </div>
+                  )}
 
-                  {remainingAttempts !== null && (
+                  {user && remainingAttempts !== null && (
                     <p className="text-sm text-muted-foreground">
                       Còn lại <span className="font-medium text-foreground">{remainingAttempts}</span> lượt làm
                     </p>
                   )}
 
-                  {passingScore != null && (
+                  {user && passingScore != null && (
                     <p className="text-sm text-muted-foreground">
                       Điểm đạt: <span className="font-medium text-foreground">{passingScore}/{maxScore}</span>
                     </p>
                   )}
 
                   {/* Best attempt */}
-                  {bestAttempt && (
+                  {user && bestAttempt && (
                     <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
                       <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-primary">
                         <Trophy className="h-3.5 w-3.5" />
@@ -490,7 +499,7 @@ const QuizDetailPage = () => {
                   )}
 
                   {/* Last attempts summary */}
-                  {attemptsWithScore.length > 0 && (
+                  {user && attemptsWithScore.length > 0 && (
                     <div className="border-t border-border pt-3">
                       <p className="mb-2 text-xs font-medium text-muted-foreground">Lần làm gần đây</p>
                       <ul className="space-y-2">
@@ -531,20 +540,9 @@ const QuizDetailPage = () => {
                     )}
 
                   {/* CTA */}
-                  <div className="border-t border-border pt-4">
-                    {participationStatus === 'NOT_JOINED' && (
-                      <Button
-                        onClick={handleJoinQuiz}
-                        disabled={!isAvailable}
-                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                        size="lg"
-                      >
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Tham gia quiz
-                      </Button>
-                    )}
-
-                    {participationStatus === 'JOINED_NOT_STARTED' && (
+                  <div className="border-t border-border pt-4 space-y-2">
+                    {/* Guest users */}
+                    {!user && visibility === 'PUBLIC' && (
                       <Button
                         onClick={handleStartClick}
                         disabled={!isAvailable}
@@ -556,7 +554,26 @@ const QuizDetailPage = () => {
                       </Button>
                     )}
 
-                    {participationStatus === 'IN_PROGRESS' && (
+                    {!user && visibility === 'GROUP' && (
+                      <div className="rounded-lg border border-border bg-muted/50 px-3 py-3 text-center text-sm text-muted-foreground">
+                        Đây là quiz trong nhóm. Vui lòng đăng nhập và tham gia nhóm để làm bài.
+                      </div>
+                    )}
+
+                    {/* Logged-in users */}
+                    {user && participationStatus === 'NOT_JOINED' && (
+                      <Button
+                        onClick={handleStartClick}
+                        disabled={!isAvailable}
+                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                        size="lg"
+                      >
+                        <Play className="mr-2 h-4 w-4" />
+                        Bắt đầu làm quiz
+                      </Button>
+                    )}
+
+                    {user && participationStatus === 'IN_PROGRESS' && (
                       <Button
                         onClick={handleContinueQuiz}
                         className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
@@ -567,18 +584,21 @@ const QuizDetailPage = () => {
                       </Button>
                     )}
 
-                    {participationStatus === 'SUBMITTED' && remainingAttempts !== null && remainingAttempts > 0 && (
-                      <Button
-                        onClick={handleRetry}
-                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                        size="lg"
-                      >
-                        <RotateCcw className="mr-2 h-4 w-4" />
-                        Làm lại
-                      </Button>
-                    )}
+                    {user &&
+                      participationStatus === 'SUBMITTED' &&
+                      remainingAttempts !== null &&
+                      remainingAttempts > 0 && (
+                        <Button
+                          onClick={handleRetry}
+                          className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                          size="lg"
+                        >
+                          <RotateCcw className="mr-2 h-4 w-4" />
+                          Làm lại
+                        </Button>
+                      )}
 
-                    {participationStatus === 'SUBMITTED' && noAttemptsLeft && (
+                    {user && participationStatus === 'SUBMITTED' && noAttemptsLeft && (
                       <div className="rounded-lg border border-border bg-muted/50 px-3 py-3 text-center text-sm text-muted-foreground">
                         Bạn đã hết lượt làm bài
                       </div>

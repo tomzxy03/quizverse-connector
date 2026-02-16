@@ -14,6 +14,7 @@ import ExamHistory from "./pages/ExamHistory";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import QuizDetail from "./pages/QuizDetail";
+import QuestionBankPage from "./pages/QuestionBank";
 import { HomeOrDashboard } from "./components/HomeOrDashboard";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,14 @@ const App = () => (
             <Route path="/library" element={<QuizLibrary />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route
+              path="/question-bank"
+              element={
+                <ProtectedRoute>
+                  <QuestionBankPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/dashboard"
               element={
@@ -62,14 +71,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/quiz/:id"
-              element={
-                <ProtectedRoute>
-                  <QuizDetail />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/quiz/:id" element={<QuizDetail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -36,7 +36,7 @@ const Header = () => {
               </Link>
             )}
             <Link to="/library" className={`nav-link ${isActive('/library') ? 'active' : ''}`}>
-              Thư viện quiz
+              Thư viện bài tập
             </Link>
             <Link to="/groups" className={`nav-link ${isActive('/groups') ? 'active' : ''}`}>
               Nhóm học
@@ -44,6 +44,9 @@ const Header = () => {
             <Link to="/history" className={`nav-link ${isActive('/history') ? 'active' : ''}`}>
               Lịch sử thi
             </Link>
+            <Link to="/question-bank" className={`nav-link ${isActive('/question-bank') ? 'active' : ''}`}>
+              Ngân hàng câu hỏi
+</Link>
           </nav>
         </div>
         

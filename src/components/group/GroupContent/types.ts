@@ -12,5 +12,4 @@ export type ContentTab =
   | 'announcements'
   | 'quizzes'
   | 'members'
-  | 'shared'
-  | 'questionBank';
+  | 'shared';
