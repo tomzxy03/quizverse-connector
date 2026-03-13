@@ -10,7 +10,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-center md:text-left">
               <Link to="/" className="text-lg font-semibold text-indigo-600">
-                QuizVerse
+                Quizory
               </Link>
               <p className="text-sm text-slate-600 mt-1">
                 Nền tảng Quiz học thuật cho sinh viên Việt Nam
@@ -33,7 +33,7 @@ const Footer = () => {
             </div>
           </div>
           <div className="text-center mt-6 text-sm text-slate-500">
-            © 2024 QuizVerse. Dành cho sinh viên đại học Việt Nam.
+            © 2026 Quizory. Dành cho sinh viên đại học Việt Nam.
           </div>
         </div>
       </footer>

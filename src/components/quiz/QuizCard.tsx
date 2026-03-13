@@ -7,20 +7,10 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// Types
-export interface Quiz {
-  id: string;
-  title: string;
-  description?: string;
-  subject: string;
-  questionCount: number;
-  estimatedTime: number;
-  isPublic: boolean;
-  attemptCount?: number;
-}
+import type { QuizResDTO } from '@/domains';
 
 interface QuizCardProps {
-  quiz: Quiz;
+  quiz: QuizResDTO;
   className?: string;
 }
 
@@ -65,38 +55,31 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, className = '' }) => {
       <div className="flex items-center gap-4 text-xs text-slate-500 mb-3">
         <div className="flex items-center gap-1">
           <FileQuestion className="h-3.5 w-3.5" />
-          {quiz.questionCount} câu
+          {quiz.totalQuestion} câu
         </div>
-
-        <div className="flex items-center gap-1">
-          <Clock className="h-3.5 w-3.5" />
-          {quiz.estimatedTime} phút
-        </div>
-
-        {quiz.attemptCount !== undefined && (
-          <div className="flex items-center gap-1 ml-auto">
-            <TrendingUp className="h-3.5 w-3.5" />
-            {quiz.attemptCount.toLocaleString()}
-          </div>
-        )}
       </div>
 
       {/* TAGS */}
       <div className="flex items-center gap-2 text-xs">
         <span className="text-indigo-700 font-medium">
-          #{quiz.subject}
+          #{quiz.lobbyName || quiz.hostName || 'Quiz'}
         </span>
 
         <span className="flex items-center gap-1 text-slate-500">
-          {quiz.isPublic ? (
+          {quiz.quizVisibility === 'public' ? (
             <>
               <Globe className="h-3 w-3" />
-              Public
+              Công khai
+            </>
+          ) : quiz.quizVisibility === 'class_only' ? (
+            <>
+              <Lock className="h-3 w-3" />
+              Lớp học
             </>
           ) : (
             <>
               <Lock className="h-3 w-3" />
-              Private
+              Riêng tư
             </>
           )}
         </span>

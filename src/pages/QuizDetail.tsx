@@ -5,13 +5,10 @@ import {
   FileQuestion,
   Award,
   RotateCcw,
-  Shuffle,
-  Calendar,
   Users,
   ArrowLeft,
   Play,
   CheckCircle2,
-  XCircle,
   AlertCircle,
   Globe,
   Lock,
@@ -34,38 +31,22 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { quizService } from '@/services';
-import { examService } from '@/services';
-import type { QuizDetail as QuizDetailType } from '@/domains';
+import type { QuizResDTO, AttemptState, QuizConfig } from '@/domains';
 import { useAuth } from '@/contexts';
-
-type UserParticipationStatus =
-  | 'NOT_JOINED'
-  | 'JOINED_NOT_STARTED'
-  | 'IN_PROGRESS'
-  | 'SUBMITTED';
-
-type Availability = 'upcoming' | 'active' | 'closed';
-
-
-const MOCK_ACTIVE: Availability = 'active';
-const MOCK_UPCOMING: Availability = 'upcoming';
-const MOCK_CLOSED: Availability = 'closed';
-const MOCK_OPEN_AT: Date | null = null;
-const MOCK_CLOSE_AT: Date | null = null;
-const MOCK_RESUME_ALLOWED = true;
-
 const QuizDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [quiz, setQuiz] = useState<QuizDetailType | null>(null);
+  const [quiz, setQuiz] = useState<QuizResDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [participationStatus, setParticipationStatus] = useState<UserParticipationStatus>('NOT_JOINED');
-  const [hasJoined, setHasJoined] = useState(false);
-  const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
-  const [userAttempts, setUserAttempts] = useState<Array<{ id: string; score: string; completedAt: string; points?: number }>>([]);
+  const [attemptState, setAttemptState] = useState<AttemptState>('NOT_STARTED');
+  const [instanceId, setInstanceId] = useState<number | null>(null);
+  const [totalAttempt, setTotalAttempt] = useState<number | null>(0);
+  const [quizConfig, setQuizConfig] = useState<QuizConfig | null>(null);
   const [startConfirmOpen, setStartConfirmOpen] = useState(false);
+  
+  const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -83,51 +64,17 @@ const QuizDetailPage = () => {
     setError(null);
 
     try {
-      const quizData = await quizService.getQuizById(id);
-      if (!quizData) {
+      const detail = await quizService.getQuizById(Number(id));
+      if (!detail || !detail.quiz) {
         setError('Không tìm thấy quiz');
         setLoading(false);
         return;
       }
-      setQuiz(quizData);
-
-      if (!user?.id) {
-        setParticipationStatus('NOT_JOINED');
-        setUserAttempts([]);
-        setRemainingAttempts(quizData.settings.maxAttempts ?? null);
-        setLoading(false);
-        return;
-      }
-
-      const attempts = await examService.getQuizAttempts(id, user.id);
-      const normalized = (attempts || []).map((a: { id: string; score?: string; completedAt?: string | Date; points?: number }) => ({
-        id: a.id,
-        score: a.score ?? '0/0',
-        completedAt: a.completedAt ? new Date(a.completedAt).toISOString() : '',
-        points: a.points,
-      }));
-      setUserAttempts(normalized);
-
-      const hasAnyAttempt = normalized.length > 0;
-      const latest = normalized[0];
-      const latestCompleted = latest?.completedAt;
-
-      if (!hasAnyAttempt) {
-        setParticipationStatus('NOT_JOINED');
-        setHasJoined(false);
-      } else if (!latestCompleted) {
-        setParticipationStatus('IN_PROGRESS');
-        setHasJoined(true);
-      } else {
-        setParticipationStatus('SUBMITTED');
-        setHasJoined(true);
-      }
-
-      if (quizData.settings.maxAttempts != null) {
-        setRemainingAttempts(Math.max(0, quizData.settings.maxAttempts - normalized.length));
-      } else {
-        setRemainingAttempts(null);
-      }
+      setQuiz(detail.quiz);
+      setAttemptState(detail.attemptState || 'NOT_STARTED');
+      setInstanceId(detail.instanceId ?? null);
+      setTotalAttempt(detail.totalAttempt ?? 0);
+      setQuizConfig(detail.quizConfig ?? null);
     } catch (err) {
       setError('Không thể tải thông tin quiz. Vui lòng thử lại.');
       console.error('Failed to load quiz:', err);
@@ -140,46 +87,39 @@ const QuizDetailPage = () => {
     setStartConfirmOpen(true);
   };
 
-  const handleConfirmStart = () => {
+  const handleConfirmStart = async () => {
     setStartConfirmOpen(false);
     if (!id) return;
-    navigate(`/quiz/${id}/start`);
+
+    setIsStarting(true);
+    try {
+      const instance = await quizService.startQuiz(Number(id));
+      navigate(`/quiz/${id}/take/${instance.id}`, {
+        state: instance
+    });
+    } catch (err) {
+      console.error('Failed to start quiz:', err);
+      setError('Không thể bắt đầu quiz. Vui lòng thử lại.');
+    } finally {
+      setIsStarting(false);
+    }
   };
 
   const handleContinueQuiz = () => {
-    if (!id || userAttempts.length === 0) return;
-    navigate(`/quiz/${id}/attempt/${userAttempts[0].id}`);
+    if (!id) return;
+    navigate(`/quiz/${id}/take`);
+  };
+
+  const handleViewResult = () => {
+    if (!id || !instanceId) return;
+    navigate(`/quiz/${id}/result/${instanceId}`);
   };
 
   const handleRetry = () => {
     setStartConfirmOpen(true);
   };
 
-  const difficultyLabel: Record<string, string> = {
-    easy: 'Dễ',
-    medium: 'Trung bình',
-    hard: 'Khó',
-  };
-
-  const difficultyColor: Record<string, string> = {
-    easy: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    medium: 'bg-amber-50 text-amber-700 border-amber-200',
-    hard: 'bg-rose-50 text-rose-700 border-rose-200',
-  };
-
-  const availabilityLabel: Record<Availability, string> = {
-    upcoming: 'Sắp mở',
-    active: 'Đang mở',
-    closed: 'Đã đóng',
-  };
-
-  const visibility = ((quiz as any)?.visibility ?? (quiz?.isPublic ? 'PUBLIC' : 'GROUP')) as
-    | 'PUBLIC'
-    | 'GROUP'
-    | 'DRAFT';
-
-  const isGuest = !user;
-  const isGroupQuiz = visibility === 'GROUP';
+  const visibility = quiz?.quizVisibility === 'public' ? 'PUBLIC' : quiz?.quizVisibility === 'class_only' ? 'GROUP' : 'DRAFT';
 
   if (loading) {
     return (
@@ -216,32 +156,33 @@ const QuizDetailPage = () => {
     );
   }
 
-  const maxScore = quiz.settings.pointsPerQuestion
-    ? quiz.questionCount * quiz.settings.pointsPerQuestion
-    : quiz.questionCount * 10;
-  const passingScore = quiz.settings.passingScore ?? null;
-
-  const isAvailable = MOCK_ACTIVE === 'active';
-  const isUpcoming = MOCK_UPCOMING === 'upcoming';
-  const isClosed = MOCK_CLOSED === 'closed';
-
-  const noAttemptsLeft = remainingAttempts !== null && remainingAttempts <= 0;
-
-  const attemptsWithScore = userAttempts
-    .filter((a) => a.completedAt)
-    .map((a) => {
-      const [correct, total] = (a.score || '0/0').split('/').map(Number);
-      const numericScore = total ? (correct / total) * maxScore : 0;
-      return { ...a, numericScore };
-    });
-
-  const bestAttempt = [...attemptsWithScore].sort((a, b) => b.numericScore - a.numericScore)[0];
-
-  const getPass = (numericScore: number) =>
-    passingScore != null ? numericScore >= passingScore : null;
-
+  const maxScore = quizConfig?.passingScore ?? quiz.totalQuestion * 10;
+  const maxAttempts = quizConfig?.maxAttempts;
+  const canRetry = maxAttempts ? totalAttempt < maxAttempts : true;
   const accessBadgeLabel =
     visibility === 'PUBLIC' ? 'Công khai' : visibility === 'GROUP' ? 'Nhóm' : 'Bản nháp';
+
+  const statusLabel: Record<AttemptState, string> = {
+    NOT_STARTED: 'Chưa tham gia',
+    IN_PROGRESS: 'Đang làm dở',
+    SUBMITTED: 'Đã nộp bài',
+    EXPIRED: 'Đã hết hạn',
+  };
+
+  const StatusIcon = () => {
+    switch (attemptState) {
+      case 'NOT_STARTED':
+        return <UserPlus className="h-4 w-4 text-muted-foreground" />;
+      case 'IN_PROGRESS':
+        return <Clock className="h-4 w-4 text-amber-600" />;
+      case 'SUBMITTED':
+        return <CheckCircle2 className="h-4 w-4 text-emerald-600" />;
+      case 'EXPIRED':
+        return <AlertCircle className="h-4 w-4 text-destructive" />;
+      default:
+        return <UserPlus className="h-4 w-4 text-muted-foreground" />;
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -260,19 +201,10 @@ const QuizDetailPage = () => {
         <div className="mb-6">
           <h1 className="mb-2 text-3xl font-bold text-foreground">{quiz.title}</h1>
           <div className="flex flex-wrap items-center gap-3 text-sm">
-            <Badge variant="outline" className={`border ${difficultyColor[quiz.difficulty] ?? ''}`}>
-              {difficultyLabel[quiz.difficulty] ?? quiz.difficulty}
-            </Badge>
             <span className="flex items-center gap-1 text-muted-foreground">
               <Users className="h-4 w-4" />
-              {quiz.subject}
+              {quiz.lobbyName || quiz.hostName}
             </span>
-            {quiz.attemptCount != null && (
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <Award className="h-4 w-4" />
-                {quiz.attemptCount} lượt làm
-              </span>
-            )}
           </div>
         </div>
 
@@ -302,68 +234,52 @@ const QuizDetailPage = () => {
                     <FileQuestion className="mt-0.5 h-5 w-5 text-primary" />
                     <div>
                       <p className="text-sm text-muted-foreground">Số câu hỏi</p>
-                      <p className="text-lg font-semibold text-foreground">{quiz.questionCount}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 rounded-lg bg-muted/30 p-3">
-                    <Clock className="mt-0.5 h-5 w-5 text-primary" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Thời gian</p>
-                      <p className="text-lg font-semibold text-foreground">
-                        {quiz.settings.timeLimit
-                          ? `${quiz.settings.timeLimit} phút`
-                          : `${quiz.estimatedTime} phút`}
-                      </p>
+                      <p className="text-lg font-semibold text-foreground">{quiz.totalQuestion}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 rounded-lg bg-muted/30 p-3">
                     <Award className="mt-0.5 h-5 w-5 text-primary" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Điểm tối đa</p>
+                      <p className="text-sm text-muted-foreground">Điểm tối đa (dự kiến)</p>
                       <p className="text-lg font-semibold text-foreground">{maxScore}</p>
                     </div>
                   </div>
-                  {quiz.settings.maxAttempts != null && (
-                    <div className="flex items-start gap-3 rounded-lg bg-muted/30 p-3">
-                      <RotateCcw className="mt-0.5 h-5 w-5 text-primary" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Số lần làm tối đa</p>
-                        <p className="text-lg font-semibold text-foreground">
-                          {quiz.settings.maxAttempts}
-                        </p>
-                      </div>
+                  <div className="flex items-start gap-3 rounded-lg bg-muted/30 p-3">
+                    <Clock className="mt-0.5 h-5 w-5 text-primary" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Giới hạn thời gian</p>
+                      <p className="text-lg font-semibold text-foreground">
+                        {quiz.timeLimitMinutes ? `${quiz.timeLimitMinutes} phút` : 'Không giới hạn'}
+                      </p>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Cài đặt</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    {quiz.settings.randomizeQuestions ? (
-                      <><Shuffle className="h-4 w-4 text-primary" /><span className="text-foreground">Câu hỏi được xáo trộn</span></>
-                    ) : (
-                      <><FileQuestion className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Câu hỏi theo thứ tự</span></>
-                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {quiz.settings.randomizeOptions ? (
-                      <><Shuffle className="h-4 w-4 text-primary" /><span className="text-foreground">Đáp án được xáo trộn</span></>
-                    ) : (
-                      <><FileQuestion className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Đáp án theo thứ tự</span></>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {quiz.settings.showCorrectAnswers ? (
-                      <><CheckCircle2 className="h-4 w-4 text-primary" /><span className="text-foreground">Hiển thị đáp án đúng sau khi nộp</span></>
-                    ) : (
-                      <><XCircle className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Không hiển thị đáp án đúng</span></>
-                    )}
+                  <div className="flex items-start gap-3 rounded-lg bg-muted/30 p-3">
+                    <RotateCcw className="mt-0.5 h-5 w-5 text-primary" />
+                    <div className="flex-1">
+                      <p className="text-sm text-muted-foreground">
+                        {maxAttempts ? 'Số lần đã làm / Tối đa' : 'Số lần đã làm'}
+                      </p>
+                      <p className="text-lg font-semibold text-foreground">
+                        {totalAttempt}
+                        {maxAttempts && ` / ${maxAttempts}`}
+                      </p>
+                      {maxAttempts && (
+                        <div className="mt-2 w-full overflow-hidden rounded-full bg-muted h-2">
+                          <div
+                            className={`h-full transition-all ${
+                              totalAttempt >= maxAttempts
+                                ? 'bg-destructive'
+                                : totalAttempt >= maxAttempts * 0.75
+                                ? 'bg-amber-500'
+                                : 'bg-emerald-500'
+                            }`}
+                            style={{
+                              width: `${Math.min((totalAttempt / maxAttempts) * 100, 100)}%`,
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -377,15 +293,8 @@ const QuizDetailPage = () => {
                 <ul className="list-inside list-disc space-y-2 text-sm text-foreground">
                   <li>Thời gian sẽ bắt đầu ngay khi bạn bắt đầu làm bài.</li>
                   <li>Bài làm sẽ tự động nộp khi hết giờ (nếu có giới hạn thời gian).</li>
-                  {MOCK_RESUME_ALLOWED && (
-                    <li>Bạn có thể tạm dừng và tiếp tục làm bài sau (tiến độ được lưu).</li>
-                  )}
+                  <li>Câu trả lời được tự động lưu sau mỗi lần chọn.</li>
                   <li>Hãy đảm bảo kết nối internet ổn định trong khi làm bài.</li>
-                  {passingScore != null && (
-                    <li className="font-medium text-primary">
-                      Điểm đạt: {passingScore} / {maxScore} điểm
-                    </li>
-                  )}
                 </ul>
               </CardContent>
             </Card>
@@ -405,24 +314,7 @@ const QuizDetailPage = () => {
                         {visibility === 'DRAFT' && <FileQuestion className="h-3.5 w-3.5" />}
                         {accessBadgeLabel}
                       </Badge>
-                      <Badge
-                        variant={MOCK_ACTIVE === 'active' ? 'default' : 'outline'}
-                        className="gap-1"
-                      >
-                        <Calendar className="h-3.5 w-3.5" />
-                        {availabilityLabel[MOCK_ACTIVE]}
-                      </Badge>
                     </div>
-                    {MOCK_OPEN_AT && (
-                      <p className="text-xs text-muted-foreground">
-                        Mở: {new Date(MOCK_OPEN_AT).toLocaleString('vi-VN')}
-                      </p>
-                    )}
-                    {MOCK_CLOSE_AT && (
-                      <p className="text-xs text-muted-foreground">
-                        Đóng: {new Date(MOCK_CLOSE_AT).toLocaleString('vi-VN')}
-                      </p>
-                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -432,7 +324,7 @@ const QuizDetailPage = () => {
                   <CardTitle className="text-base">Trạng thái của bạn</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* User status */}
+                  {/* User status from backend attemptState */}
                   {!user && (
                     <div className="flex items-center gap-2">
                       <Globe className="h-4 w-4 text-muted-foreground" />
@@ -443,109 +335,28 @@ const QuizDetailPage = () => {
                   )}
                   {user && (
                     <div className="flex items-center gap-2">
-                      {participationStatus === 'NOT_JOINED' && (
-                        <>
-                          <UserPlus className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium text-foreground">Chưa tham gia</span>
-                        </>
-                      )}
-                      {participationStatus === 'JOINED_NOT_STARTED' && (
-                        <>
-                          <Play className="h-4 w-4 text-primary" />
-                          <span className="text-sm font-medium text-foreground">Đã tham gia, chưa làm</span>
-                        </>
-                      )}
-                      {participationStatus === 'IN_PROGRESS' && (
-                        <>
-                          <Clock className="h-4 w-4 text-amber-600" />
-                          <span className="text-sm font-medium text-foreground">Đang làm dở</span>
-                        </>
-                      )}
-                      {participationStatus === 'SUBMITTED' && (
-                        <>
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                          <span className="text-sm font-medium text-foreground">Đã nộp bài</span>
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  {user && remainingAttempts !== null && (
-                    <p className="text-sm text-muted-foreground">
-                      Còn lại <span className="font-medium text-foreground">{remainingAttempts}</span> lượt làm
-                    </p>
-                  )}
-
-                  {user && passingScore != null && (
-                    <p className="text-sm text-muted-foreground">
-                      Điểm đạt: <span className="font-medium text-foreground">{passingScore}/{maxScore}</span>
-                    </p>
-                  )}
-
-                  {/* Best attempt */}
-                  {user && bestAttempt && (
-                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
-                      <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-primary">
-                        <Trophy className="h-3.5 w-3.5" />
-                        Điểm cao nhất
-                      </p>
-                      <p className="text-lg font-semibold text-foreground">
-                        {Math.round(bestAttempt.numericScore)} / {maxScore}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(bestAttempt.completedAt).toLocaleDateString('vi-VN')}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Last attempts summary */}
-                  {user && attemptsWithScore.length > 0 && (
-                    <div className="border-t border-border pt-3">
-                      <p className="mb-2 text-xs font-medium text-muted-foreground">Lần làm gần đây</p>
-                      <ul className="space-y-2">
-                        {attemptsWithScore.slice(0, 3).map((attempt) => {
-                          const passed = getPass(attempt.numericScore);
-                          return (
-                            <li
-                              key={attempt.id}
-                              className="flex items-center justify-between rounded-md bg-muted/30 px-2 py-1.5 text-xs"
-                            >
-                              <span className="font-medium text-foreground">{attempt.score}</span>
-                              <span className="text-muted-foreground">
-                                {attempt.completedAt
-                                  ? new Date(attempt.completedAt).toLocaleDateString('vi-VN')
-                                  : '—'}
-                              </span>
-                              {passed === true && (
-                                <Badge variant="default" className="text-[10px]">Đạt</Badge>
-                              )}
-                              {passed === false && (
-                                <Badge variant="secondary" className="text-[10px]">Chưa đạt</Badge>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
+                      <StatusIcon />
+                      <span className="text-sm font-medium text-foreground">
+                        {statusLabel[attemptState]}
+                      </span>
                     </div>
                   )}
 
                   {/* Start warning */}
-                  {(participationStatus === 'JOINED_NOT_STARTED' || participationStatus === 'SUBMITTED') &&
-                    isAvailable &&
-                    !noAttemptsLeft && (
-                      <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-                        <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-                        <p>Thời gian sẽ bắt đầu ngay khi bạn bắt đầu làm bài.</p>
-                      </div>
-                    )}
+                  {attemptState === 'NOT_STARTED' && (
+                    <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+                      <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                      <p>Thời gian sẽ bắt đầu ngay khi bạn bắt đầu làm bài.</p>
+                    </div>
+                  )}
 
                   {/* CTA */}
                   <div className="border-t border-border pt-4 space-y-2">
-                    {/* Guest users */}
+                    {/* Guest users on public quiz */}
                     {!user && visibility === 'PUBLIC' && (
                       <Button
                         onClick={handleStartClick}
-                        disabled={!isAvailable}
+                        disabled={isStarting}
                         className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                         size="lg"
                       >
@@ -560,20 +371,21 @@ const QuizDetailPage = () => {
                       </div>
                     )}
 
-                    {/* Logged-in users */}
-                    {user && participationStatus === 'NOT_JOINED' && (
+                    {/* Logged-in: NOT_STARTED */}
+                    {user && attemptState === 'NOT_STARTED' && (
                       <Button
                         onClick={handleStartClick}
-                        disabled={!isAvailable}
+                        disabled={isStarting}
                         className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                         size="lg"
                       >
                         <Play className="mr-2 h-4 w-4" />
-                        Bắt đầu làm quiz
+                        {isStarting ? 'Đang khởi tạo...' : 'Bắt đầu làm quiz'}
                       </Button>
                     )}
 
-                    {user && participationStatus === 'IN_PROGRESS' && (
+                    {/* Logged-in: IN_PROGRESS */}
+                    {user && attemptState === 'IN_PROGRESS' && (
                       <Button
                         onClick={handleContinueQuiz}
                         className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
@@ -584,35 +396,43 @@ const QuizDetailPage = () => {
                       </Button>
                     )}
 
-                    {user &&
-                      participationStatus === 'SUBMITTED' &&
-                      remainingAttempts !== null &&
-                      remainingAttempts > 0 && (
+                    {/* Logged-in: SUBMITTED — view result + retry */}
+                    {user && attemptState === 'SUBMITTED' && (
+                      <>
+                        {instanceId && (
+                          <Button
+                            onClick={handleViewResult}
+                            variant="outline"
+                            className="w-full"
+                            size="lg"
+                          >
+                            <Trophy className="mr-2 h-4 w-4" />
+                            Xem kết quả
+                          </Button>
+                        )}
+                        {canRetry ? (
                         <Button
                           onClick={handleRetry}
+                          disabled={isStarting}
                           className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                           size="lg"
                         >
                           <RotateCcw className="mr-2 h-4 w-4" />
-                          Làm lại
+                          {isStarting ? 'Đang khởi tạo...' : 'Làm lại'}
                         </Button>
-                      )}
+                        ) : (
+                          <div className="rounded-lg border border-border bg-muted/50 px-3 py-3 text-center text-sm text-muted-foreground">
+                            Bạn đã đạt giới hạn số lần làm bài ({quiz.maxAttempts} lần)
+                          </div>
+                        )}
+                      </>
+                    )}
 
-                    {user && participationStatus === 'SUBMITTED' && noAttemptsLeft && (
+                    {/* EXPIRED */}
+                    {user && attemptState === 'EXPIRED' && (
                       <div className="rounded-lg border border-border bg-muted/50 px-3 py-3 text-center text-sm text-muted-foreground">
-                        Bạn đã hết lượt làm bài
+                        Bài thi đã hết hạn
                       </div>
-                    )}
-
-                    {isUpcoming && (
-                      <p className="text-center text-sm text-muted-foreground">
-                        Quiz sẽ mở vào thời gian được chỉ định
-                      </p>
-                    )}
-                    {isClosed && (
-                      <p className="text-center text-sm text-muted-foreground">
-                        Quiz đã đóng
-                      </p>
                     )}
                   </div>
                 </CardContent>

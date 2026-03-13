@@ -4,7 +4,7 @@ import { X, Eye, Download, Save, Send, Calendar } from "lucide-react";
 import Header from "@/components/layout/Header";
 import QuizForm, { type QuizFormRef } from "@/components/quiz/QuizForm";
 import { quizService } from "@/services";
-import type { QuizDetail } from "@/domains";
+import type { QuizDetailResDTO } from "@/domains";
 import { toast } from "@/hooks/use-toast";
 
 const AddQuiz = () => {
@@ -12,7 +12,7 @@ const AddQuiz = () => {
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("edit");
   const formRef = useRef<QuizFormRef>(null);
-  const [initialQuiz, setInitialQuiz] = useState<QuizDetail | null>(null);
+  const [initialQuiz, setInitialQuiz] = useState<QuizDetailResDTO | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ const AddQuiz = () => {
     let cancelled = false;
     setLoading(true);
     quizService
-      .getQuizById(editId)
+      .getQuizById(Number(editId))
       .then((data) => {
         if (!cancelled && data) setInitialQuiz(data);
       })
@@ -56,10 +56,28 @@ const AddQuiz = () => {
     setLoading(true);
     try {
       if (editId) {
-        await quizService.updateQuiz(editId, { ...payload, id: editId });
+        // For update: transform to QuizReqDTO without id and questionIds
+        await quizService.updateQuiz(Number(editId), {
+          title: payload.title,
+          description: payload.description,
+          timeLimitMinutes: payload.estimatedTime,
+          visibility: payload.isPublic ? "public" : "private",
+          maxAttempts: payload.settings.maxAttempts,
+          subjectId: Number(payload.subject) || 0, // Subject ID extraction
+          questionIds: [], // Will be handled separately
+        });
         toast({ title: "Đã cập nhật bài kiểm tra" });
       } else {
-        await quizService.createQuiz(payload);
+        // For create: transform to QuizReqDTO
+        await quizService.createQuiz({
+          title: payload.title,
+          description: payload.description,
+          timeLimitMinutes: payload.estimatedTime,
+          visibility: payload.isPublic ? "public" : "private",
+          maxAttempts: payload.settings.maxAttempts,
+          subjectId: Number(payload.subject) || 0, // Subject ID extraction
+          questionIds: [], // Questions will be handled separately
+        });
         toast({ title: "Đã tạo bài kiểm tra" });
       }
       navigate("/groups");

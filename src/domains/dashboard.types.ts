@@ -1,6 +1,6 @@
 // Dashboard aggregate types – lightweight, no questions/answers/snapshots
 
-import { User } from './user.types';
+import { UserResDTO } from './user.types';
 import { GroupRole } from '@/core/types';
 
 /** Quiz instance status for resume / recent / upcoming */
@@ -8,8 +8,8 @@ export type QuizInstanceStatus = 'IN_PROGRESS' | 'DONE' | 'UPCOMING' | 'MISSED';
 
 /** In-progress quiz instance (resume) */
 export interface InProgressQuizInstance {
-  id: string;
-  quizId: string;
+  id: number;
+  quizId: number;
   quizTitle: string;
   answeredCount: number;
   totalQuestions: number;
@@ -19,8 +19,8 @@ export interface InProgressQuizInstance {
 
 /** Recent or upcoming quiz item */
 export interface QuizRecentItem {
-  id: string;
-  quizId: string;
+  id: number;
+  quizId: number;
   quizTitle: string;
   status: QuizInstanceStatus; // DONE | UPCOMING | MISSED
   submittedAt?: string; // ISO, for DONE
@@ -30,7 +30,7 @@ export interface QuizRecentItem {
 
 /** Group summary for dashboard */
 export interface DashboardGroupSummary {
-  id: string;
+  id: number;
   name: string;
   role: GroupRole;
   openQuizzesCount: number;
@@ -38,7 +38,7 @@ export interface DashboardGroupSummary {
 
 /** Draft quiz (Host/Admin) */
 export interface DraftQuizItem {
-  id: string;
+  id: number;
   title: string;
   subject: string;
   questionCount: number;
@@ -54,7 +54,7 @@ export interface DashboardUserStats {
 
 /** Full dashboard payload (1 aggregated API) */
 export interface DashboardSummary {
-  user: User;
+  user: UserResDTO;
   userStats: DashboardUserStats;
   inProgressInstances: InProgressQuizInstance[];
   recentAndUpcoming: QuizRecentItem[];

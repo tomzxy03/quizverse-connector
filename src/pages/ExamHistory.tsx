@@ -5,26 +5,31 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BarChart3, User } from 'lucide-react';
 import { examService } from '@/services';
-import { ExamAttempt } from '@/domains';
+import type { AttemptResDTO } from '@/domains';
+import { useAuth } from '@/contexts';
 
 const ExamHistory = () => {
-  const [examHistory, setExamHistory] = useState<ExamAttempt[]>([]);
+  const { user } = useAuth();
+  const [examHistory, setExamHistory] = useState<AttemptResDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Mock user ID - Replace with actual user from auth context
-  const currentUserId = 'user1';
 
   useEffect(() => {
     loadExamHistory();
   }, []);
 
   const loadExamHistory = async () => {
+    if (!user) {
+      setError('Vui lòng đăng nhập để xem lịch sử thi.');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const data = await examService.getExamHistory(currentUserId);
+      const data = await examService.getAttemptsByUserId(user.id);
       setExamHistory(data);
     } catch (err) {
       setError('Không thể tải lịch sử thi. Vui lòng thử lại.');
@@ -61,8 +66,8 @@ const ExamHistory = () => {
                 <User className="h-7 w-7 text-primary" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground">thichcakhia20</h2>
-                <p className="text-sm text-muted-foreground">Trang công khai</p>
+                <h2 className="text-lg font-semibold text-foreground">{user?.userName || 'Người dùng'}</h2>
+                <p className="text-sm text-muted-foreground">{user?.email || ''}</p>
               </div>
             </div>
             <div className="flex gap-8 border-b border-border">

@@ -4,20 +4,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { AlignLeft, Type, BookOpen, Gauge, Globe, Clock } from "lucide-react";
-
-const SUBJECT_OPTIONS = ["Toán", "Vật lý", "Hóa học", "Sinh học", "Tiếng Anh", "Lịch sử", "Địa lý", "Lập trình", "Khác"];
-const DIFFICULTY_OPTIONS = [
-  { value: "easy", label: "Dễ" },
-  { value: "medium", label: "Trung bình" },
-  { value: "hard", label: "Khó" },
-] as const;
+import { useEffect, useState } from "react";
+import { subjectRepository } from "@/repositories";
+import type { Subject } from "@/domains/subject/subject.types";
 
 interface GeneralInfoProps {
   quizData: {
     title: string;
     description: string;
     subject: string;
-    difficulty: string;
     isPublic: boolean;
     duration: number;
     useStartTime: boolean;
@@ -31,6 +26,25 @@ interface GeneralInfoProps {
 }
 
 const GeneralInfo = ({ quizData, onChange }: GeneralInfoProps) => {
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [loadingSubjects, setLoadingSubjects] = useState(true);
+
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        setLoadingSubjects(true);
+        const data = await subjectRepository.getAll();
+        setSubjects(data);
+      } catch (error) {
+        console.error("Failed to fetch subjects:", error);
+        setSubjects([]);
+      } finally {
+        setLoadingSubjects(false);
+      }
+    };
+    fetchSubjects();
+  }, []);
+
   const safeNum = (v: string, fallback: number) => {
     const n = parseInt(v, 10);
     return Number.isNaN(n) ? fallback : n;
@@ -80,14 +94,15 @@ const GeneralInfo = ({ quizData, onChange }: GeneralInfoProps) => {
         <Select
           value={quizData.subject || undefined}
           onValueChange={(v) => onChange("subject", v)}
+          disabled={loadingSubjects}
         >
           <SelectTrigger id="subject">
-            <SelectValue placeholder="Chọn môn học" />
+            <SelectValue placeholder={loadingSubjects ? "Đang tải..." : "Chọn môn học"} />
           </SelectTrigger>
           <SelectContent>
-            {SUBJECT_OPTIONS.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
+            {subjects.map((subject) => (
+              <SelectItem key={subject.id} value={String(subject.id)}>
+                {subject.name}
               </SelectItem>
             ))}
           </SelectContent>

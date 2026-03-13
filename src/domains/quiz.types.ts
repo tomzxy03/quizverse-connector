@@ -1,120 +1,107 @@
-// Quiz related types and interfaces
+// Quiz related types – aligned with BE api.json DTOs
 
-import { Difficulty, QuestionType } from '@/core/types';
-import { User } from './user.types';
-import { Question } from './question.types';
+import { QuizVisibility, QuizStatus } from '@/core/types';
 
+// === Response DTOs (from BE) ===
 
-export interface Quiz {
-  id: string;
+// Matches BE QuizResDTO
+export interface QuizResDTO {
+  id: number;
   title: string;
   description?: string;
-  subject: string;
-  questionCount: number;
-  estimatedTime: number;
-  difficulty: Difficulty;
-  isPublic: boolean;
-  visibility?: 'PUBLIC' | 'GROUP' | 'DRAFT';
-  attemptCount?: number;
-  creatorId?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-  tags?: string[];
+  totalQuestion: number;
+  timeLimitMinutes?: number;
+  maxAttempts?: number;
+  quizVisibility: QuizVisibility;
+  status: QuizStatus;
+  hostName: string;
+  lobbyName?: string;
 }
 
-export interface QuizDetail extends Quiz {
-  questions: Question[];
-  settings: QuizSettings;
-  creator?: User;
-}
-
-export interface QuizSettings {
-  pointsPerQuestion?: number;
-  randomizeQuestions: boolean;
-  randomizeOptions: boolean;
-  showCorrectAnswers: boolean;
+// Matches BE QuizConfig – Quiz configuration settings
+export interface QuizConfig {
+  shuffleQuestions?: boolean;
+  shuffleAnswers?: boolean;
+  showScoreImmediately?: boolean;
+  allowReview?: boolean;
   maxAttempts?: number;
   passingScore?: number;
-  timeLimit?: number;
 }
 
-export interface QuizQuestionSnapshot {
-  id: string;               // snapshot id
-  questionId: string;       // reference
-  content: string;
-  type: QuestionType;
-  points: number;
-  orderIndex: number;
-
-  options: QuizOptionSnapshot[];
-}
-export interface QuizOptionSnapshot {
-  id: string;
-  content: string;
-  orderIndex: number;
-
-  //chỉ BE dùng, FE submit không thấy
-  isCorrect?: boolean;
-}
-export interface QuizAnswerSnapshot {
-  id: string;
-  content: string;
-  orderIndex: number;
-
-  // FE Player KHÔNG được thấy
-  isCorrect?: boolean;
+// Matches BE QuizDetailResDTO – returned by GET /api/quizzes/{quizId}
+export interface QuizDetailResDTO {
+  quiz: QuizResDTO;
+  quizConfig?: QuizConfig;
+  attemptState: AttemptState;
+  instanceId?: number;
+  totalAttempt: number;
 }
 
+// Possible attempt states from backend
+export type AttemptState = 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'EXPIRED';
 
+// === Request DTOs (to BE) ===
 
+// Matches BE QuizReqDTO
+export interface QuizReqDTO {
+  title: string;
+  description?: string;
+  visibility?: QuizVisibility;
+  timeLimitMinutes?: number;
+  maxAttempts?: number;
+  startDate?: string;
+  subjectId: number;
+  questionIds: number[];
+  public?: boolean;
+}
 
+export interface QuizFilter {
+  subjectId?: number;
+  search?: string;
+  minQuestions?: number;
+  maxQuestions?: number;
+  minDuration?: number;
+  maxDuration?: number;
+  page?: number;
+  size?: number;
+
+}
+
+// === Request DTOs (to BE) ===
+
+// Matches BE QuizAnswerReqDTO – for POST /api/quiz-instances/{instanceId}/answer
+// Updated to index-based answer format:
+// Single choice: answer: [0]
+// Multiple choice: answer: [0, 2, 3]
+export interface QuizAnswerReqDTO {
+  questionId: number;
+  answer: number[]; // Array of option indices (0-indexed)
+}
+
+// Create/Update Quiz Request DTO
 export interface CreateQuizRequest {
   title: string;
   description?: string;
   subject: string;
   estimatedTime: number;
-  difficulty: Difficulty;
   isPublic: boolean;
-  questions: CreateQuestionRequest[];
-  settings: QuizSettings;
+  questions: Array<{
+    text: string;
+    type: "multiple_choice";
+    points: number;
+    options: Array<{
+      text: string;
+      isCorrect: boolean;
+    }>;
+  }>;
+  settings: {
+    randomizeQuestions: boolean;
+    randomizeOptions: boolean;
+    showCorrectAnswers: boolean;
+    maxAttempts: number;
+    timeLimit: number;
+  };
 }
 
-export interface UpdateQuizRequest extends Partial<CreateQuizRequest> {
-  id: string;
-}
-
-export interface CreateQuestionRequest {
-  text: string;
-  type: QuestionType;
-  points: number;
-  explanation?: string;
-  options: CreateQuestionOptionRequest[];
-}
-
-export interface CreateQuestionOptionRequest {
-  text: string;
-  isCorrect: boolean;
-}
-
-export interface QuizFilter {
-  subject?: string;
-  difficulty?: Difficulty;
-  minQuestions?: number;
-  maxQuestions?: number;
-  minDuration?: number;
-  maxDuration?: number;
-  isPublic?: boolean;
-  search?: string;
-  tags?: string[];
-}
-
-export interface QuizStatistics {
-  quizId: string;
-  totalAttempts: number;
-  averageScore: number;
-  averageTime: number;
-  completionRate: number;
-  difficultyRating: number;
-}
-export type { Question };
-
+// === Aliases ===
+export type Quiz = QuizResDTO;

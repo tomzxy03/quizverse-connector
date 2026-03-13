@@ -22,7 +22,7 @@ const Login = () => {
     setIsLoading(true);
     try {
       const res = await userService.login({ email, password });
-      login(res.user, res.token);
+      login(res.user, res.token, res.refreshToken);
       navigate(from, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Đăng nhập thất bại.');
@@ -30,7 +30,7 @@ const Login = () => {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
@@ -40,9 +40,9 @@ const Login = () => {
             className="inline-block hover:opacity-80 transition-opacity"
           >
             <img
-              src="/assets/logo.png"
+              src="/assets/Print.svg"
               alt="Quizory"
-              className="h-10 w-auto mx-auto"
+              className="h-13 w-auto mx-auto"
             />
           </Link>
           <h1 className="text-2xl font-bold mt-6 mb-2 text-foreground">

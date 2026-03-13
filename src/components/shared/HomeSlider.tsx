@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import QuizCard, { Quiz } from '@/components/quiz/QuizCard';
+import QuizCard from '@/components/quiz/QuizCard';
+import type { QuizResDTO } from '@/domains';
 
 interface QuizSliderProps {
-  quizzes: Quiz[];
+  quizzes: QuizResDTO[];
   title?: string;
   slidesPerView?: {
     mobile: number;
@@ -12,7 +13,7 @@ interface QuizSliderProps {
   };
 }
 
-const QuizSlider: React.FC<QuizSliderProps> = ({ 
+const QuizSlider: React.FC<QuizSliderProps> = ({
   quizzes,
   title = 'Quiz mới nhất',
   slidesPerView = {
@@ -77,7 +78,7 @@ const QuizSlider: React.FC<QuizSliderProps> = ({
   const handleDragEnd = () => {
     if (!isDragging) return;
     setIsDragging(false);
-    
+
     // Snap to nearest slide
     if (sliderRef.current) {
       const cardWidth = sliderRef.current.scrollWidth / quizzes.length;
@@ -89,12 +90,25 @@ const QuizSlider: React.FC<QuizSliderProps> = ({
   // Calculate transform for current index
   const translateX = -(currentIndex * (100 / slidesToShow));
 
+  if (!quizzes || quizzes.length === 0) {
+    return (
+      <div className="relative">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
+        </div>
+        <div className="text-center py-12 bg-white rounded-xl border border-dashed border-slate-300">
+          <p className="text-slate-500 font-medium">Chưa có dữ liệu</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
-        
+
         {/* Navigation Buttons - Desktop */}
         <div className="hidden md:flex items-center gap-2">
           <button
@@ -102,8 +116,8 @@ const QuizSlider: React.FC<QuizSliderProps> = ({
             disabled={currentIndex === 0}
             className={`
               p-2 rounded-lg border transition-all
-              ${currentIndex === 0 
-                ? 'border-slate-200 text-slate-300 cursor-not-allowed' 
+              ${currentIndex === 0
+                ? 'border-slate-200 text-slate-300 cursor-not-allowed'
                 : 'border-slate-300 text-slate-700 hover:border-indigo-600 hover:text-indigo-600 hover:bg-indigo-50'
               }
             `}
@@ -133,7 +147,7 @@ const QuizSlider: React.FC<QuizSliderProps> = ({
         <div
           ref={sliderRef}
           className="flex transition-transform duration-500 ease-out cursor-grab active:cursor-grabbing"
-          style={{ 
+          style={{
             transform: `translateX(${translateX}%)`,
             userSelect: isDragging ? 'none' : 'auto'
           }}
@@ -149,7 +163,7 @@ const QuizSlider: React.FC<QuizSliderProps> = ({
             <div
               key={quiz.id}
               className="flex-shrink-0 px-2"
-              style={{ 
+              style={{
                 width: `${100 / slidesToShow}%`,
                 minWidth: `${100 / slidesToShow}%`
               }}
@@ -169,8 +183,8 @@ const QuizSlider: React.FC<QuizSliderProps> = ({
               onClick={() => setCurrentIndex(index)}
               className={`
                 h-2 rounded-full transition-all
-                ${currentIndex === index 
-                  ? 'w-6 bg-indigo-600' 
+                ${currentIndex === index
+                  ? 'w-6 bg-indigo-600'
                   : 'w-2 bg-slate-300'
                 }
               `}

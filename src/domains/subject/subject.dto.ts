@@ -1,10 +1,20 @@
+// Matches BE SubjectResDTO
 export interface SubjectResDTO {
   id: number;
   subjectName: string;
   description?: string;
 }
 
-export interface SubjectReqDTO {
+// Matches BE SubjectDetailResDTO
+export interface SubjectDetailResDTO {
+  id: number;
   subjectName: string;
   description?: string;
+  countQuiz: number;
+}
+
+// Matches BE SubjectReqDTO
+export interface SubjectReqDTO {
+  subjectName: string;
+  description: string;
 }

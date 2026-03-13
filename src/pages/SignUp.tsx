@@ -1,10 +1,12 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { userService as authService } from '@/services/user.service';
 
 const SignUp = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -15,6 +17,7 @@ const SignUp = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
+  const [errorMessage, setErrorMessage] = useState("");
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -24,23 +27,29 @@ const SignUp = () => {
     });
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (step === 1) {
-      setStep(2);
-      return;
-    }
-    
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (step === 1) {
+    setStep(2);
+    return;
+  }
+
+  try {
     setIsLoading(true);
-    
-    // Simulate account creation
-    setTimeout(() => {
-      setIsLoading(false);
-      // Redirect to homepage would happen here in a real application
-      window.location.href = '/';
-    }, 1500);
-  };
+
+    await authService.signUp({
+      userName: formData.name,
+      email: formData.email,
+      password: formData.password,
+    });
+    navigate("/login");
+  } catch (error: any) {
+    setErrorMessage(error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
   
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -63,6 +72,12 @@ const SignUp = () => {
             Join QuizVerse to access thousands of quizzes
           </p>
         </div>
+
+        {errorMessage && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+            {errorMessage}
+          </div>
+        )}
 
         <Card>
           <CardContent className="p-6">

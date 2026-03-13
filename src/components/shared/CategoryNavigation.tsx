@@ -136,7 +136,7 @@ const CategoryNavigation: React.FC<CategoryNavigationProps> = ({
             return (
               <Link
                 key={category.id}
-                to={`/subjects/${category.id}`}
+                to={`/library/${category.id}`}
                 className="group"
               >
                 <div className={`
@@ -184,7 +184,7 @@ const CategoryNavigation: React.FC<CategoryNavigationProps> = ({
         {/* Browse All Link */}
         <div className="text-center mt-8">
           <Link
-            to="/subjects"
+            to="/library"
             className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
           >
             Xem tất cả môn học

@@ -7,12 +7,11 @@ export interface PageRequest {
   sortBy?: string | string[];
 }
 
+// Matches BE PageResDTOObject
 export interface PageResponse<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  currentPage: number;
-  pageSize: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
+  page: number;
+  size: number;
+  total_page: number;
+  total: number;
+  items: T[];
 }

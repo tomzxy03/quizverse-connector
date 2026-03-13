@@ -1,7 +1,14 @@
-// API Endpoints for Spring Boot backend
-// These endpoints should match your Spring Boot @RestController mappings
+// API Endpoints for Spring Boot backend – aligned with api.json Swagger spec
+// All paths are relative to the base URL (e.g. http://localhost:8080/api)
 
-import { SubjectReqDTO } from '@/domains/subject/subject.dto';
+import { QuizFilter } from "@/domains";
+
+const buildQuery = (params: Record<string, any>) =>
+  new URLSearchParams(
+    Object.entries(params)
+      .filter(([_, v]) => v !== undefined && v !== null)
+      .map(([k, v]) => [k, String(v)])
+  ).toString();
 
 export const API_ENDPOINTS = {
   // Authentication
@@ -18,99 +25,109 @@ export const API_ENDPOINTS = {
     BASE: '/users',
     BY_ID: (id: number) => `/users/${id}`,
     PROFILE: (id: number) => `/users/${id}/profile`,
-    UPDATE_PROFILE: (id: number) => `/users/${id}/profile`,
+    DELETE_MANY: '/users/delete_many',
   },
 
   // Subjects
   SUBJECTS: {
     BASE: '/subjects',
     BY_ID: (id: number) => `/subjects/${id}`,
-    CREATE: '/subjects',
-    UPDATE: (id: number) => `/subjects/${id}`,
-    DELETE: (id: number) => `/subjects/${id}`,
+    QUIZ_COUNT: '/subjects/quiz_count',
   },
 
   // Quizzes
   QUIZZES: {
     BASE: '/quizzes',
     BY_ID: (id: number) => `/quizzes/${id}`,
-    BY_SUBJECT: (subject: string) => `/quizzes/subject/${subject}`,
-    POPULAR: '/quizzes/popular',
-    LATEST: '/quizzes/latest',
-    SEARCH: '/quizzes/search',
-    SUBJECTS: '/quizzes/subjects',
     CREATE: '/quizzes',
     UPDATE: (id: number) => `/quizzes/${id}`,
     DELETE: (id: number) => `/quizzes/${id}`,
-    STATISTICS: (id: number) => `/quizzes/${id}/statistics`,
+    GET_BY_FILTER: (filter: QuizFilter) => `/quizzes/filter?${buildQuery(filter)}`,
+    START: (quizId: number) => `/quizzes/${quizId}/start`,
+    ACTIVE_INSTANCE: (quizId: number) => `/quizzes/${quizId}/active-instance`,
   },
 
-  // Questions
+  // Questions (nested under quizzes)
   QUESTIONS: {
-    BY_QUIZ: (quizId: string) => `/quizzes/${quizId}/questions`,
-    BY_ID: (quizId: string, questionId: string) => `/quizzes/${quizId}/questions/${questionId}`,
-    CREATE: (quizId: string) => `/quizzes/${quizId}/questions`,
-    UPDATE: (quizId: string, questionId: string) => `/quizzes/${quizId}/questions/${questionId}`,
-    DELETE: (quizId: string, questionId: string) => `/quizzes/${quizId}/questions/${questionId}`,
+    BY_QUIZ: (quizId: number) => `/quizzes/${quizId}/questions`,
+    BY_ID: (quizId: number, questionId: number) => `/quizzes/${quizId}/questions/${questionId}`,
+    ADD_LIST: (quizId: number) => `/quizzes/${quizId}/questions/add_list`,
+  },
+
+  // Answers
+  ANSWERS: {
+    BASE: '/answers',
+    BY_ID: (id: number) => `/answers/${id}`,
+  },
+
+  // Quiz Instances
+  QUIZ_INSTANCES: {
+    START: '/quiz-instances/start',
+    BY_ID: (instanceId: number) => `/quiz-instances/${instanceId}`,
+    SUBMIT: (instanceId: number) => `/quiz-instances/${instanceId}/submit`,
+    RESULT: (instanceId: number) => `/quiz-instances/${instanceId}/result`,
+    CHECK_ELIGIBILITY: '/quiz-instances/check-eligibility',
+    SAVE_ANSWER: (instanceId: number) => `/quiz-instances/${instanceId}/answer`,
+    GET_STATE: (instanceId: number) => `/quiz-instances/${instanceId}/state`,
+  },
+
+  // Quiz User Responses
+  QUIZ_USER_RESPONSES: {
+    BASE: '/quiz-user-responses',
+    BY_ID: (id: number) => `/quiz-user-responses/${id}`,
+    UPDATE_ANSWER: (responseId: number) => `/quiz-user-responses/${responseId}/answer`,
+    SUBMIT: '/quiz-user-responses/submit',
+    SKIP: '/quiz-user-responses/skip',
+    BY_USER: (userId: number) => `/quiz-user-responses/user/${userId}`,
+    BY_USER_PAGE: (userId: number) => `/quiz-user-responses/user/${userId}/page`,
+    BY_QUIZ_INSTANCE: (quizInstanceId: number) => `/quiz-user-responses/quiz-instance/${quizInstanceId}`,
+    BY_QUIZ_INSTANCE_USER: (quizInstanceId: number, userId: number) =>
+      `/quiz-user-responses/quiz-instance/${quizInstanceId}/user/${userId}`,
+    CORRECT: '/quiz-user-responses/correct',
+    CORRECT_PAGE: '/quiz-user-responses/correct/page',
+    ANSWERED: '/quiz-user-responses/answered',
+    SKIPPED: '/quiz-user-responses/skipped',
+    RECENT: '/quiz-user-responses/recent',
+    DATE_RANGE: '/quiz-user-responses/date-range',
+    TIME_RANGE: '/quiz-user-responses/time-range',
   },
 
   // Exam Attempts
   ATTEMPTS: {
     BASE: '/attempts',
     BY_ID: (id: number) => `/attempts/${id}`,
-    BY_USER: (userId: string) => `/attempts/user/${userId}`,
-    BY_QUIZ: (quizId: string, userId: string) => `/attempts/quiz/${quizId}/user/${userId}`,
-    CREATE: '/attempts',
-    DELETE: (id: number) => `/attempts/${id}`,
-    STATISTICS: (userId: string) => `/attempts/user/${userId}/statistics`,
+    BY_USER: (userId: number) => `/attempts/user/${userId}`,
+    BY_QUIZ_AND_USER: (quizId: number, userId: number) => `/attempts/quiz/${quizId}/user/${userId}`,
+    USER_STATISTICS: (userId: number) => `/attempts/user/${userId}/statistics`,
   },
 
-  // Groups
+  // Groups (Lobby)
   GROUPS: {
     BASE: '/groups',
-    BY_ID: (id: number) => `/groups/${id}`,
-    BY_USER: (userId: string) => `/groups/user/${userId}`,
-    CREATE: '/groups',
-    UPDATE: (id: number) => `/groups/${id}`,
-    DELETE: (id: number) => `/groups/${id}`,
-
-    MEMBERS: (groupId: string) => `/groups/${groupId}/members`,
-    ADD_MEMBER: (groupId: string) => `/groups/${groupId}/members`,
-    REMOVE_MEMBER: (groupId: string, userId: string) => `/groups/${groupId}/members/${userId}`,
-    UPDATE_ROLE: (groupId: string, userId: string) => `/groups/${groupId}/members/${userId}/role`,
-
-    ANNOUNCEMENTS: (groupId: string) => `/groups/${groupId}/announcements`,
-    CREATE_ANNOUNCEMENT: (groupId: string) => `/groups/${groupId}/announcements`,
-    UPDATE_ANNOUNCEMENT: (groupId: string, announcementId: string) =>
-      `/groups/${groupId}/announcements/${announcementId}`,
-    DELETE_ANNOUNCEMENT: (groupId: string, announcementId: string) =>
-      `/groups/${groupId}/announcements/${announcementId}`,
-
-    QUIZZES: (groupId: string) => `/groups/${groupId}/quizzes`,
-    ADD_QUIZ: (groupId: string) => `/groups/${groupId}/quizzes`,
-    REMOVE_QUIZ: (groupId: string, quizId: string) => `/groups/${groupId}/quizzes/${quizId}`,
-
-    RESOURCES: (groupId: string) => `/groups/${groupId}/resources`,
-    UPLOAD_RESOURCE: (groupId: string) => `/groups/${groupId}/resources`,
-    DELETE_RESOURCE: (groupId: string, resourceId: string) =>
-      `/groups/${groupId}/resources/${resourceId}`,
+    BY_ID: (groupId: number) => `/groups/${groupId}`,
+    OWNED: '/groups/owned',
+    JOINED: '/groups/joined',
+    MEMBERS: (groupId: number) => `/groups/${groupId}/members`,
+    REMOVE_MEMBER: (groupId: number, userId: number) => `/groups/${groupId}/members/${userId}`,
+    QUIZZES: (groupId: number) => `/groups/${groupId}/quizzes`,
+    UPDATE_QUIZ: (groupId: number, quizId: number) => `/groups/${groupId}/quizzes/${quizId}/update`,
+    REMOVE_QUIZ: (groupId: number, quizId: number) => `/groups/${groupId}/quizzes/${quizId}/delete`,
+    ANNOUNCEMENTS: (groupId: number) => `/groups/${groupId}/announcements`,
+    ADD_ANNOUNCEMENT: (groupId: number) => `/groups/${groupId}/add-announcement`,
+    UPDATE_ANNOUNCEMENT: (groupId: number, announcementId: number) => `/groups/${groupId}/${announcementId}/update`,
+    DELETE_ANNOUNCEMENT: (groupId: number, announcementId: number) => `/groups/${groupId}/${announcementId}/delete`,
+    LEAVE: (groupId: number) => `/groups/${groupId}/leave`,
   },
 
-  // Dashboard (aggregated)
-  DASHBOARD: {
-    SUMMARY: (userId: string) => `/dashboard/${userId}`,
+  // Roles
+  ROLES: {
+    BASE: '/roles',
+    BY_ID: (roleId: number) => `/roles/${roleId}`,
   },
 
-  // Statistics
-  STATISTICS: {
-    USER: (userId: string) => `/statistics/user/${userId}`,
-    QUIZ: (quizId: string) => `/statistics/quiz/${quizId}`,
-    DASHBOARD: '/statistics/dashboard',
-  },
-
-  // File Upload
-  FILES: {
-    UPLOAD: '/files/upload',
-    DOWNLOAD: (fileId: string) => `/files/${fileId}`,
+  // Notifications
+  NOTIFICATIONS: {
+    BASE: '/notifications',
+    BY_ID: (id: number) => `/notifications/${id}`,
   },
 } as const;

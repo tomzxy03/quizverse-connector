@@ -1,60 +1,35 @@
-// GroupContent/tabs/QuizzesTab.tsx
-import { PlusCircle, Search } from 'lucide-react';
+import { useEffect, useCallback } from 'react';
+import { PlusCircle, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import QuizCard from '@/components/quiz/QuizCard';
-import { useNavigate } from 'react-router-dom';
-
-type LocalQuiz = {
-  id: string;
-  title: string;
-  subject: string;
-  questionCount: number;
-  estimatedTime: number;
-  isPublic: boolean;
-  difficulty: 'easy' | 'medium' | 'hard';
-};
-
-const dummyQuizzes: LocalQuiz[] = [
-  {
-    id: '1',
-    title: 'Đại số cơ bản',
-    subject: 'Toán',
-    questionCount: 15,
-    estimatedTime: 20,
-    isPublic: true,
-    difficulty: 'easy',
-  },
-  {
-    id: '2',
-    title: 'Định luật Newton',
-    subject: 'Vật lý',
-    questionCount: 10,
-    estimatedTime: 15,
-    isPublic: true,
-    difficulty: 'medium',
-  },
-  {
-    id: '3',
-    title: 'Hóa học hữu cơ cơ bản',
-    subject: 'Hóa học',
-    questionCount: 12,
-    estimatedTime: 18,
-    isPublic: false,
-    difficulty: 'hard',
-  },
-  {
-    id: '4',
-    title: 'Lịch sử thế giới hiện đại',
-    subject: 'Lịch sử',
-    questionCount: 20,
-    estimatedTime: 25,
-    isPublic: true,
-    difficulty: 'medium',
-  }
-];
+import { useNavigate, useParams } from 'react-router-dom';
+import { groupService } from '@/services';
+import type { QuizResDTO } from '@/domains';
+import { useLazyLoad } from '@/hooks';
 
 const QuizzesTab = ({ canManage }: { canManage: boolean }) => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+
+  const fetchFn = useCallback(
+    async (page: number, size: number) => {
+      return await groupService.getGroupQuizzes(Number(id), page, size);
+    },
+    [id]
+  );
+
+  const { data: quizzes, loading, hasMore, loadMore, fetch, error } = useLazyLoad<QuizResDTO>(fetchFn, {
+    initialPage: 0,
+    pageSize: 10,
+    cacheEnabled: true,
+  });
+
+  useEffect(() => {
+    if (id) {
+      fetch(0, false);
+    }
+  }, [id, fetch]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap justify-between items-center gap-3">
@@ -76,11 +51,31 @@ const QuizzesTab = ({ canManage }: { canManage: boolean }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {dummyQuizzes.map((q) => (
-          <QuizCard key={q.id} quiz={q} />
-        ))}
-      </div>
+      {loading && quizzes.length === 0 ? (
+        <div className="text-center py-4 text-sm text-muted-foreground flex justify-center items-center">
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Đang tải...
+        </div>
+      ) : error ? (
+        <div className="text-center py-4 text-sm text-red-500">Đã xảy ra lỗi khi tải dữ liệu</div>
+      ) : quizzes.length === 0 ? (
+        <div className="text-center py-4 text-sm text-muted-foreground">Chưa có quiz nào</div>
+      ) : (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {quizzes.map((q) => (
+              <QuizCard key={q.id} quiz={q} />
+            ))}
+          </div>
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button variant="outline" size="sm" onClick={loadMore} disabled={loading}>
+                {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Xem thêm
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

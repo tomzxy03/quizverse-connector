@@ -6,3 +6,6 @@ export * from './group.types';
 export * from './exam.types';
 export * from './question.types';
 export * from './dashboard.types';
+export * from './notification.types';
+export * from './quiz-instance.types';
+export * from './role.types';

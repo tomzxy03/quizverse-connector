@@ -1,94 +1,36 @@
-// Group related types and interfaces
+// Group (Lobby) related types – aligned with BE api.json DTOs
+import { QuizResDTO } from './quiz.types';
+import { NotificationResDTO } from './notification.types';
 
-import { GroupRole } from '@/core/types';
-import { User } from './user.types';
-import { Quiz } from './quiz.types';
+// === Response DTOs (from BE) ===
 
-export interface Group {
-  id: string;
-  name: string;
-  description?: string;
-  memberCount: number;
-  role?: GroupRole;
-  creatorId: string;
-  createdAt: Date;
-  updatedAt: Date;
+// Matches BE LobbyResDTO
+export interface LobbyResDTO {
+  id: number;
+  lobbyName: string;
+  hostName: string;
 }
 
-export interface GroupDetail extends Group {
-  members: GroupMember[];
-  quizzes: Quiz[];
-  announcements: Announcement[];
+// === Request DTOs (to BE) ===
+
+// Matches BE LobbyNotificationResDTO
+export interface LobbyNotificationResDTO {
+  id: number;
+  notificationResDTOS: NotificationResDTO[];
 }
 
-export interface GroupMember {
-  id: string;
-  groupId: string;
-  userId: string;
-  user?: User;
-  name: string;
-  role: GroupRole;
-  avatar?: string;
-  joinedAt: Date;
+// Matches BE LobbyQuizResDTO
+export interface LobbyQuizResDTO {
+  id: number;
+  quizzes: QuizResDTO[];
 }
 
-export interface Announcement {
-  id: string;
-  groupId: string;
-  authorId: string;
-  author?: User;
-  title: string;
-  content: string;
-  isPinned: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+// Matches BE LobbyReqDTO
+export interface LobbyReqDTO {
+  lobbyName: string;
 }
 
-export interface SharedResource {
-  id: string;
-  groupId: string;
-  uploaderId: string;
-  uploader?: User;
-  title: string;
-  description?: string;
-  fileUrl: string;
-  fileType: string;
-  fileSize: number;
-  uploadedAt: Date;
-}
-
-export interface CreateGroupRequest {
-  name: string;
-  description?: string;
-}
-
-export interface UpdateGroupRequest {
-  id: string;
-  name?: string;
-  description?: string;
-}
-
-export interface InviteMemberRequest {
-  groupId: string;
-  email: string;
-  role?: GroupRole;
-}
-
-export interface CreateAnnouncementRequest {
-  groupId: string;
-  title: string;
-  content: string;
-  isPinned?: boolean;
-}
-
-export interface CreateSharedResourceRequest {
-  groupId: string;
-  title: string;
-  description?: string;
-  file: File;
-}
-
-export interface GroupFilter {
-  search?: string;
-  role?: GroupRole;
-}
+// === Aliases ===
+export type Group = LobbyResDTO;
+export type CreateGroupRequest = LobbyReqDTO;
+export type UpdateGroupRequest = LobbyReqDTO;

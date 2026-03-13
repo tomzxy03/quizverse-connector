@@ -1,160 +1,41 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { TrendingUp, Users, Clock, Zap } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import QuizSlider from '@/components/shared/HomeSlider';
 import CategoryNavigation from '@/components/shared/CategoryNavigation';
-import { Quiz } from '@/domains';
+import type { QuizResDTO } from '@/domains';
+import { quizService } from '@/services';
 
 const HomePage = () => {
-  // Mock data - Replace with API call
-  const latestQuizzes: Quiz[] = [
-    {
-      id: '1',
-      title: 'Java Cơ Bản - Biến và Kiểu Dữ Liệu',
-      description: 'Tìm hiểu về các loại biến và kiểu dữ liệu trong Java.',
-      estimatedTime: 10,
-      subject: 'Lập trình',
-      questionCount: 15,
-      isPublic: true,
-      difficulty: 'easy'
-    },
-    {
-      id: '1',
-      title: 'Java Cơ Bản - Biến và Kiểu Dữ Liệu',
-      description: 'Tìm hiểu về các loại biến và kiểu dữ liệu trong Java.',
-      estimatedTime: 10,
-      subject: 'Lập trình',
-      questionCount: 15,
-      isPublic: true,
-      difficulty: 'easy'
-    },
-    {
-      id: '3',
-      title: 'Luật Dân Sự - Giao Dịch Dân Sự Cơ Bản',
-      description: 'Tìm hiểu về các quy định pháp luật liên quan đến giao dịch dân sự.',
-      estimatedTime: 12,
-      subject: 'Pháp luật',
-      questionCount: 12,
-      isPublic: true,
-      difficulty: 'medium'
-    },
-    {
-      id: '4',
-      title: 'Cấu Trúc Dữ Liệu - Cây và Đồ Thị',
-      description: 'Tìm hiểu về các cấu trúc dữ liệu cây và đồ thị trong lập trình.',
-      estimatedTime: 15,
-      subject: 'Lập trình',
-      questionCount: 25,
-      isPublic: true,
-      difficulty: 'hard'
-    },
-    {
-      id: '5',
-      title: 'Giải Phẫu Người - Hệ Tuần Hoàn',
-      description: 'Tìm hiểu về hệ tuần hoàn trong cơ thể người.',
-      estimatedTime: 12,
-      subject: 'Y khoa',
-      questionCount: 18,
-      isPublic: true,
-      difficulty: 'medium'
-    },
-    {
-      id: '6',
-      title: 'Marketing Cơ Bản - 4P và Chiến Lược',
-      description: 'Tìm hiểu về mô hình 4P và các chiến lược marketing cơ bản.',
-      estimatedTime: 7,
-      subject: 'Quản trị',
-      questionCount: 10,
-      isPublic: true,
-      difficulty: 'easy'
-    },
-    {
-      id: '7',
-      title: 'Spring Boot - REST API và Database',
-      description: 'Tìm hiểu về cách xây dựng REST API với Spring Boot và kết nối cơ sở dữ liệu.',
-      estimatedTime: 20,
-      subject: 'Lập trình',
-      questionCount: 22,
-      isPublic: true,
-      difficulty: 'hard'
-    },
-    {
-      id: '8',
-      title: 'Toán Cao Cấp - Vi Phân và Tích Phân',
-      description: 'Tìm hiểu về vi phân và tích phân trong toán học.',
-      estimatedTime: 25,
-      subject: 'Khoa học',
-      questionCount: 16,
-      isPublic: true,
-      difficulty: 'medium'
-    }
-  ];
+  const [latestQuizzes, setLatestQuizzes] = useState<QuizResDTO[]>([]);
+  const [popularQuizzes, setPopularQuizzes] = useState<QuizResDTO[]>([]);
 
-  const popularQuizzes: Quiz[] = [
-    {
-      id: '9',
-      title: 'Tiếng Anh TOEIC - Reading Comprehension',
-      description: 'Tìm hiểu về kỹ năng đọc hiểu trong bài thi TOEIC.',
-      estimatedTime: 30,
-      subject: 'Ngoại ngữ',
-      questionCount: 30,
-      isPublic: true,
-      difficulty: 'medium'
-    },
-    {
-      id: '10',
-      title: 'React + TypeScript - Hooks và Components',
-      description: 'Tìm hiểu về Hooks và Components trong React với TypeScript.',
-      estimatedTime: 25,
-      subject: 'Lập trình',
-      questionCount: 20,
-      isPublic: true,
-      difficulty: 'medium'
-    },
-    {
-      id: '11',
-      title: 'Kinh Tế Vĩ Mô - GDP và Lạm Phát',
-      description: 'Tìm hiểu về GDP và lạm phát trong kinh tế vĩ mô.',
-      estimatedTime: 30,
-      subject: 'Kinh tế',
-      questionCount: 18,
-      isPublic: true,
-      difficulty: 'medium'
-    },
-    {
-      id: '12',
-      title: 'Hóa Học Hữu Cơ - Hydrocarbon',
-      description: 'Tìm hiểu về Hydrocarbon trong hóa học hữu cơ.',
-      estimatedTime: 28,
-      subject: 'Khoa học',
-      questionCount: 14,
-      isPublic: true,
-      difficulty: 'easy'
-    },
-    {
-      id: '13',
-      title: 'Quản Trị Chiến Lược - SWOT và BCG',
-      subject: 'Quản trị',
-      questionCount: 15,
-      isPublic: true,
-      difficulty: 'medium',
-      estimatedTime: 18,
-      description: 'Tìm hiểu về phân tích SWOT và ma trận BCG trong quản trị chiến lược.'
-    }
-  ];
+  useEffect(() => {
+    const fetchQuizzes = async () => {
+      try {
+        const response = await quizService.getAllQuizzes(0, 10);
+        setLatestQuizzes(response.items);
+        setPopularQuizzes(response.items);
+      } catch (err) {
+        console.error('Failed to load quizzes directly on Home:', err);
+      }
+    };
+    fetchQuizzes();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
-      
+
       <main className="flex-1">
         {/* Hero Section - Compact */}
         <section className="bg-gradient-to-br from-indigo-600 to-indigo-800 text-white">
           <div className="container mx-auto px-4 py-12 md:py-16">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-3xl md:text-4xl font-bold mb-4">
-                Nền tảng Quiz học thuật 
+                Nền tảng Quiz học thuật
               </h1>
               <p className="text-lg text-indigo-100 mb-6">
                 Luyện tập, ôn thi và nâng cao kiến thức với hàng nghìn quiz chất lượng
@@ -190,7 +71,7 @@ const HomePage = () => {
                 <div className="text-2xl font-bold text-slate-900">1,200+</div>
                 <div className="text-sm text-slate-600">Quiz công khai</div>
               </div>
-              
+
               <div className="text-center">
                 <div className="flex items-center justify-center mb-2">
                   <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
@@ -200,7 +81,7 @@ const HomePage = () => {
                 <div className="text-2xl font-bold text-slate-900">15,000+</div>
                 <div className="text-sm text-slate-600">Sinh viên</div>
               </div>
-              
+
               <div className="text-center">
                 <div className="flex items-center justify-center mb-2">
                   <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
@@ -210,7 +91,7 @@ const HomePage = () => {
                 <div className="text-2xl font-bold text-slate-900">10+ môn</div>
                 <div className="text-sm text-slate-600">Ngành học</div>
               </div>
-              
+
               <div className="text-center">
                 <div className="flex items-center justify-center mb-2">
                   <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
@@ -226,7 +107,7 @@ const HomePage = () => {
 
         {/* Latest Quizzes Slider */}
         <section className="container mx-auto px-4 py-12">
-          <QuizSlider 
+          <QuizSlider
             quizzes={latestQuizzes}
             title="Quiz mới nhất"
             slidesPerView={{
@@ -238,14 +119,14 @@ const HomePage = () => {
         </section>
 
         {/* Category Navigation */}
-        <CategoryNavigation 
+        <CategoryNavigation
           title="Khám phá theo môn học"
           showCount={true}
         />
 
         {/* Popular Quizzes Slider */}
         <section className="container mx-auto px-4 py-12">
-          <QuizSlider 
+          <QuizSlider
             quizzes={popularQuizzes}
             title="Quiz phổ biến"
             slidesPerView={{
@@ -261,7 +142,7 @@ const HomePage = () => {
           <div className="container mx-auto px-4">
             <div className="text-center mb-10">
               <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                Tại sao chọn QuizVerse?
+                Tại sao chọn Quizory?
               </h2>
               <p className="text-slate-600">
                 Nền tảng học tập được thiết kế dành riêng cho sinh viên
@@ -309,7 +190,7 @@ const HomePage = () => {
               Sẵn sàng nâng cao kiến thức?
             </h2>
             <p className="text-indigo-100 mb-6 text-lg">
-              Tham gia cùng hàng nghìn sinh viên đang học tập trên QuizVerse
+              Tham gia cùng hàng nghìn sinh viên đang học tập trên Quizory
             </p>
             <Link
               to="/signup"
@@ -323,7 +204,7 @@ const HomePage = () => {
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

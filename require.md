@@ -1,88 +1,118 @@
-You are a senior product designer & system architect.
+You are a senior frontend architect.
+Your task is to design the **client-side requirements for a Quiz System** implemented with Angular.
 
-I am building an online quiz platform similar to Study4, with public quizzes, group-based quizzes, and a shared question bank.
+## Backend Architecture
 
-Please redesign and refine the system with the following STRICT requirements:
+The backend is implemented using:
 
-1. QUESTION BANK
-- Question Bank is GLOBAL, shared across the whole system.
-- It must NOT appear inside any group page.
-- Access location:
-  - Either in the main header navigation
-  - Or inside a profile dropdown menu.
-- Question Bank structure:
-  - Folder + Question model.
-  - Folder must support actions: create, rename, move, delete.
-  - Question supports edit, move, delete.
-- Question Bank is used when creating quizzes (select questions from it).
+* Spring Boot
+* PostgreSQL
+* Redis (temporary answer storage)
 
-2. GROUP LOGIC
-- Group is a permission boundary.
-- Only members of a group can:
-  - View group quizzes
-  - Access quiz detail pages
-  - Participate in group quizzes
-- Non-members:
-  - Cannot access group quizzes even via direct URL.
-- Joining a group requires confirmation:
-  - User sends join request
-  - Group owner/admin approves
-- There is NO "confirm join" step for quizzes inside a group.
+The system supports **quiz attempts with snapshots**.
 
-3. QUIZ TYPES
-- Quiz has 3 visibility states:
-  - PUBLIC
-  - GROUP
-  - DRAFT
-- DRAFT quizzes are visible only to owner/admin and should be pinned to the top of quiz lists.
+### Important backend behaviors
 
-4. PUBLIC QUIZ (Study4-style behavior)
-- Users can take public quizzes without logging in.
-- Score is calculated for everyone.
-- Result handling:
-  - Guest users: score is NOT saved.
-  - Logged-in users: score IS saved.
+1. When a user starts a quiz, the server creates a **QuizInstance** and stores a **snapshot of questions** in JSONB.
+2. User answers are **temporarily stored in Redis**.
+3. When the user submits the quiz, the backend:
 
-5. GROUP QUIZ
-- Only accessible by group members.
-- No guest access.
-- Joining a quiz does NOT require confirmation.
-- Participation depends only on:
-  - Quiz availability
-  - maxAttempts
-  - time constraints (if any).
+   * loads the snapshot
+   * loads answers from Redis
+   * calculates the score
+   * saves results into PostgreSQL
 
-6. QUIZ DETAIL PAGE
-- Must clearly show:
-  - Quiz information
-  - Rules & settings
-  - User attempt history (if logged in)
-  - Best score
-- CTA buttons must be context-aware:
-  - Join / Start / Continue / Retry
-- CTA logic must differ correctly for:
-  - Guest user
-  - Logged-in non-member
-  - Logged-in group member
-  - Owner/admin
+### Key APIs
 
-7. ROUTING & SECURITY
-- Frontend routing must NOT rely solely on login checks.
-- Backend must enforce:
-  - Group membership validation
-  - Quiz access permission
-- Prevent URL guessing for group quizzes.
+Start quiz
 
-8. UI / UX REQUIREMENTS
-- Group pages should use full-width layout (not constrained to 2/3 width).
-- Avoid overcrowding small cards with too many actions.
-- Use dropdown/context menus for edit/delete actions.
-- Ensure consistency of action placement across all pages.
+POST /api/quizzes/{quizId}/start
 
-Deliver:
-- Clear system structure
-- Permission logic explanation
-- UI layout suggestions
-- Edge cases and trade-offs
+Response:
 
-Think like a real production system, not a demo.
+* quizInstanceId
+* snapshot (questions + answers)
+* timeLimit
+* startTime
+
+Check active quiz instance
+
+GET /api/quizzes/{quizId}/active-instance
+
+Save answer
+
+POST /api/quiz-instances/{instanceId}/answer
+
+Payload:
+{
+questionId,
+answerId,
+clientTime
+}
+
+Submit quiz
+
+POST /api/quiz-instances/{instanceId}/submit
+
+---
+
+## Your Task
+
+Generate a **complete client requirement specification** for the Angular application.
+
+The requirement must include:
+
+1. User flow
+2. Component architecture
+3. State management strategy
+4. API integration
+5. Timer logic
+6. Resume quiz logic
+7. Answer storage on client
+8. Autosave strategy
+9. Error handling
+10. UX features for quiz experience
+
+---
+
+## Expected Output Structure
+
+The answer must include the following sections:
+
+1. Quiz User Flow
+2. Angular Component Structure
+3. Client State Management
+4. API Integration Layer
+5. Answer Handling Logic
+6. Timer System
+7. Resume Quiz Mechanism
+8. Submit Quiz Flow
+9. Edge Cases
+10. Recommended UX Enhancements
+
+---
+
+## Important Constraints
+
+The client must support:
+
+* quiz resume after refresh
+* autosave answers
+* timer expiration
+* prevention of double submission
+* network failure handling
+* highlighting answered questions
+
+---
+
+## Technology Stack
+
+Frontend:
+
+* Angular
+* RxJS
+* TypeScript
+
+The design should be **clean, scalable, and production-ready**.
+
+Provide the solution as a **technical requirement document for frontend developers**.

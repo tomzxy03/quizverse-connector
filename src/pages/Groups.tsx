@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import { Users, PlusCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, PlusCircle, Loader2 } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import GroupSidebar from '@/components/group/GroupContent/GroupSidebar';
 import GroupContent from '@/components/group/GroupContent/GroupContent';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { groupService } from '@/services/group.service';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Group {
   id: string;
@@ -14,17 +16,51 @@ interface Group {
 }
 
 const Groups = () => {
-  const [groups, setGroups] = useState<Group[]>([
-    { id: '1', name: 'Lớp Toán Cao Cấp', memberCount: 15, isOwned: true },
-    { id: '2', name: 'TOEIC Study Group', memberCount: 8, isOwned: true },
-    { id: '3', name: 'Java Programming', memberCount: 12, isOwned: false },
-    { id: '4', name: 'Biology Team', memberCount: 7, isOwned: false },
-    { id: '5', name: 'History Club', memberCount: 20, isOwned: false },
-  ]);
+  const { user } = useAuth();
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDescription, setNewGroupDescription] = useState('');
+
+  const fetchGroups = async () => {
+    try {
+      setIsLoading(true);
+      const [ownedRes, joinedRes] = await Promise.all([
+        groupService.getOwnedGroups(0, 50),
+        groupService.getJoinedGroups(0, 50)
+      ]);
+
+      const owned = (ownedRes.items || []).map((g: any) => ({
+        id: g.id.toString(),
+        name: g.lobbyName,
+        memberCount: g.totalMembers || 0,
+        isOwned: true,
+      }));
+
+      const ownedIds = new Set(ownedRes.items?.map((g: any) => g.id.toString()) || []);
+
+      const joined = (joinedRes.items || [])
+        .filter((g: any) => !ownedIds.has(g.id.toString()))
+        .map((g: any) => ({
+          id: g.id.toString(),
+          name: g.lobbyName,
+          memberCount: g.totalMembers || 0,
+          isOwned: false,
+        }));
+
+      setGroups([...owned, ...joined]);
+    } catch (error) {
+      console.error('Failed to fetch groups', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
 
   const handleGroupSelect = (group: Group) => {
     setSelectedGroup(group);
@@ -36,38 +72,63 @@ const Groups = () => {
     setShowCreateModal(true);
   };
 
-  const handleGroupCreated = (name: string, description?: string) => {
+  const handleGroupCreated = async (name: string, description?: string) => {
     const trimmedName = name.trim();
     if (!trimmedName) return;
 
-    const newGroup: Group = {
-      id: Date.now().toString(),
-      name: trimmedName,
-      memberCount: 1,
-      isOwned: true,
-    };
+    try {
+      const res = await groupService.createGroup({
+        lobbyName: trimmedName,
+      });
 
-    setGroups((prev) => [...prev, newGroup]);
-    setSelectedGroup(newGroup);
+      const newGroup: Group = {
+        id: res.id.toString(),
+        name: res.lobbyName,
+        memberCount: 1,
+        isOwned: true,
+      };
+      console.log('Created group:', newGroup);
+
+      setGroups((prev) => [...prev, newGroup]);
+      setSelectedGroup(newGroup);
+    } catch (error) {
+      console.error('Error creating group:', error);
+      alert('Failed to create group. Please check your inputs.');
+    }
     // description is currently unused but kept for future extension
     void description;
   };
 
-  const handleGroupUpdated = (updatedGroup: Group) => {
-    setGroups((prev) =>
-      prev.map((g) => (g.id === updatedGroup.id ? { ...g, ...updatedGroup } : g)),
-    );
+  const handleGroupUpdated = async (updatedGroup: Group) => {
+    try {
+      const res = await groupService.updateGroup(parseInt(updatedGroup.id, 10), {
+        lobbyName: updatedGroup.name,
+      });
 
-    if (selectedGroup?.id === updatedGroup.id) {
-      setSelectedGroup(updatedGroup);
+      setGroups((prev) =>
+        prev.map((g) => (g.id === updatedGroup.id ? { ...g, name: res.lobbyName } : g)),
+      );
+
+      if (selectedGroup?.id === updatedGroup.id) {
+        setSelectedGroup({ ...selectedGroup, name: res.lobbyName });
+      }
+    } catch (error) {
+      console.error('Error updating group:', error);
+      alert('Failed to update group.');
     }
   };
 
-  const handleGroupDeleted = (groupId: string) => {
-    setGroups((prev) => prev.filter((g) => g.id !== groupId));
+  const handleGroupDeleted = async (groupId: string) => {
+    try {
+      await groupService.deleteGroup(parseInt(groupId, 10));
+      setGroups((prev) => prev.filter((g) => g.id !== groupId));
 
-    if (selectedGroup?.id === groupId) {
-      setSelectedGroup(null);
+      if (selectedGroup?.id === groupId) {
+        setSelectedGroup(null);
+      }
+    } catch (error) {
+      console.error('Error deleting group:', error);
+      alert('Failed to delete group.');
     }
   };
 
@@ -85,42 +146,50 @@ const Groups = () => {
         </p>
 
         <div className="flex-1 flex flex-col md:flex-row gap-6 min-h-0">
-          <GroupSidebar
-            groups={groups}
-            onGroupSelect={handleGroupSelect}
-            onCreateGroup={handleCreateGroup}
-            selectedGroup={selectedGroup}
-            onUpdateGroup={handleGroupUpdated}
-            onDeleteGroup={handleGroupDeleted}
-          />
-
-          {selectedGroup ? (
-            <div className="flex-1 min-w-0 rounded-lg border bg-card overflow-hidden flex flex-col">
-              <GroupContent
-                group={{
-                  ...selectedGroup,
-                  role: selectedGroup.isOwned ? 'OWNER' : 'MEMBER',
-                }}
-              />
+          {isLoading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <Card className="flex-1 flex items-center justify-center min-h-[320px]">
-              <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/10 border border-border flex items-center justify-center mb-4">
-                  <PlusCircle className="h-8 w-8 text-primary" />
+            <>
+              <GroupSidebar
+                groups={groups}
+                onGroupSelect={handleGroupSelect}
+                onCreateGroup={handleCreateGroup}
+                selectedGroup={selectedGroup}
+                onUpdateGroup={handleGroupUpdated}
+                onDeleteGroup={handleGroupDeleted}
+              />
+
+              {selectedGroup ? (
+                <div className="flex-1 min-w-0 rounded-lg border bg-card overflow-hidden flex flex-col">
+                  <GroupContent
+                    group={{
+                      ...selectedGroup,
+                      role: selectedGroup.isOwned ? 'OWNER' : 'MEMBER',
+                    }}
+                  />
                 </div>
-                <h2 className="text-xl font-semibold text-foreground mb-2">
-                  Chọn hoặc tạo nhóm
-                </h2>
-                <p className="text-muted-foreground mb-6 max-w-sm">
-                  Chọn một nhóm ở thanh bên hoặc tạo nhóm mới để bắt đầu.
-                </p>
-                <Button onClick={handleCreateGroup}>
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Tạo nhóm mới
-                </Button>
-              </CardContent>
-            </Card>
+              ) : (
+                <Card className="flex-1 flex items-center justify-center min-h-[320px]">
+                  <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 border border-border flex items-center justify-center mb-4">
+                      <PlusCircle className="h-8 w-8 text-primary" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-foreground mb-2">
+                      Chọn hoặc tạo nhóm
+                    </h2>
+                    <p className="text-muted-foreground mb-6 max-w-sm">
+                      Chọn một nhóm ở thanh bên hoặc tạo nhóm mới để bắt đầu.
+                    </p>
+                    <Button onClick={handleCreateGroup}>
+                      <PlusCircle className="h-4 w-4 mr-2" />
+                      Tạo nhóm mới
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
         </div>
       </main>

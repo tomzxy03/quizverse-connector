@@ -1,26 +1,46 @@
-import { Difficulty, QuestionType } from '@/core/types';
+// Question & Answer types – aligned with BE api.json DTOs
 
-export interface Question {
-  id: string;
-  content: string;
-  type: QuestionType;
-  difficulty: Difficulty;
+import { QuestionType, AnswerType, QuestionLevel } from '@/core/types';
 
-  bankId: string;
-  folderId?: string;
+// === Response DTOs (from BE) ===
 
-  explanation?: string;
-  tags?: string[];
-
-  createdAt?: Date;
-  updatedAt?: Date;
+// Matches BE QuestionResDTO
+export interface QuestionResDTO {
+  id: number;
+  questionName: string;
+  questionType: QuestionType;
+  level: QuestionLevel;
+  bankId: number;
+  folderId?: number;
+  folderName?: string;
+  answers: AnswerResDTO[];
 }
 
-export interface AnswerDefinition {
-  id: string;
-  questionId: string;
-  content: string;
-  isCorrect: boolean;
+// Matches BE AnswerResDTO
+export interface AnswerResDTO {
+  id: number;
+  answerText: string;
+  answerType: AnswerType;
   orderIndex: number;
 }
 
+// === Request DTOs (to BE) ===
+
+// Matches BE QuestionReqDTO
+export interface QuestionReqDTO {
+  questionName: string;
+  questionType: QuestionType;
+  level: QuestionLevel;
+  answers: AnswerReqDTO[];
+}
+
+// Matches BE AnswerReqDTO
+export interface AnswerReqDTO {
+  answerName: string;
+  answerType: AnswerType;
+  answerCorrect?: boolean;
+}
+
+// === Aliases ===
+export type Question = QuestionResDTO;
+export type Answer = AnswerResDTO;

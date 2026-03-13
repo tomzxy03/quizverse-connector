@@ -1,43 +1,30 @@
-// User Service - Business logic layer
-
 import { userRepository } from '@/repositories';
-import { User, UserProfile, LoginRequest, SignUpRequest, AuthResponse } from '@/domains';
+import { UserResDTO, UserProfileReqDTO, LoginReqDTO, SignupReqDTO, AuthResDTO, RefreshTokenReqDTO } from '@/domains';
 
 export class UserService {
-  async login(data: LoginRequest): Promise<AuthResponse> {
-    // Validate email
+  async login(data: LoginReqDTO): Promise<AuthResDTO> {
     if (!data.email || !this.isValidEmail(data.email)) {
       throw new Error('Invalid email address');
     }
-
-    // Validate password
     if (!data.password || data.password.length < 6) {
       throw new Error('Password must be at least 6 characters');
     }
-
     return await userRepository.login(data);
   }
 
-  async signUp(data: SignUpRequest): Promise<AuthResponse> {
-    // Validate email
+  async signUp(data: SignupReqDTO): Promise<AuthResDTO> {
     if (!data.email || !this.isValidEmail(data.email)) {
       throw new Error('Invalid email address');
     }
-
-    // Validate password
     if (!data.password || data.password.length < 6) {
       throw new Error('Password must be at least 6 characters');
     }
-
-    // Validate username
-    if (!data.username || data.username.length < 3) {
+    if (!data.userName || data.userName.length < 3) {
       throw new Error('Username must be at least 3 characters');
     }
-
-    if (!/^[a-zA-Z0-9_]+$/.test(data.username)) {
+    if (!/^[a-zA-Z0-9_]+$/.test(data.userName)) {
       throw new Error('Username can only contain letters, numbers, and underscores');
     }
-
     return await userRepository.signUp(data);
   }
 
@@ -45,35 +32,31 @@ export class UserService {
     return await userRepository.logout();
   }
 
-  async getCurrentUser(): Promise<User | null> {
+  async refreshToken(data: RefreshTokenReqDTO): Promise<AuthResDTO> {
+    return await userRepository.refreshToken(data);
+  }
+
+  async getCurrentUser(): Promise<UserResDTO> {
     return await userRepository.getCurrentUser();
   }
 
-  async getUserProfile(userId: string): Promise<UserProfile | null> {
-    return await userRepository.getUserProfile(userId);
+  async getUserById(id: number): Promise<UserResDTO> {
+    return await userRepository.getById(id);
   }
 
-  async updateProfile(userId: string, data: Partial<User>): Promise<User | null> {
-    // Validate email if provided
+  async updateProfile(id: number, data: UserProfileReqDTO): Promise<UserResDTO> {
     if (data.email && !this.isValidEmail(data.email)) {
       throw new Error('Invalid email address');
     }
-
-    // Validate username if provided
-    if (data.username) {
-      if (data.username.length < 3) {
+    if (data.userName) {
+      if (data.userName.length < 3) {
         throw new Error('Username must be at least 3 characters');
       }
-      if (!/^[a-zA-Z0-9_]+$/.test(data.username)) {
+      if (!/^[a-zA-Z0-9_]+$/.test(data.userName)) {
         throw new Error('Username can only contain letters, numbers, and underscores');
       }
     }
-
-    return await userRepository.updateProfile(userId, data);
-  }
-
-  async getUserById(id: string): Promise<User | null> {
-    return await userRepository.getById(id);
+    return await userRepository.updateProfile(id, data);
   }
 
   private isValidEmail(email: string): boolean {
@@ -82,8 +65,12 @@ export class UserService {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    const user = await this.getCurrentUser();
-    return user !== null;
+    try {
+      const user = await this.getCurrentUser();
+      return !!user;
+    } catch {
+      return false;
+    }
   }
 }
 

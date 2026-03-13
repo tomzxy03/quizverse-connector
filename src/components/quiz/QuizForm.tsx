@@ -3,8 +3,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import GeneralInfo from "./QuizSections/GeneralInfo";
 import AdvancedSettings from "./QuizSections/AdvancedSettings";
 import QuestionsSection from "./QuizSections/QuestionsSection";
-import type { CreateQuizRequest, QuizDetail } from "@/domains";
-import type { Difficulty } from "@/core/types";
+import type { CreateQuizRequest, QuizDetailResDTO } from "@/domains";
 
 export interface FormQuestion {
   id: string;
@@ -22,7 +21,6 @@ const defaultQuizData = {
   title: "",
   description: "",
   subject: "",
-  difficulty: "medium" as Difficulty,
   isPublic: true,
   duration: 0,
   useStartTime: false,
@@ -57,35 +55,26 @@ const createEmptyQuestion = (): FormQuestion => ({
 });
 
 interface QuizFormProps {
-  initialData?: QuizDetail | null;
+  initialData?: QuizDetailResDTO | null;
 }
 
 const QuizForm = forwardRef<QuizFormRef, QuizFormProps>(function QuizForm({ initialData }, ref) {
   const [quizData, setQuizData] = useState(() => ({
     ...defaultQuizData,
     ...(initialData && {
-      title: initialData.title,
-      description: initialData.description ?? "",
-      subject: initialData.subject,
-      difficulty: initialData.difficulty,
-      isPublic: initialData.isPublic,
-      duration: initialData.estimatedTime ?? 0,
-      randomizeQuestions: initialData.settings?.randomizeQuestions ?? false,
-      randomizeOptions: initialData.settings?.randomizeOptions ?? false,
-      showCorrectAnswers: initialData.settings?.showCorrectAnswers ?? true,
-      maxAttempts: initialData.settings?.maxAttempts ?? 100,
+      title: initialData.quiz.title,
+      description: initialData.quiz.description ?? "",
+      subject: initialData.quiz.lobbyName || "",
+      isPublic: initialData.quiz.quizVisibility === "public",
+      duration: initialData.quiz.timeLimitMinutes ?? 0,
+      randomizeQuestions: initialData.quizConfig?.shuffleQuestions ?? false,
+      randomizeOptions: initialData.quizConfig?.shuffleAnswers ?? false,
+      showCorrectAnswers: initialData.quizConfig?.showScoreImmediately ?? true,
+      maxAttempts: initialData.quizConfig?.maxAttempts ?? 100,
     }),
   }));
 
-  const [questions, setQuestions] = useState<FormQuestion[]>(() => {
-    if (!initialData?.questions?.length) return [];
-    return initialData.questions.map((q, i) => ({
-      id: q.id || `q-${i}`,
-      text: "content" in q ? (q as { content: string }).content : "",
-      options: [],
-      points: 10,
-    }));
-  });
+  const [questions, setQuestions] = useState<FormQuestion[]>([]);
 
   const validationErrorsRef = useRef<string[]>([]);
 
@@ -93,33 +82,17 @@ const QuizForm = forwardRef<QuizFormRef, QuizFormProps>(function QuizForm({ init
     if (!initialData) return;
     setQuizData((prev) => ({
       ...prev,
-      title: initialData.title,
-      description: initialData.description ?? "",
-      subject: initialData.subject,
-      difficulty: initialData.difficulty,
-      isPublic: initialData.isPublic,
-      duration: initialData.estimatedTime ?? 0,
-      randomizeQuestions: initialData.settings?.randomizeQuestions ?? false,
-      randomizeOptions: initialData.settings?.randomizeOptions ?? false,
-      showCorrectAnswers: initialData.settings?.showCorrectAnswers ?? true,
-      maxAttempts: initialData.settings?.maxAttempts ?? 100,
+      title: initialData.quiz.title,
+      description: initialData.quiz.description ?? "",
+      subject: initialData.quiz.lobbyName || "",
+      isPublic: initialData.quiz.quizVisibility === "public",
+      duration: initialData.quiz.timeLimitMinutes ?? 0,
+      randomizeQuestions: initialData.quizConfig?.shuffleQuestions ?? false,
+      randomizeOptions: initialData.quizConfig?.shuffleAnswers ?? false,
+      showCorrectAnswers: initialData.quizConfig?.showScoreImmediately ?? true,
+      maxAttempts: initialData.quizConfig?.maxAttempts ?? 100,
     }));
-    if (initialData.questions?.length) {
-      setQuestions(
-        initialData.questions.map((q, i) => ({
-          id: q.id || `q-${i}`,
-          text: "content" in q ? (q as { content: string }).content : "",
-          options: [
-            { id: `opt-1`, text: "", isCorrect: false },
-            { id: `opt-2`, text: "", isCorrect: false },
-            { id: `opt-3`, text: "", isCorrect: false },
-            { id: `opt-4`, text: "", isCorrect: false },
-          ],
-          points: 10,
-        }))
-      );
-    }
-  }, [initialData?.id]);
+  }, [initialData?.quiz.id]);
 
   const handleQuizDataChange = (field: string, value: unknown) => {
     setQuizData((prev) => ({ ...prev, [field]: value }));
@@ -157,14 +130,12 @@ const QuizForm = forwardRef<QuizFormRef, QuizFormProps>(function QuizForm({ init
 
   const getPayload = (): CreateQuizRequest | null => {
     if (!quizData.title?.trim() || !quizData.subject?.trim() || questions.length === 0) return null;
-    const difficulty = (quizData.difficulty || "medium") as Difficulty;
     const estimatedTime = Math.max(0, Number(quizData.duration) || 0) || 30;
     return {
       title: quizData.title.trim(),
       description: quizData.description?.trim() || undefined,
       subject: quizData.subject,
       estimatedTime,
-      difficulty,
       isPublic: Boolean(quizData.isPublic),
       questions: questions.map((q) => ({
         text: q.text.trim(),

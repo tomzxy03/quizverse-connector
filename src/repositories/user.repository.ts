@@ -1,108 +1,46 @@
-// User Repository - Mock implementation
+import { apiClient, API_ENDPOINTS } from '@/core/api';
+import {
+  UserResDTO,
+  UserProfileReqDTO,
+  LoginReqDTO,
+  SignupReqDTO,
+  AuthResDTO,
+  RefreshTokenReqDTO
+} from '@/domains';
 
-import { User, UserProfile, LoginRequest, SignUpRequest, AuthResponse } from '@/domains';
+export const userRepository = {
+  login(data: LoginReqDTO): Promise<AuthResDTO> {
+    return apiClient.post<AuthResDTO>(API_ENDPOINTS.AUTH.LOGIN, data);
+  },
 
-export class UserRepository {
-  private mockUsers: User[] = [
-    {
-      id: 'user1',
-      email: 'user@example.com',
-      username: 'thichcakhia20',
-      fullName: 'Nguyen Van A',
-      avatar: 'https://i.pravatar.cc/150?img=1',
-      createdAt: new Date('2025-01-01'),
-      updatedAt: new Date('2025-01-01')
-    }
-  ];
+  signUp(data: SignupReqDTO): Promise<AuthResDTO> {
+    return apiClient.post<AuthResDTO>(API_ENDPOINTS.AUTH.SIGNUP, data);
+  },
 
-  private currentUser: User | null = null;
+  logout(): Promise<void> {
+    return apiClient.post<void>(API_ENDPOINTS.AUTH.LOGOUT);
+  },
 
-  async login(data: LoginRequest): Promise<AuthResponse> {
-    // Mock login - In real app, this will call Spring Boot API
-    const user = this.mockUsers.find(u => u.email === data.email);
+  refreshToken(data: RefreshTokenReqDTO): Promise<AuthResDTO> {
+    return apiClient.post<AuthResDTO>(API_ENDPOINTS.AUTH.REFRESH, data);
+  },
 
-    if (!user) {
-      throw new Error('Invalid credentials');
-    }
+  getCurrentUser(): Promise<UserResDTO> {
+    return apiClient.get<UserResDTO>(API_ENDPOINTS.AUTH.CURRENT_USER);
+  },
 
-    this.currentUser = user;
+  getById(id: number): Promise<UserResDTO> {
+    return apiClient.get<UserResDTO>(API_ENDPOINTS.USERS.BY_ID(id));
+  },
 
-    return Promise.resolve({
-      token: 'mock-jwt-token-' + Date.now(),
-      user,
-      expiresIn: 3600
-    });
+  updateProfile(id: number, data: UserProfileReqDTO): Promise<UserResDTO> {
+    return apiClient.put<UserResDTO>(API_ENDPOINTS.USERS.PROFILE(id), data);
+  },
+
+  deleteMany(ids: number[]): Promise<void> {
+    // Note: apiClient.delete doesn't pass a body yet, so modifying to a different approach if needed
+    // Assuming backend takes comma separated IDs via query or similar, or apiClient needs update.
+    // For now we'll send it as a POST or custom request if BE requires body in DELETE
+    return apiClient.post<void>(API_ENDPOINTS.USERS.DELETE_MANY, ids);
   }
-
-  async signUp(data: SignUpRequest): Promise<AuthResponse> {
-    // Check if user already exists
-    const existingUser = this.mockUsers.find(u => u.email === data.email);
-    if (existingUser) {
-      throw new Error('User already exists');
-    }
-
-    const newUser: User = {
-      id: `user${this.mockUsers.length + 1}`,
-      email: data.email,
-      username: data.username,
-      fullName: data.fullName,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    this.mockUsers.push(newUser);
-    this.currentUser = newUser;
-
-    return Promise.resolve({
-      token: 'mock-jwt-token-' + Date.now(),
-      user: newUser,
-      expiresIn: 3600
-    });
-  }
-
-  async logout(): Promise<void> {
-    this.currentUser = null;
-    return Promise.resolve();
-  }
-
-  async getCurrentUser(): Promise<User | null> {
-    return Promise.resolve(this.currentUser);
-  }
-
-  async getUserProfile(userId: string): Promise<UserProfile | null> {
-    const user = this.mockUsers.find(u => u.id === userId);
-    if (!user) return null;
-
-    return Promise.resolve({
-      ...user,
-      bio: 'Học sinh đam mê học tập',
-      isPublicProfile: true,
-      totalQuizzesTaken: 156,
-      totalPoints: 15420
-    });
-  }
-
-  async updateProfile(userId: string, data: Partial<User>): Promise<User | null> {
-    const index = this.mockUsers.findIndex(u => u.id === userId);
-    if (index === -1) return null;
-
-    this.mockUsers[index] = {
-      ...this.mockUsers[index],
-      ...data,
-      updatedAt: new Date()
-    };
-
-    if (this.currentUser && this.currentUser.id === userId) {
-      this.currentUser = this.mockUsers[index];
-    }
-
-    return Promise.resolve(this.mockUsers[index]);
-  }
-
-  async getById(id: string): Promise<User | null> {
-    const user = this.mockUsers.find(u => u.id === id);
-    return Promise.resolve(user || null);
-  }
-}
-
-export const userRepository = new UserRepository();
+};

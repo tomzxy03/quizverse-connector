@@ -3,7 +3,7 @@ import QuestionBankTab from '@/components/group/GroupContent/tabs/QuestionBankTa
 
 const QuestionBankPage = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-slate-900/50">
       <Header />
       <main className="flex-1 w-full px-4 py-6">
         <div className="max-w-6xl mx-auto">

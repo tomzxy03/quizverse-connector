@@ -16,6 +16,7 @@ interface AdvancedSettingsProps {
     showCorrectAnswers?: boolean;
     maxAttempts: number;
     resultDisplay: string;
+    reviewScore?: boolean;
   };
   onChange: (field: string, value: unknown) => void;
 }
@@ -52,35 +53,19 @@ const AdvancedSettings = ({ quizData, onChange }: AdvancedSettingsProps) => {
           </div>
 
           <div>
-            <Label className="font-medium mb-2 block">Kết quả sẽ hiển thị</Label>
-            <Select
-              value={quizData.resultDisplay}
-              onValueChange={(v) => onChange("resultDisplay", v)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Chọn thời điểm hiển thị kết quả" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="after_grading">Sau khi giáo viên chấm bài</SelectItem>
-                <SelectItem value="after_deadline">Sau khi kết thúc thời gian làm bài</SelectItem>
-                <SelectItem value="after_submission">Sau khi học sinh nộp bài</SelectItem>
-              </SelectContent>
-            </Select>
-            {quizData.resultDisplay === "after_grading" && (
-              <div className="mt-2 ml-4 bg-muted/30 p-4 rounded-md">
-                <p className="text-sm">Kết quả hiển thị sau khi giáo viên chấm xong</p>
+            
+            <div className="flex items-center justify-between ">
+              <div>
+                <p className="font-medium">Cho phép học sinh xem điểm</p>
+                <p className="text-sm text-muted-foreground">
+                  Điểm sẽ được hiển thị sau khi hết thời gian làm bài hoặc nộp bài
+                </p>
               </div>
-            )}
-            {quizData.resultDisplay === "after_deadline" && (
-              <div className="mt-2 ml-4 bg-muted/30 p-4 rounded-md">
-                <p className="text-sm">Kết quả hiển thị sau khi hết thời gian làm bài</p>
-              </div>
-            )}
-            {quizData.resultDisplay === "after_submission" && (
-              <div className="mt-2 ml-4 bg-muted/30 p-4 rounded-md">
-                <p className="text-sm">Kết quả hiển thị ngay sau khi nộp bài</p>
-              </div>
-            )}
+              <Switch
+                checked={quizData.reviewScore ?? false}
+                onCheckedChange={(checked) => onChange("reviewScore", checked)}
+              />
+            </div>
           </div>
 
           <div className="flex items-center justify-between">
