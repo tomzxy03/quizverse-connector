@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Plus, FileText, UploadCloud, FolderOpen, BrainCircuit, Database, Trash2 } from "lucide-react";
+import { Plus, FileText, UploadCloud, FolderOpen, BrainCircuit, Database, Trash2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -14,11 +14,22 @@ interface Question {
   points: number;
 }
 
-interface QuestionsSectionProps {
+interface QuizSection {
+  id: string;
+  title: string;
+  description?: string;
   questions: Question[];
-  addQuestion: (question: Question) => void;
-  updateQuestion: (index: number, question: Question) => void;
-  removeQuestion: (index: number) => void;
+}
+
+interface QuestionsSectionProps {
+  sections?: QuizSection[];
+  questions?: Question[];
+  addSection?: (section: QuizSection) => void;
+  updateSection?: (id: string, section: QuizSection) => void;
+  removeSection?: (id: string) => void;
+  addQuestion: (sectionIdOrQuestion: string | Question, questionOrIndex?: Question | number, question?: Question) => void;
+  updateQuestion: (sectionIdOrIndex: string | number, indexOrQuestion?: number | Question, question?: Question) => void;
+  removeQuestion: (sectionIdOrIndex: string | number, index?: number) => void;
   quizData: {
     questionNumbering: string;
     questionsPerPage: number;
@@ -34,7 +45,31 @@ const safeNum = (v: string, fallback: number) => {
   return Number.isNaN(n) ? fallback : n;
 };
 
-const QuestionsSection = ({ questions, addQuestion, updateQuestion, removeQuestion, quizData, onChange }: QuestionsSectionProps) => {
+const QuestionsSection = ({ 
+  sections: propSections,
+  questions: propQuestions,
+  addSection, 
+  updateSection, 
+  removeSection, 
+  addQuestion, 
+  updateQuestion, 
+  removeQuestion, 
+  quizData, 
+  onChange 
+}: QuestionsSectionProps) => {
+  // Handle both old (flat questions) and new (sections) format
+  const isLegacyMode = !propSections && propQuestions;
+  const initialSections: QuizSection[] = isLegacyMode
+    ? [{
+        id: "default-section",
+        title: "Phần 1",
+        description: "",
+        questions: propQuestions || [],
+      }]
+    : (propSections || []);
+
+  const [internalSections, setInternalSections] = useState<QuizSection[]>(initialSections);
+  
   const shuffleValue =
     quizData.randomizeQuestions && quizData.randomizeOptions
       ? "trộn tất cả"
@@ -63,8 +98,12 @@ const QuestionsSection = ({ questions, addQuestion, updateQuestion, removeQuesti
         onChange("randomizeOptions", false);
     }
   };
-  const [sectionTitle, setSectionTitle] = useState("Phần 1");
+
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    new Set(internalSections.map((s) => s.id))
+  );
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(internalSections[0]?.id || null);
   const [currentQuestion, setCurrentQuestion] = useState<Question>({
     id: `q-${Date.now()}`,
     text: "",
@@ -79,6 +118,18 @@ const QuestionsSection = ({ questions, addQuestion, updateQuestion, removeQuesti
 
   const [selectedOption, setSelectedOption] = useState<string | undefined>(undefined);
 
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId);
+      } else {
+        newSet.add(sectionId);
+      }
+      return newSet;
+    });
+  };
+
   const handleOptionSelect = (optionId: string) => {
     setSelectedOption(optionId);
     const updatedOptions = currentQuestion.options.map((opt) => ({
@@ -89,15 +140,39 @@ const QuestionsSection = ({ questions, addQuestion, updateQuestion, removeQuesti
   };
 
   const handleSaveQuestion = () => {
-    if (editingIndex !== null) {
-      // Update existing question
-      updateQuestion(editingIndex, currentQuestion);
+    if (!activeSectionId) return;
+
+    if (isLegacyMode) {
+      // Legacy mode: pass question to parent callback
+      if (editingIndex !== null) {
+        updateQuestion(editingIndex, currentQuestion);
+      } else {
+        addQuestion(currentQuestion);
+      }
     } else {
-      // Add new question
-      addQuestion(currentQuestion);
+      // New mode: pass sectionId and index
+      if (editingIndex !== null) {
+        updateQuestion(activeSectionId, editingIndex, currentQuestion);
+      } else {
+        addQuestion(activeSectionId, currentQuestion);
+      }
     }
     
-    // Reset form
+    // Update internal state AFTER calling parent callbacks
+    setInternalSections((prev) =>
+      prev.map((s) =>
+        s.id === activeSectionId
+          ? {
+              ...s,
+              questions:
+                editingIndex !== null
+                  ? s.questions.map((q, i) => (i === editingIndex ? currentQuestion : q))
+                  : [...s.questions, currentQuestion],
+            }
+          : s
+      )
+    );
+
     setCurrentQuestion({
       id: `q-${Date.now()}`,
       text: "",
@@ -113,12 +188,15 @@ const QuestionsSection = ({ questions, addQuestion, updateQuestion, removeQuesti
     setEditingIndex(null);
   };
 
-  const handleEditQuestion = (index: number) => {
-    const question = questions[index];
+  const handleEditQuestion = (sectionId: string, index: number) => {
+    const section = internalSections.find((s) => s.id === sectionId);
+    if (!section) return;
+
+    const question = section.questions[index];
     setCurrentQuestion(question);
     setEditingIndex(index);
-    // Find the correct option
-    const correctOption = question.options.find(opt => opt.isCorrect);
+    setActiveSectionId(sectionId);
+    const correctOption = question.options.find((opt) => opt.isCorrect);
     setSelectedOption(correctOption?.id);
   };
 
@@ -138,12 +216,31 @@ const QuestionsSection = ({ questions, addQuestion, updateQuestion, removeQuesti
     setEditingIndex(null);
   };
 
-  const questionNumber = questions.length + 1;
+  const handleAddSection = () => {
+    const newSection: QuizSection = {
+      id: `section-${Date.now()}`,
+      title: `Phần ${internalSections.length + 1}`,
+      description: "",
+      questions: [],
+    };
+    
+    if (isLegacyMode || !addSection) {
+      setInternalSections((prev) => [...prev, newSection]);
+    } else {
+      addSection(newSection);
+    }
+    
+    setActiveSectionId(newSection.id);
+    setExpandedSections((prev) => new Set([...prev, newSection.id]));
+  };
+
+  const activeSection = internalSections.find((s) => s.id === activeSectionId);
+  const questionNumber = (activeSection?.questions.length || 0) + 1;
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-4 border rounded-xl px-6 py-4 shadow-sm">
-        <h3 className="font-medium">{sectionTitle}</h3>
+      <div className="flex flex-wrap items-center justify-between gap-4 border rounded-xl px-6 py-4 shadow-sm bg-white">
+        <h3 className="font-medium text-lg">Cài đặt câu hỏi</h3>
         <div className="flex flex-wrap items-center gap-4">
           <Select value={shuffleValue} onValueChange={handleShuffleChange}>
             <SelectTrigger className="w-36">
@@ -209,123 +306,208 @@ const QuestionsSection = ({ questions, addQuestion, updateQuestion, removeQuesti
         </div>
       </div>
 
-      {questions.map((q, index) => (
-        <div
-          key={q.id}
-          className="border rounded-xl p-6 shadow-sm cursor-pointer hover:border-primary transition-colors group relative"
-          onClick={() => handleEditQuestion(index)}
-        >
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h4 className="font-medium">Câu {index + 1}:</h4>
-              <span className="text-sm text-muted-foreground">{q.points} điểm</span>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive shrink-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                removeQuestion(index);
-                if (editingIndex === index) handleCancelEdit();
-                else if (editingIndex !== null && editingIndex > index) setEditingIndex(editingIndex - 1);
-              }}
-              aria-label="Xóa câu hỏi"
+      {/* Sections Layout */}
+      <div className="space-y-3">
+        {internalSections.map((section) => (
+          <div key={section.id} className="border rounded-xl shadow-sm overflow-hidden">
+            {/* Section Header */}
+            <div
+              className="flex items-center justify-between px-6 py-4 bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors"
+              onClick={() => toggleSection(section.id)}
             >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-          <p className="mb-4">{q.text}</p>
-          <div className="space-y-2">
-            {q.options.map((opt, optIndex) => (
-              <div key={opt.id} className="flex items-center gap-2">
-                <span className="font-medium">{String.fromCharCode(65 + optIndex)}.</span>
-                <p className={opt.isCorrect ? "font-medium text-primary" : ""}>{opt.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-
-      <div className="border rounded-xl p-6 shadow-sm">
-        <div className="flex justify-between mb-4">
-          <h4 className="font-medium">
-            {editingIndex !== null ? `Chỉnh sửa câu ${editingIndex + 1}` : `Câu ${questionNumber}`}:
-          </h4>
-        </div>
-        <Input
-          value={currentQuestion.text}
-          onChange={(e) =>
-            setCurrentQuestion({ ...currentQuestion, text: e.target.value })
-          }
-          placeholder="Nhập nội dung câu hỏi..."
-          className="w-full mb-4"
-        />
-        <RadioGroup
-          value={selectedOption}
-          onValueChange={handleOptionSelect}
-          className="space-y-2"
-        >
-          {currentQuestion.options.map((option, index) => (
-            <div key={option.id} className="flex items-center gap-2">
-              <RadioGroupItem
-                value={option.id}
-                id={option.id}
-                className="mt-1"
-              />
-              <div className="flex gap-2 items-center flex-1">
-                <Label htmlFor={option.id} className="font-medium">
-                  {String.fromCharCode(65 + index)}.
-                </Label>
-                <Input
-                  value={option.text}
-                  onChange={(e) => {
-                    const updatedOptions = [...currentQuestion.options];
-                    updatedOptions[index].text = e.target.value;
-                    setCurrentQuestion({
-                      ...currentQuestion,
-                      options: updatedOptions,
-                    });
-                  }}
-                  placeholder="Câu trả lời chưa có nội dung"
-                  className="flex-1"
+              <div className="flex items-center gap-3 flex-1">
+                <ChevronDown
+                  className={`h-5 w-5 transition-transform ${
+                    expandedSections.has(section.id) ? "rotate-180" : ""
+                  }`}
                 />
+                <div>
+                  <h4 className="font-semibold">{section.title}</h4>
+                  {section.description && (
+                    <p className="text-sm text-muted-foreground">{section.description}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium bg-primary/10 text-primary px-3 py-1 rounded-full">
+                  {section.questions.length} câu hỏi
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isLegacyMode || !removeSection) {
+                      setInternalSections((prev) => prev.filter((s) => s.id !== section.id));
+                    } else {
+                      removeSection(section.id);
+                    }
+                    if (activeSectionId === section.id) {
+                      setActiveSectionId(internalSections[0]?.id || null);
+                    }
+                  }}
+                  aria-label="Xóa phần"
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
               </div>
             </div>
-          ))}
-        </RadioGroup>
-        <div className="mt-4">
-          <div className="flex items-center border rounded p-2 w-max">
-            <Label htmlFor="points" className="mr-2 text-sm">Điểm</Label>
-            <Input
-              id="points"
-              type="number"
-              min="0"
-              value={currentQuestion.points}
-              onChange={(e) =>
-                setCurrentQuestion({
-                  ...currentQuestion,
-                  points: parseInt(e.target.value) || 0,
-                })
-              }
-              className="w-16 h-8 text-sm"
-            />
+
+            {/* Section Content */}
+            {expandedSections.has(section.id) && (
+              <div className="px-6 py-4 space-y-3 bg-white">
+                {/* Questions List */}
+                {section.questions.map((q, index) => (
+                  <div
+                    key={q.id}
+                    className="border rounded-lg p-4 hover:border-primary transition-colors group cursor-pointer"
+                    onClick={() => handleEditQuestion(section.id, index)}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h5 className="font-medium">Câu {index + 1}</h5>
+                        <span className="text-xs text-muted-foreground">{q.points} điểm</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isLegacyMode) {
+                            removeQuestion(index);
+                            setInternalSections((prev) =>
+                              prev.map((s) =>
+                                s.id === section.id
+                                  ? {
+                                      ...s,
+                                      questions: s.questions.filter((_, i) => i !== index),
+                                    }
+                                  : s
+                              )
+                            );
+                          } else {
+                            removeQuestion(section.id, index);
+                          }
+                          if (editingIndex === index && activeSectionId === section.id) {
+                            handleCancelEdit();
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-sm mb-2">{q.text}</p>
+                    <div className="space-y-1">
+                      {q.options.map((opt, optIndex) => (
+                        <div key={opt.id} className="text-xs">
+                          <span className="font-medium">{String.fromCharCode(65 + optIndex)}.</span>
+                          <span className={opt.isCorrect ? "font-semibold text-primary ml-1" : " ml-1"}>
+                            {opt.text}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Add Question Form */}
+                {activeSectionId === section.id && (
+                  <div className="border-t pt-4 mt-4">
+                    <h5 className="font-medium mb-4">
+                      {editingIndex !== null ? `Chỉnh sửa câu ${editingIndex + 1}` : `Câu ${questionNumber}`}
+                    </h5>
+                    <Input
+                      value={currentQuestion.text}
+                      onChange={(e) =>
+                        setCurrentQuestion({ ...currentQuestion, text: e.target.value })
+                      }
+                      placeholder="Nhập nội dung câu hỏi..."
+                      className="w-full mb-4"
+                    />
+                    <RadioGroup
+                      value={selectedOption}
+                      onValueChange={handleOptionSelect}
+                      className="space-y-2 mb-4"
+                    >
+                      {currentQuestion.options.map((option, idx) => (
+                        <div key={option.id} className="flex items-center gap-2">
+                          <RadioGroupItem value={option.id} id={option.id} className="mt-1" />
+                          <div className="flex gap-2 items-center flex-1">
+                            <Label htmlFor={option.id} className="font-medium min-w-fit">
+                              {String.fromCharCode(65 + idx)}.
+                            </Label>
+                            <Input
+                              value={option.text}
+                              onChange={(e) => {
+                                const updatedOptions = [...currentQuestion.options];
+                                updatedOptions[idx].text = e.target.value;
+                                setCurrentQuestion({
+                                  ...currentQuestion,
+                                  options: updatedOptions,
+                                });
+                              }}
+                              placeholder="Câu trả lời chưa có nội dung"
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Label htmlFor="points" className="text-sm">
+                        Điểm
+                      </Label>
+                      <Input
+                        id="points"
+                        type="number"
+                        min="0"
+                        value={currentQuestion.points}
+                        onChange={(e) =>
+                          setCurrentQuestion({
+                            ...currentQuestion,
+                            points: parseInt(e.target.value) || 0,
+                          })
+                        }
+                        className="w-20 text-sm"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      {editingIndex !== null && (
+                        <Button onClick={handleCancelEdit} variant="outline" size="sm">
+                          Hủy
+                        </Button>
+                      )}
+                      <Button onClick={handleSaveQuestion} size="sm" className="bg-primary text-white">
+                        <Plus className="h-4 w-4 mr-1" />
+                        {editingIndex !== null ? "Cập nhật câu hỏi" : "Thêm câu hỏi"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        </div>
+        ))}
       </div>
 
+      {/* Action Buttons */}
       <div className="flex justify-between pt-4">
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 flex-wrap gap-2">
           <Button
+            type="button"
             variant="outline"
             size="sm"
+            onClick={handleAddSection}
             className="flex items-center gap-1"
           >
             <FileText className="h-4 w-4" />
-            <span>Phần</span>
+            <span>Thêm phần</span>
           </Button>
           <Button
+            type="button"
             variant="outline"
             size="sm"
             className="flex items-center gap-1"
@@ -334,6 +516,7 @@ const QuestionsSection = ({ questions, addQuestion, updateQuestion, removeQuesti
             <span>Ngân hàng câu hỏi</span>
           </Button>
           <Button
+            type="button"
             variant="outline"
             size="sm"
             className="flex items-center gap-1"
@@ -342,6 +525,7 @@ const QuestionsSection = ({ questions, addQuestion, updateQuestion, removeQuesti
             <span>Tải file lên</span>
           </Button>
           <Button
+            type="button"
             variant="outline"
             size="sm"
             className="flex items-center gap-1"
@@ -350,30 +534,13 @@ const QuestionsSection = ({ questions, addQuestion, updateQuestion, removeQuesti
             <span>Thư viện</span>
           </Button>
           <Button
+            type="button"
             variant="outline"
             size="sm"
             className="flex items-center gap-1"
           >
             <BrainCircuit className="h-4 w-4" />
             <span>AI</span>
-          </Button>
-        </div>
-        <div className="flex gap-2">
-          {editingIndex !== null && (
-            <Button
-              onClick={handleCancelEdit}
-              variant="outline"
-              className="flex items-center gap-1"
-            >
-              <span>Hủy</span>
-            </Button>
-          )}
-          <Button
-            onClick={handleSaveQuestion}
-            className="flex items-center gap-1 bg-primary text-white"
-          >
-            <Plus className="h-4 w-4" />
-            <span>{editingIndex !== null ? "Cập nhật câu hỏi" : "Thêm câu hỏi"}</span>
           </Button>
         </div>
       </div>

@@ -6,6 +6,7 @@ interface Props {
   activeTab: ContentTab;
   onChange: (tab: ContentTab) => void;
   canManage: boolean;
+  groupId: string;
 }
 
 const TabButton = ({
@@ -25,10 +26,9 @@ const TabButton = ({
     className={`
       px-4 py-3 flex items-center gap-2 text-sm font-medium shrink-0
       border-b-2 transition-colors
-      ${
-        active
-          ? 'border-primary text-primary'
-          : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50'
+      ${active
+        ? 'border-primary text-primary'
+        : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50'
       }
     `}
   >
@@ -37,30 +37,35 @@ const TabButton = ({
   </button>
 );
 
-const GroupTabs = ({ activeTab, onChange, canManage }: Props) => {
+const GroupTabs = ({ activeTab, onChange, canManage, groupId }: Props) => {
+  const handleTabChange = (tab: ContentTab) => {
+    onChange(tab);
+    window.history.pushState(null, '', `/groups/${groupId}/${tab}`);
+  };
+
   return (
     <div className="bg-card border-b border-border flex overflow-x-auto">
       <TabButton
         active={activeTab === 'announcements'}
-        onClick={() => onChange('announcements')}
+        onClick={() => handleTabChange('announcements')}
         icon={Bell}
         label="Thông báo"
       />
       <TabButton
         active={activeTab === 'quizzes'}
-        onClick={() => onChange('quizzes')}
+        onClick={() => handleTabChange('quizzes')}
         icon={FileText}
         label="Bài tập"
       />
       <TabButton
         active={activeTab === 'members'}
-        onClick={() => onChange('members')}
+        onClick={() => handleTabChange('members')}
         icon={Users}
         label="Thành viên"
       />
       <TabButton
         active={activeTab === 'shared'}
-        onClick={() => onChange('shared')}
+        onClick={() => handleTabChange('shared')}
         icon={Share2}
         label="Chia sẻ"
       />

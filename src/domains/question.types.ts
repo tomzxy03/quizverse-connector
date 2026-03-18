@@ -26,18 +26,24 @@ export interface AnswerResDTO {
 
 // === Request DTOs (to BE) ===
 
+export interface QuizQuestionReqDTO {
+  questionId?: number;
+  questionReqDTO: QuestionReqDTO;
+  points?: number;
+}
+
 // Matches BE QuestionReqDTO
 export interface QuestionReqDTO {
   questionName: string;
-  questionType: QuestionType;
-  level: QuestionLevel;
+  questionType: QuestionType | 'TEXT' | 'IMAGE';
+  level?: QuestionLevel;
   answers: AnswerReqDTO[];
 }
 
 // Matches BE AnswerReqDTO
 export interface AnswerReqDTO {
   answerName: string;
-  answerType: AnswerType;
+  answerType: AnswerType | 'TEXT' | 'IMAGE';
   answerCorrect?: boolean;
 }
 

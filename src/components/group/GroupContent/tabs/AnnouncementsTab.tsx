@@ -5,11 +5,20 @@ import { Button } from '@/components/ui/button';
 import { groupService } from '@/services';
 import { useLazyLoad } from '@/hooks'
 
-const AnnouncementsTab = ({ canManage }: { canManage: boolean }) => {
-  const { id } = useParams<{ id: string }>();
+const AnnouncementsTab = ({ canManage, groupId: propGroupId }: { canManage: boolean; groupId?: string }) => {
+  const { id: paramId } = useParams<{ id: string }>();
+  const id = propGroupId || paramId;
 
   const fetchFn = useCallback(
     async (page: number, size: number) => {
+      if (!id) {
+        return {
+          items: [],
+          total_page: 0,
+          total: 0,
+          page,
+        };
+      }
       return await groupService.getAnnouncements(Number(id), page, size);
     },
     [id]

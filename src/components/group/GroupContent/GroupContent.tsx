@@ -1,5 +1,5 @@
 // GroupContent/GroupContent.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Group, ContentTab } from './types';
 import GroupHeader from './GroupHeader';
 import GroupTabs from './GroupTab';
@@ -13,8 +13,21 @@ interface Props {
   group: Group;
 }
 
+import { useParams } from 'react-router-dom';
+
 const GroupContent = ({ group }: Props) => {
-  const [activeTab, setActiveTab] = useState<ContentTab>('announcements');
+  const { tab } = useParams<{ tab: string }>();
+  const validTabs: ContentTab[] = ['announcements', 'quizzes', 'members', 'shared'];
+  const initialTab = validTabs.includes(tab as ContentTab) ? (tab as ContentTab) : 'announcements';
+
+  const [activeTab, setActiveTab] = useState<ContentTab>(initialTab);
+
+  // Sync state if URL changes (e.g., from browser back/forward buttons)
+  useEffect(() => {
+    if (tab && validTabs.includes(tab as ContentTab) && tab !== activeTab) {
+      setActiveTab(tab as ContentTab);
+    }
+  }, [tab]);
 
   const canManage = group.role === 'OWNER' || group.role === 'ADMIN';
 
@@ -25,17 +38,18 @@ const GroupContent = ({ group }: Props) => {
         activeTab={activeTab}
         onChange={setActiveTab}
         canManage={canManage}
+        groupId={group.id}
       />
 
       <div className="flex-1 overflow-y-auto p-6 bg-background">
         {activeTab === 'announcements' && (
-          <AnnouncementsTab canManage={canManage} />
+          <AnnouncementsTab canManage={canManage} groupId={group.id} />
         )}
         {activeTab === 'quizzes' && (
-          <QuizzesTab canManage={canManage} />
+          <QuizzesTab canManage={canManage} groupId={group.id} />
         )}
         {activeTab === 'members' && (
-          <MembersTab canManage={canManage} />
+          <MembersTab canManage={canManage} groupId={group.id} />
         )}
         {activeTab === 'shared' && (
           <SharedTab group={group} />

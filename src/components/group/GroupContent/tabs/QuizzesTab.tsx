@@ -7,12 +7,21 @@ import { groupService } from '@/services';
 import type { QuizResDTO } from '@/domains';
 import { useLazyLoad } from '@/hooks';
 
-const QuizzesTab = ({ canManage }: { canManage: boolean }) => {
+const QuizzesTab = ({ canManage, groupId: propGroupId }: { canManage: boolean; groupId?: string }) => {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const { id: paramId } = useParams<{ id: string }>();
+  const id = propGroupId || paramId;
 
   const fetchFn = useCallback(
     async (page: number, size: number) => {
+      if (!id) {
+        return {
+          items: [],
+          total_page: 0,
+          total: 0,
+          page,
+        };
+      }
       return await groupService.getGroupQuizzes(Number(id), page, size);
     },
     [id]
@@ -43,7 +52,7 @@ const QuizzesTab = ({ canManage }: { canManage: boolean }) => {
             />
           </div>
           {canManage && (
-            <Button size="sm" onClick={() => navigate('/groups/add-quiz')}>
+            <Button size="sm" onClick={() => navigate(`/groups/${id}/add-quiz`)}>
               <PlusCircle className="h-4 w-4 mr-2" />
               Thêm quiz
             </Button>

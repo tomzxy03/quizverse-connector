@@ -7,3 +7,4 @@ export * from './group.service';
 export * from './user.service';
 export * from './dashboard.service';
 export * from './role.service';
+export * from './question.service';

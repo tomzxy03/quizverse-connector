@@ -6,27 +6,44 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { groupService } from '@/services';
 import { useLazyLoad } from '@/hooks';
 
-const MembersTab = ({ canManage }: { canManage: boolean }) => {
-  const { id } = useParams<{ id: string }>();
+const MembersTab = ({ canManage, groupId: propGroupId }: { canManage: boolean; groupId?: string }) => {
+  const { groupId: paramGroupId } = useParams<{ groupId: string }>();
+  const groupId = propGroupId || paramGroupId;
 
   const fetchFn = useCallback(
     async (page: number, size: number) => {
-      return await groupService.getGroupMembers(Number(id), page, size);
+      if (!groupId) {
+        return {
+          items: [],
+          total_page: 0,
+          total: 0,
+          page,
+        };
+      }
+
+      const res = await groupService.getGroupMembers(Number(groupId), page, size);
+
+      return {
+        items: res.items,
+        total_page: res.total_page,
+        total: res.total,
+        page: res.page,
+      };
     },
-    [id]
+    [groupId]
   );
 
   const { data: members, loading, hasMore, loadMore, fetch, error } = useLazyLoad<any>(fetchFn, {
     initialPage: 0,
     pageSize: 20,
-    cacheEnabled: true,
+    cacheEnabled: false,
   });
 
   useEffect(() => {
-    if (id) {
+    if (groupId) {
       fetch(0, false);
     }
-  }, [id, fetch]);
+  }, [groupId, fetch]);
 
   return (
     <div className="space-y-4">
@@ -71,7 +88,7 @@ const MembersTab = ({ canManage }: { canManage: boolean }) => {
                 </Avatar>
                 <div className="min-w-0">
                   <p className="font-medium text-foreground truncate">{m.name || m.userName}</p>
-                  <p className="text-xs text-muted-foreground">{m.role || 'Thành viên'}</p>
+                  <p className="text-xs text-muted-foreground">{m.roleName ? 'Chủ nhóm' : 'Thành viên'}</p>
                 </div>
               </li>
             ))}

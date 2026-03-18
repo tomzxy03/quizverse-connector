@@ -112,7 +112,10 @@ const GroupSidebar = ({
                     <button
                       type="button"
                       className="flex-1 text-left flex items-start gap-2 min-w-0"
-                      onClick={() => onGroupSelect(group)}
+                      onClick={() => {
+                        onGroupSelect(group);
+                        window.history.pushState(null, '', `/groups/${group.id}`);
+                      }}
                     >
                       {activeTab === 'owned' ? (
                         <Users className="h-4 w-4 mt-0.5 shrink-0" />
@@ -151,7 +154,7 @@ const GroupSidebar = ({
                     <div className="absolute right-2 top-9 z-10 w-36 rounded-md border border-border bg-popover shadow-md py-1 text-xs">
                       <button
                         type="button"
-                        className="w-full px-3 py-2 text-left hover:bg-muted transition-colors"
+                        className="w-full px-3 py-2 text-left hover:bg-muted transition-colors "
                         onClick={(event) => {
                           event.stopPropagation();
                           handleEditGroup(group);

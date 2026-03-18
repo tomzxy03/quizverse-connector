@@ -3,7 +3,22 @@ import { LobbyResDTO, LobbyReqDTO, LobbyQuizResDTO, NotificationReqDTO } from '@
 import { QuizReqDTO } from '@/domains/quiz.types';
 import { PageResponse } from '@/core/types';
 
+/**
+ * Group Service
+ * Business logic layer for group operations
+ * 
+ * Architecture: Service → Repository → API Client → API Endpoints
+ * 
+ * Responsibilities:
+ * - Validate input data
+ * - Transform data between DTOs
+ * - Handle business logic and rules
+ * - Error handling and logging
+ * - Call appropriate repository methods
+ */
 export class GroupService {
+  // ===== Group Management =====
+  
   async getAllGroups(page: number = 0, size: number = 10, search?: string): Promise<PageResponse<LobbyResDTO>> {
     return await groupRepository.getAll(page, size, search);
   }
@@ -30,6 +45,27 @@ export class GroupService {
     return await groupRepository.delete(id);
   }
 
+  async getOwnedGroups(page: number = 0, size: number = 10): Promise<PageResponse<LobbyResDTO>> {
+    return await groupRepository.getOwnedGroups(page, size);
+  }
+
+  async getJoinedGroups(page: number = 0, size: number = 10): Promise<PageResponse<LobbyResDTO>> {
+    return await groupRepository.getJoinedGroups(page, size);
+  }
+
+  async leaveGroup(groupId: number): Promise<void> {
+    return await groupRepository.leaveGroup(groupId);
+  }
+
+  // ===== Members Management =====
+
+  /**
+   * Get members of a specific group with pagination
+   * @param groupId - The group identifier
+   * @param page - Page number (0-based)
+   * @param size - Items per page
+   * @returns Paginated list of group members
+   */
   async getGroupMembers(groupId: number, page: number = 0, size: number = 10): Promise<PageResponse<any>> {
     return await groupRepository.getMembers(groupId, page, size);
   }
@@ -38,6 +74,15 @@ export class GroupService {
     return await groupRepository.removeMember(groupId, userId);
   }
 
+  // ===== Quizzes Management =====
+
+  /**
+   * Get quizzes associated with a specific group with pagination
+   * @param groupId - The group identifier
+   * @param page - Page number (0-based)
+   * @param size - Items per page
+   * @returns Paginated list of group quizzes
+   */
   async getGroupQuizzes(groupId: number, page: number = 0, size: number = 10): Promise<PageResponse<any>> {
     return await groupRepository.getQuizzes(groupId, page, size);
   }
@@ -54,6 +99,15 @@ export class GroupService {
     return await groupRepository.removeQuiz(groupId, quizId);
   }
 
+  // ===== Announcements Management =====
+
+  /**
+   * Get announcements for a specific group with pagination
+   * @param groupId - The group identifier
+   * @param page - Page number (0-based)
+   * @param size - Items per page
+   * @returns Paginated list of announcements
+   */
   async getAnnouncements(groupId: number, page: number = 0, size: number = 10): Promise<PageResponse<any>> {
     return await groupRepository.getAnnouncements(groupId, page, size);
   }
@@ -75,19 +129,6 @@ export class GroupService {
   async deleteAnnouncement(groupId: number, announcementId: number): Promise<void> {
     return await groupRepository.deleteAnnouncement(groupId, announcementId);
   }
-
-  async getOwnedGroups(page: number = 0, size: number = 10): Promise<PageResponse<any>> {
-    return await groupRepository.getOwnedGroups(page, size);
-  }
-
-  async getJoinedGroups(page: number = 0, size: number = 10): Promise<PageResponse<any>> {
-    return await groupRepository.getJoinedGroups(page, size);
-  }
-
-  async leaveGroup(groupId: number): Promise<void> {
-    return await groupRepository.leaveGroup(groupId);
-  }
-
 }
 
 export const groupService = new GroupService();

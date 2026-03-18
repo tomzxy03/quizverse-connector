@@ -1,5 +1,5 @@
 import { quizRepository } from '@/repositories';
-import { QuizResDTO, QuizReqDTO, QuizFilter, QuizDetailResDTO } from '@/domains';
+import { QuizResDTO, QuizReqDTO, QuizFilter, QuizDetailResDTO, QuestionResDTO } from '@/domains';
 import { QuizInstanceResDTO } from '@/domains';
 import { PageResponse } from '@/core/types';
 
@@ -31,12 +31,9 @@ export class QuizService {
     return await quizRepository.getActiveInstance(quizId);
   }
 
-  async createQuiz(data: QuizReqDTO): Promise<void> {
+  async createQuiz(data: QuizReqDTO): Promise<QuizResDTO> {
     if (!data.title || data.title.trim().length === 0) {
       throw new Error('Quiz title is required');
-    }
-    if (!data.questionIds || data.questionIds.length === 0) {
-      throw new Error('Quiz must have at least one question');
     }
     return await quizRepository.create(data);
   }
@@ -48,6 +45,15 @@ export class QuizService {
   async deleteQuiz(id: number): Promise<void> {
     return await quizRepository.delete(id);
   }
+
+  /** Fetch questions belonging to a quiz (for edit mode) */
+  async getQuizQuestions(quizId: number): Promise<QuestionResDTO[]> {
+    return await quizRepository.getQuestions(quizId);
+  }
+
+createGroupQuiz(groupId: number, data: QuizReqDTO) {
+  return quizRepository.createForGroup(groupId, data);
+}
 }
 
 export const quizService = new QuizService();

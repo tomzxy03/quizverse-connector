@@ -11,34 +11,45 @@ export interface QuizResDTO {
   description?: string;
   totalQuestion: number;
   timeLimitMinutes?: number;
-  maxAttempts?: number;
+  maxAttempt?: number;
   quizVisibility: QuizVisibility;
   status: QuizStatus;
   hostName: string;
   lobbyName?: string;
 }
 
-// Matches BE QuizConfig – Quiz configuration settings
+export interface LobbyQuizResDTO {
+  id: number;
+  quizzes: QuizResDTO[];
+}
+
 export interface QuizConfig {
   shuffleQuestions?: boolean;
   shuffleAnswers?: boolean;
+  autoDistributePoints?: boolean;
   showScoreImmediately?: boolean;
   allowReview?: boolean;
-  maxAttempts?: number;
   passingScore?: number;
+}
+
+export interface QuestionLayout {
+  questionNumbering?: string;
+  questionPerPage?: number;
+  answerPerRow?: number;
 }
 
 // Matches BE QuizDetailResDTO – returned by GET /api/quizzes/{quizId}
 export interface QuizDetailResDTO {
   quiz: QuizResDTO;
   quizConfig?: QuizConfig;
+  questionLayout?: QuestionLayout;
   attemptState: AttemptState;
   instanceId?: number;
   totalAttempt: number;
 }
 
 // Possible attempt states from backend
-export type AttemptState = 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'EXPIRED';
+export type AttemptState = 'NONE' | 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'EXPIRED';
 
 // === Request DTOs (to BE) ===
 
@@ -48,11 +59,12 @@ export interface QuizReqDTO {
   description?: string;
   visibility?: QuizVisibility;
   timeLimitMinutes?: number;
-  maxAttempts?: number;
+  maxAttempt?: number;
   startDate?: string;
   subjectId: number;
-  questionIds: number[];
   public?: boolean;
+  quizConfig?: QuizConfig;
+  questionLayout?: QuestionLayout;
 }
 
 export interface QuizFilter {
@@ -84,12 +96,14 @@ export interface CreateQuizRequest {
   description?: string;
   subject: string;
   estimatedTime: number;
-  isPublic: boolean;
+  visibility: QuizVisibility;
   questions: Array<{
+    id: string;
     text: string;
-    type: "multiple_choice";
+    type: "text";
     points: number;
     options: Array<{
+      id: string;
       text: string;
       isCorrect: boolean;
     }>;
@@ -100,6 +114,12 @@ export interface CreateQuizRequest {
     showCorrectAnswers: boolean;
     maxAttempts: number;
     timeLimit: number;
+    autoDistributePoints: boolean;
+    allowReview: boolean;
+    passingScore: number;
+    questionNumbering: string;
+    questionPerPage: number;
+    answerPerRow: number;
   };
 }
 

@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { groupService } from '@/services/group.service';
 import { useAuth } from '@/contexts/AuthContext';
 
+import { useParams } from 'react-router-dom';
+
 interface Group {
   id: string;
   name: string;
@@ -16,6 +18,7 @@ interface Group {
 }
 
 const Groups = () => {
+  const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
   const [groups, setGroups] = useState<Group[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,6 +64,15 @@ const Groups = () => {
   useEffect(() => {
     fetchGroups();
   }, []);
+
+  useEffect(() => {
+    if (groupId && groups.length > 0 && selectedGroup?.id !== groupId) {
+      const found = groups.find((g) => g.id === groupId);
+      if (found) {
+        setSelectedGroup(found);
+      }
+    }
+  }, [groupId, groups, selectedGroup]);
 
   const handleGroupSelect = (group: Group) => {
     setSelectedGroup(group);

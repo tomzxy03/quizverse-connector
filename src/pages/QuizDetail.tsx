@@ -33,6 +33,11 @@ import {
 import { quizService } from '@/services';
 import type { QuizResDTO, AttemptState, QuizConfig } from '@/domains';
 import { useAuth } from '@/contexts';
+import {
+  ATTEMPT_STATE_LABELS,
+  getAttemptStateColor,
+  getAttemptStateBadgeVariant,
+} from '@/core/constants';
 const QuizDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -45,7 +50,7 @@ const QuizDetailPage = () => {
   const [totalAttempt, setTotalAttempt] = useState<number | null>(0);
   const [quizConfig, setQuizConfig] = useState<QuizConfig | null>(null);
   const [startConfirmOpen, setStartConfirmOpen] = useState(false);
-  
+
   const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
@@ -94,9 +99,10 @@ const QuizDetailPage = () => {
     setIsStarting(true);
     try {
       const instance = await quizService.startQuiz(Number(id));
+      console.log('Quiz started, instance:', instance);
       navigate(`/quiz/${id}/take/${instance.id}`, {
         state: instance
-    });
+      });
     } catch (err) {
       console.error('Failed to start quiz:', err);
       setError('Không thể bắt đầu quiz. Vui lòng thử lại.');
@@ -107,7 +113,7 @@ const QuizDetailPage = () => {
 
   const handleContinueQuiz = () => {
     if (!id) return;
-    navigate(`/quiz/${id}/take`);
+    navigate(`/quiz/${id}/take/${instanceId}`);
   };
 
   const handleViewResult = () => {
@@ -157,17 +163,10 @@ const QuizDetailPage = () => {
   }
 
   const maxScore = quizConfig?.passingScore ?? quiz.totalQuestion * 10;
-  const maxAttempts = quizConfig?.maxAttempts;
+  const maxAttempts = quiz.maxAttempt;
   const canRetry = maxAttempts ? totalAttempt < maxAttempts : true;
   const accessBadgeLabel =
     visibility === 'PUBLIC' ? 'Công khai' : visibility === 'GROUP' ? 'Nhóm' : 'Bản nháp';
-
-  const statusLabel: Record<AttemptState, string> = {
-    NOT_STARTED: 'Chưa tham gia',
-    IN_PROGRESS: 'Đang làm dở',
-    SUBMITTED: 'Đã nộp bài',
-    EXPIRED: 'Đã hết hạn',
-  };
 
   const StatusIcon = () => {
     switch (attemptState) {
@@ -266,13 +265,12 @@ const QuizDetailPage = () => {
                       {maxAttempts && (
                         <div className="mt-2 w-full overflow-hidden rounded-full bg-muted h-2">
                           <div
-                            className={`h-full transition-all ${
-                              totalAttempt >= maxAttempts
+                            className={`h-full transition-all ${totalAttempt >= maxAttempts
                                 ? 'bg-destructive'
                                 : totalAttempt >= maxAttempts * 0.75
-                                ? 'bg-amber-500'
-                                : 'bg-emerald-500'
-                            }`}
+                                  ? 'bg-amber-500'
+                                  : 'bg-emerald-500'
+                              }`}
                             style={{
                               width: `${Math.min((totalAttempt / maxAttempts) * 100, 100)}%`,
                             }}
@@ -337,18 +335,18 @@ const QuizDetailPage = () => {
                     <div className="flex items-center gap-2">
                       <StatusIcon />
                       <span className="text-sm font-medium text-foreground">
-                        {statusLabel[attemptState]}
+                        {ATTEMPT_STATE_LABELS[attemptState]}
                       </span>
                     </div>
                   )}
 
                   {/* Start warning */}
-                  {attemptState === 'NOT_STARTED' && (
+                  {attemptState === 'NONE' || attemptState === 'NOT_STARTED' ? (
                     <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
                       <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                       <p>Thời gian sẽ bắt đầu ngay khi bạn bắt đầu làm bài.</p>
                     </div>
-                  )}
+                  ) : null}
 
                   {/* CTA */}
                   <div className="border-t border-border pt-4 space-y-2">
@@ -371,8 +369,8 @@ const QuizDetailPage = () => {
                       </div>
                     )}
 
-                    {/* Logged-in: NOT_STARTED */}
-                    {user && attemptState === 'NOT_STARTED' && (
+                    {/* Logged-in: NONE or NOT_STARTED */}
+                    {user && (attemptState === 'NONE' || attemptState === 'NOT_STARTED') ? (
                       <Button
                         onClick={handleStartClick}
                         disabled={isStarting}
@@ -382,7 +380,7 @@ const QuizDetailPage = () => {
                         <Play className="mr-2 h-4 w-4" />
                         {isStarting ? 'Đang khởi tạo...' : 'Bắt đầu làm quiz'}
                       </Button>
-                    )}
+                    ) : null}
 
                     {/* Logged-in: IN_PROGRESS */}
                     {user && attemptState === 'IN_PROGRESS' && (
@@ -411,18 +409,18 @@ const QuizDetailPage = () => {
                           </Button>
                         )}
                         {canRetry ? (
-                        <Button
-                          onClick={handleRetry}
-                          disabled={isStarting}
-                          className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                          size="lg"
-                        >
-                          <RotateCcw className="mr-2 h-4 w-4" />
-                          {isStarting ? 'Đang khởi tạo...' : 'Làm lại'}
-                        </Button>
+                          <Button
+                            onClick={handleRetry}
+                            disabled={isStarting}
+                            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                            size="lg"
+                          >
+                            <RotateCcw className="mr-2 h-4 w-4" />
+                            {isStarting ? 'Đang khởi tạo...' : 'Làm lại'}
+                          </Button>
                         ) : (
                           <div className="rounded-lg border border-border bg-muted/50 px-3 py-3 text-center text-sm text-muted-foreground">
-                            Bạn đã đạt giới hạn số lần làm bài ({quiz.maxAttempts} lần)
+                            Bạn đã đạt giới hạn số lần làm bài ({quiz.maxAttempt} lần)
                           </div>
                         )}
                       </>

@@ -1,31 +1,40 @@
 import { useRef, useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { X, Eye, Download, Save, Send, Calendar } from "lucide-react";
 import Header from "@/components/layout/Header";
 import QuizForm, { type QuizFormRef } from "@/components/quiz/QuizForm";
-import { quizService } from "@/services";
-import type { QuizDetailResDTO } from "@/domains";
+import { quizService, questionService } from "@/services";
+import type { QuizDetailResDTO, QuestionResDTO } from "@/domains";
 import { toast } from "@/hooks/use-toast";
 
 const AddQuiz = () => {
+  const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("edit");
   const formRef = useRef<QuizFormRef>(null);
   const [initialQuiz, setInitialQuiz] = useState<QuizDetailResDTO | null>(null);
+  const [initialQuestions, setInitialQuestions] = useState<QuestionResDTO[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!editId) {
       setInitialQuiz(null);
+      setInitialQuestions([]);
       return;
     }
     let cancelled = false;
     setLoading(true);
-    quizService
-      .getQuizById(Number(editId))
-      .then((data) => {
-        if (!cancelled && data) setInitialQuiz(data);
+
+    Promise.all([
+      quizService.getQuizById(Number(editId)),
+      quizService.getQuizQuestions(Number(editId)).catch(() => [] as QuestionResDTO[]),
+    ])
+      .then(([quizData, questions]) => {
+        if (!cancelled && quizData) {
+          setInitialQuiz(quizData);
+          setInitialQuestions(questions);
+        }
       })
       .catch(() => {
         if (!cancelled) toast({ title: "Không tải được bài kiểm tra", variant: "destructive" });
@@ -52,35 +61,86 @@ const AddQuiz = () => {
       return;
     }
     const payload = formRef.current.getPayload();
-    if (!payload) return;
+    if (!payload) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể lấy dữ liệu form. Vui lòng kiểm tra lại.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Debug: Log payload to see what we're sending
+    console.log('📦 Payload:', {
+      title: payload.title,
+      questionsCount: payload.questions.length,
+      questions: payload.questions.map((q, i) => ({
+        index: i,
+        text: q.text.substring(0, 50),
+        optionsCount: q.options.length,
+        hasCorrectAnswer: q.options.some(o => o.isCorrect)
+      }))
+    });
+
+    const subjectId = Number(payload.subject);
+    if (!subjectId || isNaN(subjectId)) {
+      toast({ title: "Vui lòng chọn môn học hợp lệ", variant: "destructive" });
+      return;
+    }
+
     setLoading(true);
     try {
+      const quizReqDTO = {
+        title: payload.title,
+        description: payload.description,
+        timeLimitMinutes: payload.estimatedTime,
+        visibility: payload.visibility,
+        maxAttempt: payload.settings.maxAttempts,
+        subjectId,
+        quizConfig: {
+          shuffleQuestions: payload.settings.randomizeQuestions,
+          shuffleAnswers: payload.settings.randomizeOptions,
+          autoDistributePoints: payload.settings.autoDistributePoints,
+          showScoreImmediately: payload.settings.showCorrectAnswers,
+          allowReview: payload.settings.allowReview,
+          passingScore: payload.settings.passingScore
+        },
+        questionLayout: {
+          questionNumbering: payload.settings.questionNumbering,
+          questionPerPage: payload.settings.questionPerPage,
+          answerPerRow: payload.settings.answerPerRow
+        }
+      };
+
+      let quizId: number;
+
       if (editId) {
-        // For update: transform to QuizReqDTO without id and questionIds
-        await quizService.updateQuiz(Number(editId), {
-          title: payload.title,
-          description: payload.description,
-          timeLimitMinutes: payload.estimatedTime,
-          visibility: payload.isPublic ? "public" : "private",
-          maxAttempts: payload.settings.maxAttempts,
-          subjectId: Number(payload.subject) || 0, // Subject ID extraction
-          questionIds: [], // Will be handled separately
-        });
-        toast({ title: "Đã cập nhật bài kiểm tra" });
+        const updated = await quizService.updateQuiz(Number(editId), quizReqDTO);
+        quizId = updated.id;
       } else {
-        // For create: transform to QuizReqDTO
-        await quizService.createQuiz({
-          title: payload.title,
-          description: payload.description,
-          timeLimitMinutes: payload.estimatedTime,
-          visibility: payload.isPublic ? "public" : "private",
-          maxAttempts: payload.settings.maxAttempts,
-          subjectId: Number(payload.subject) || 0, // Subject ID extraction
-          questionIds: [], // Questions will be handled separately
-        });
-        toast({ title: "Đã tạo bài kiểm tra" });
+        if (groupId) {
+          const response = await quizService.createGroupQuiz(Number(groupId), quizReqDTO);
+          console.log(response);
+          quizId = response.quizzes[0].id;
+        } else {
+          const response = await quizService.createQuiz(quizReqDTO);
+          quizId = response.id;
+        }
+
       }
-      navigate("/groups");
+
+      if (quizId && payload.questions.length > 0) {
+        console.log(payload.questions);
+        if (editId) {
+          await questionService.updateQuestionsToQuiz(quizId, payload.questions);
+        } else {
+          await questionService.addQuestionsToQuiz(quizId, payload.questions);
+        }
+      }
+
+      toast({ title: editId ? "Đã cập nhật bài kiểm tra" : "Đã tạo bài kiểm tra" });
+      // navigation to group quizzes
+      navigate(`/groups/${groupId}/quizzes`);
     } catch (err) {
       toast({
         title: editId ? "Cập nhật thất bại" : "Tạo bài thất bại",
@@ -143,13 +203,13 @@ const AddQuiz = () => {
               <Eye className="h-4 w-4" />
               <span>Xem trước</span>
             </button>
-            <button
+            {/* <button
               type="button"
               className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-muted transition-colors text-foreground"
             >
               <Download className="h-4 w-4" />
               <span>Export</span>
-            </button>
+            </button> */}
             <button
               type="button"
               onClick={handleSaveDraft}
@@ -185,7 +245,7 @@ const AddQuiz = () => {
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         ) : (
-          <QuizForm ref={formRef} initialData={editId ? initialQuiz ?? undefined : undefined} />
+          <QuizForm ref={formRef} initialData={editId ? initialQuiz ?? undefined : undefined} initialQuestions={editId ? initialQuestions : []} />
         )}
       </main>
     </div>

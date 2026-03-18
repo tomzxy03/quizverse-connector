@@ -13,7 +13,7 @@ interface GeneralInfoProps {
     title: string;
     description: string;
     subject: string;
-    isPublic: boolean;
+    visibility: string;
     duration: number;
     useStartTime: boolean;
     useEndTime: boolean;
@@ -133,20 +133,24 @@ const GeneralInfo = ({ quizData, onChange }: GeneralInfoProps) => {
         </Select> */}
       </div>
 
-      <div className="flex items-center justify-between rounded-lg border p-4">
+      <div className="space-y-4">
         <div className="flex items-center gap-3">
           <Globe className="text-muted-foreground" size={20} />
-          <div>
-            <p className="font-medium">Công khai</p>
-            <p className="text-sm text-muted-foreground">
-              Quiz công khai có thể được tìm thấy trong thư viện
-            </p>
-          </div>
+          <Label className="text-base font-medium">Chế độ hiển thị</Label>
         </div>
-        <Switch
-          checked={quizData.isPublic}
-          onCheckedChange={(checked) => onChange("isPublic", checked)}
-        />
+        <Select
+          value={quizData.visibility || "public"}
+          onValueChange={(v) => onChange("visibility", v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Chọn chế độ hiển thị" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="public">Công khai — Có thể tìm thấy trong thư viện</SelectItem>
+            <SelectItem value="private">Riêng tư — Chỉ người được mời mới xem được</SelectItem>
+            <SelectItem value="class_only">Chỉ trong lớp — Chỉ thành viên lớp mới xem được</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <div className="space-y-4">
         <div className="flex items-center gap-3">
@@ -179,7 +183,7 @@ const GeneralInfo = ({ quizData, onChange }: GeneralInfoProps) => {
                 <span className="ml-4">Phút</span>
               </div>
             </div>
-            
+
           </div>
 
           <div className="space-y-2">
@@ -196,20 +200,20 @@ const GeneralInfo = ({ quizData, onChange }: GeneralInfoProps) => {
               </div>
             </div>
             {quizData.useStartTime && (
-            <div className="mt-2 pl-10 flex flex-wrap gap-4">
-              <Input
-                type="time"
-                value={quizData.startTime}
-                onChange={(e) => onChange("startTime", e.target.value)}
-                className="w-36"
-              />
-              <Input
-                type="date"
-                value={quizData.startDate}
-                onChange={(e) => onChange("startDate", e.target.value)}
-                className="w-40"
-              />
-            </div>
+              <div className="mt-2 pl-10 flex flex-wrap gap-4">
+                <Input
+                  type="time"
+                  value={quizData.startTime}
+                  onChange={(e) => onChange("startTime", e.target.value)}
+                  className="w-36"
+                />
+                <Input
+                  type="date"
+                  value={quizData.startDate}
+                  onChange={(e) => onChange("startDate", e.target.value)}
+                  className="w-40"
+                />
+              </div>
             )}
           </div>
 
@@ -227,20 +231,20 @@ const GeneralInfo = ({ quizData, onChange }: GeneralInfoProps) => {
               </div>
             </div>
             {quizData.useEndTime && (
-            <div className="mt-2 pl-10 flex flex-wrap gap-4">
-              <Input
-                type="time"
-                value={quizData.endTime}
-                onChange={(e) => onChange("endTime", e.target.value)}
-                className="w-36"
-              />
-              <Input
-                type="date"
-                value={quizData.endDate}
-                onChange={(e) => onChange("endDate", e.target.value)}
-                className="w-40"
-              />
-            </div>
+              <div className="mt-2 pl-10 flex flex-wrap gap-4">
+                <Input
+                  type="time"
+                  value={quizData.endTime}
+                  onChange={(e) => onChange("endTime", e.target.value)}
+                  className="w-36"
+                />
+                <Input
+                  type="date"
+                  value={quizData.endDate}
+                  onChange={(e) => onChange("endDate", e.target.value)}
+                  className="w-40"
+                />
+              </div>
             )}
           </div>
         </div>
