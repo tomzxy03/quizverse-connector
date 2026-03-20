@@ -35,16 +35,45 @@ export interface QuizQuestionReqDTO {
 // Matches BE QuestionReqDTO
 export interface QuestionReqDTO {
   questionName: string;
-  questionType: QuestionType | 'TEXT' | 'IMAGE';
-  level?: QuestionLevel;
+  questionType: QuestionType | 'text' | 'image';
   answers: AnswerReqDTO[];
 }
 
 // Matches BE AnswerReqDTO
 export interface AnswerReqDTO {
   answerName: string;
-  answerType: AnswerType | 'TEXT' | 'IMAGE';
-  answerCorrect?: boolean;
+  answerType: AnswerType | 'text' | 'image';
+  answerCorrect: boolean;
+}
+
+export interface QBankAnswerReqDTO {
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface QBankAnswerResDTO {
+  id: number;
+  text: string;
+  isCorrect: boolean;
+}
+
+// Backend expects SINGLE question wrapped in folder context
+export interface QuestionFolderReqDTO {
+  folderId?: number | null;
+  questions: QuestionReqDTO;
+}
+
+export interface QuestionFolderResDTO {
+  id: number;
+  questionName: string;
+  type: string;
+  level?: string;
+  bankId: number;
+  folderId?: number;
+  folderName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  answers: QBankAnswerResDTO[];
 }
 
 // === Aliases ===

@@ -8,3 +8,5 @@ export * from './user.service';
 export * from './dashboard.service';
 export * from './role.service';
 export * from './question.service';
+export * from './question-bank.service';
+export * from './folder.service';

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import { useAuth } from '@/contexts';
 
 const ExamHistory = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [examHistory, setExamHistory] = useState<AttemptResDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -143,7 +145,11 @@ const ExamHistory = () => {
                             </div>
                           </div>
                         </div>
-                        <Button variant="link" className="text-primary p-0 shrink-0">
+                        <Button
+                          variant="link"
+                          className="text-primary p-0 shrink-0"
+                          onClick={() => navigate(`/history/${exam.id}`)}
+                        >
                           Xem chi tiết
                         </Button>
                       </li>

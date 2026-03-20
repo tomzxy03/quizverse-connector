@@ -35,6 +35,30 @@ export const API_ENDPOINTS = {
     QUIZ_COUNT: '/subjects/quiz_count',
   },
 
+  // Question Banks
+  QUESTION_BANKS: {
+    BASE: '/question-banks',
+    MY_BANK: '/question-banks/my-bank',
+  },
+
+  // Folders
+  FOLDERS: {
+    BASE: '/folders',
+    BY_ID: (folderId: number) => `/folders/${folderId}`,
+    ROOT: '/folders/root',
+    TREE: '/folders/tree',
+    MOVE: (folderId: number) => `/folders/${folderId}/move`,
+  },
+
+  // Question Folders
+  QUESTION_FOLDERS: {
+    BASE: '/questions-folder',
+    BY_ID: (questionId: number) => `/questions-folder/${questionId}`,
+    MOVE: (questionId: number) => `/questions-folder/${questionId}/move`,
+    ROOT: '/questions-folder/root',
+    BY_FOLDER: (folderId: number) => `/questions-folder/folder/${folderId}`,
+  },
+
   // Quizzes
   QUIZZES: {
     BASE: '/quizzes',

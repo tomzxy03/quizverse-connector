@@ -18,6 +18,8 @@ import QuizTakingPage from "./pages/QuizTaking";
 import QuizResultPage from "./pages/QuizResult";
 import QuestionBankPage from "./pages/QuestionBank";
 import ApiDocs from "./pages/ApiDocs";
+import Profile from "./pages/Profile";
+import HistoryResultDetail from "./pages/HistoryResultDetail";
 import { HomeOrDashboard } from "./components/HomeOrDashboard";
 import GroupLayout from "./components/group/GroupLayout";
 import { GroupAnnouncementsTab, GroupQuizzesTab, GroupMembersTab, GroupSharedTab } from "./components/group/tabs";
@@ -88,10 +90,26 @@ const App = () => (
                 }
               />
               <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/history"
                 element={
                   <ProtectedRoute>
                     <ExamHistory />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/history/:attemptId"
+                element={
+                  <ProtectedRoute>
+                    <HistoryResultDetail />
                   </ProtectedRoute>
                 }
               />

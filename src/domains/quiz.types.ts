@@ -18,10 +18,6 @@ export interface QuizResDTO {
   lobbyName?: string;
 }
 
-export interface LobbyQuizResDTO {
-  id: number;
-  quizzes: QuizResDTO[];
-}
 
 export interface QuizConfig {
   shuffleQuestions?: boolean;

@@ -94,7 +94,7 @@ export default function QuestionContent({
         </h2>
       </div>
 
-      {question.questionType === 'IMAGE' && (
+      {question.questionType === 'image' && (
         <div className="relative group overflow-hidden rounded-2xl border border-border bg-muted/30 aspect-video flex items-center justify-center">
           <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
           {/* In a real app, img tag with question.questionImage would be here */}
@@ -110,14 +110,14 @@ export default function QuestionContent({
               key={answer.id}
               onClick={() => handleOptionSelect(answer.id)}
               className={`group relative flex items-center gap-4 w-full p-4 rounded-xl border-2 transition-all duration-200 text-left hover:shadow-md ${isSelected
-                  ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
-                  : 'border-border hover:border-primary/40 hover:bg-muted/30'
+                ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                : 'border-border hover:border-primary/40 hover:bg-muted/30'
                 }`}
             >
               <div
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 text-base font-bold transition-colors ${isSelected
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-muted-foreground/20 text-muted-foreground group-hover:border-primary/40'
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-muted-foreground/20 text-muted-foreground group-hover:border-primary/40'
                   }`}
               >
                 {answer.optionLabel || String.fromCharCode(64 + answer.displayOrder + 1)}

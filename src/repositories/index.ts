@@ -9,3 +9,5 @@ export * from './notification.repository';
 export * from './quiz-instance.repository';
 export * from './role.repository';
 export * from './question.repository';
+export * from './question-bank.repository';
+export * from './folder.repository';

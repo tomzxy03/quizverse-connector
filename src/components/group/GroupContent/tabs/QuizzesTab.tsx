@@ -1,9 +1,12 @@
-import { useEffect, useCallback } from 'react';
-import { PlusCircle, Search, Loader2 } from 'lucide-react';
+import { useEffect, useCallback, useState } from 'react';
+import { PlusCircle, Search, Loader2, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import QuizCard from '@/components/quiz/QuizCard';
 import { useNavigate, useParams } from 'react-router-dom';
-import { groupService } from '@/services';
+import { groupService, quizService } from '@/services';
+import { toast } from '@/hooks/use-toast';
 import type { QuizResDTO } from '@/domains';
 import { useLazyLoad } from '@/hooks';
 
@@ -11,6 +14,9 @@ const QuizzesTab = ({ canManage, groupId: propGroupId }: { canManage: boolean; g
   const navigate = useNavigate();
   const { id: paramId } = useParams<{ id: string }>();
   const id = propGroupId || paramId;
+
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; id?: number; title?: string }>({ open: false });
+  const [deleting, setDeleting] = useState(false);
 
   const fetchFn = useCallback(
     async (page: number, size: number) => {
@@ -32,6 +38,21 @@ const QuizzesTab = ({ canManage, groupId: propGroupId }: { canManage: boolean; g
     pageSize: 10,
     cacheEnabled: true,
   });
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.id) return;
+    setDeleting(true);
+    try {
+      await quizService.deleteQuiz(deleteModal.id);
+      toast({ title: 'Đã xóa bài tập' });
+      setDeleteModal({ open: false });
+      fetch(0, false);
+    } catch (err) {
+      toast({ title: 'Xóa thất bại', variant: 'destructive' });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -72,7 +93,34 @@ const QuizzesTab = ({ canManage, groupId: propGroupId }: { canManage: boolean; g
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {quizzes.map((q) => (
-              <QuizCard key={q.id} quiz={q} />
+              <div key={q.id} className="relative group">
+                <QuizCard quiz={q} />
+                {canManage && (
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                        <Button variant="outline" size="icon" className="h-8 w-8 bg-white/80 backdrop-blur-sm hover:bg-white shadow-sm border-slate-200">
+                          <MoreVertical className="h-4 w-4 text-slate-700" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenuItem onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/groups/${id}/add-quiz?edit=${q.id}`); }}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Chỉnh sửa
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteModal({ open: true, id: q.id, title: q.title }); }}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Xóa
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
           {hasMore && (
@@ -85,6 +133,27 @@ const QuizzesTab = ({ canManage, groupId: propGroupId }: { canManage: boolean; g
           )}
         </div>
       )}
+
+      {/* Delete Modal */}
+      <Dialog open={deleteModal.open} onOpenChange={(open) => !open && setDeleteModal({ open: false })}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Xóa bài tập</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn xóa bài "{deleteModal.title}"? Hành động này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteModal({ open: false })} disabled={deleting}>
+              Hủy
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleting}>
+              {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Xóa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
