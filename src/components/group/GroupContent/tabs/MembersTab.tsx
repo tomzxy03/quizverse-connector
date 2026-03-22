@@ -1,14 +1,16 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Search, UserPlus, Loader2 } from 'lucide-react';
+import { Search, UserPlus, Loader2, UserX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { groupService } from '@/services';
 import { useLazyLoad } from '@/hooks';
+import { toast } from '@/hooks/use-toast';
 
 const MembersTab = ({ canManage, groupId: propGroupId }: { canManage: boolean; groupId?: string }) => {
   const { groupId: paramGroupId } = useParams<{ groupId: string }>();
   const groupId = propGroupId || paramGroupId;
+  const [kickingId, setKickingId] = useState<number | null>(null);
 
   const fetchFn = useCallback(
     async (page: number, size: number) => {
@@ -45,6 +47,24 @@ const MembersTab = ({ canManage, groupId: propGroupId }: { canManage: boolean; g
     }
   }, [groupId, fetch]);
 
+  const handleKickMember = async (userId: number, name?: string) => {
+    if (!groupId) return;
+    if (!window.confirm(`Mời "${name || 'thành viên này'}" rời nhóm?`)) {
+      return;
+    }
+
+    try {
+      setKickingId(userId);
+      await groupService.deleteMember(Number(groupId), userId);
+      toast({ title: 'Đã mời thành viên rời nhóm' });
+      fetch(0, false);
+    } catch (error) {
+      toast({ title: 'Không thể mời thành viên rời nhóm', variant: 'destructive' });
+    } finally {
+      setKickingId(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap justify-between items-center gap-3">
@@ -77,21 +97,60 @@ const MembersTab = ({ canManage, groupId: propGroupId }: { canManage: boolean; g
       ) : (
         <div className="space-y-4">
           <ul className="space-y-2">
-            {members.map((m: any) => (
-              <li
-                key={m.id}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
-              >
+            <>
+              {members
+                .filter((m) => m.roleName === "HOST")
+                .map((m) => (
+                  <li
+                    key={m.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                  >
                 <Avatar className="h-9 w-9">
                   <AvatarImage src={m.avatar || m.profilePictureUrl} alt={m.name || m.userName} />
-                  <AvatarFallback>{(m.name || m.userName || 'U').slice(0, 1).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{(m.name || m.userName || "U").slice(0, 1).toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <div className="min-w-0">
-                  <p className="font-medium text-foreground truncate">{m.name || m.userName}</p>
-                  <p className="text-xs text-muted-foreground">{m.roleName ? 'Chủ nhóm' : 'Thành viên'}</p>
-                </div>
-              </li>
-            ))}
+              <div className="min-w-0">
+                <p className="font-medium text-foreground truncate">{m.name || m.userName}</p>
+                <p className="text-xs text-muted-foreground">Chủ nhóm</p>
+              </div>
+            </li>
+                ))}
+
+ 
+    {members
+    .filter((m) => m.roleName !== "HOST")
+    .map((m) => (
+      <li
+        key={m.id}
+        className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+      >
+        <Avatar className="h-9 w-9">
+          <AvatarImage src={m.avatar || m.profilePictureUrl} alt={m.name || m.userName} />
+          <AvatarFallback>{(m.name || m.userName || "U").slice(0, 1).toUpperCase()}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-foreground truncate">{m.name || m.userName}</p>
+          <p className="text-xs text-muted-foreground">Thành viên</p>
+        </div>
+        {canManage && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-destructive border-destructive/30 hover:text-destructive"
+            onClick={() => handleKickMember(m.id, m.name || m.userName)}
+            disabled={kickingId === m.id}
+          >
+            {kickingId === m.id ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <UserX className="h-4 w-4 mr-2" />
+            )}
+            Mời ra
+          </Button>
+        )}
+      </li>
+    ))}
+</>
           </ul>
           {hasMore && (
             <div className="flex justify-center pt-2">

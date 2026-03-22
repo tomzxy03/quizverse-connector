@@ -1,5 +1,7 @@
 // Quiz Instance types – aligned with BE api.json DTOs
 
+import type { QuestionLayout } from './quiz.types';
+
 // === Response DTOs (from BE) ===
 
 // Matches BE QuizInstanceResDTO
@@ -16,6 +18,7 @@ export interface QuizInstanceResDTO {
     status: string;
     questions: QuizInstanceQuestionResDTO[];
     remainingTimeSeconds: number;
+    questionLayout?: QuestionLayout;
 }
 
 // Matches BE QuizInstanceQuestionResDTO

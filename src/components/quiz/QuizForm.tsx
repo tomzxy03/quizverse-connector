@@ -73,9 +73,10 @@ function mapBackendQuestions(questions: QuestionResDTO[]): FormQuestion[] {
 interface QuizFormProps {
   initialData?: QuizDetailResDTO | null;
   initialQuestions?: QuestionResDTO[];
+  groupId?: number;
 }
 
-const QuizForm = forwardRef<QuizFormRef, QuizFormProps>(function QuizForm({ initialData, initialQuestions = [] }, ref) {
+const QuizForm = forwardRef<QuizFormRef, QuizFormProps>(function QuizForm({ initialData, initialQuestions = [], groupId }, ref) {
   const [quizData, setQuizData] = useState(() => ({
     ...defaultQuizData,
     ...(initialData && {
@@ -227,6 +228,7 @@ const QuizForm = forwardRef<QuizFormRef, QuizFormProps>(function QuizForm({ init
         addQuestion={addQuestion}
         updateQuestion={updateQuestion}
         removeQuestion={removeQuestion}
+        groupId={groupId}
         quizData={quizData}
         onChange={handleQuizDataChange}
       />

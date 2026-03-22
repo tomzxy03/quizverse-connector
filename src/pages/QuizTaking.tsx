@@ -192,9 +192,27 @@ const QuizTakingPage = () => {
     };
 
     const questions = useMemo(() => instance?.questions || [], [instance]);
-    const currentQuestion = questions[activeQuestionIndex];
     const totalQuestions = questions.length;
     const answeredCount = useMemo(() => Object.keys(answers).length, [answers]);
+    const questionLayout = instance?.questionLayout ?? {};
+    const questionNumbering = questionLayout.questionNumbering ?? "1, 2, 3...";
+    const questionPerPage = Math.max(1, Number(questionLayout.questionPerPage || 1));
+    const answerPerRow = Math.max(1, Number(questionLayout.answerPerRow || 1));
+    const currentPage = Math.floor(activeQuestionIndex / questionPerPage);
+    const pageStartIndex = currentPage * questionPerPage;
+    const pageQuestions = questions.slice(pageStartIndex, pageStartIndex + questionPerPage);
+    const getQuestionLabel = useCallback((index: number) => {
+        if (questionNumbering === "A, B, C...") {
+            return String.fromCharCode(65 + index);
+        }
+        if (questionNumbering === "1, 2, 3...") {
+            return String(index + 1);
+        }
+        if (questionNumbering === "none") {
+            return "";
+        }
+        return String(index + 1);
+    }, [questionNumbering]);
 
     if (loading) {
         return (
@@ -309,44 +327,49 @@ const QuizTakingPage = () => {
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 max-w-6xl mx-auto">
                     {/* Question Area */}
                     <div className="lg:col-span-8 flex flex-col gap-8">
-                        {currentQuestion && (
-                            <div className="group relative">
-                                <div className="absolute -inset-1 bg-gradient-to-br from-primary/5 to-primary/0 rounded-3xl blur-2xl opacity-50 transition-opacity group-hover:opacity-70" />
-                                <Card className="relative border-border/40 bg-background/50 backdrop-blur-sm shadow-xl p-8 md:p-10 rounded-3xl overflow-hidden min-h-[400px]">
-                                    <QuestionContent
-                                        question={currentQuestion}
-                                        index={activeQuestionIndex}
-                                        selectedAnswers={answers[currentQuestion.id] || []}
-                                        syncStatus={syncStatus[currentQuestion.id] || 'idle'}
-                                        onChange={(answerIndices) => setAnswer(currentQuestion.id, answerIndices)}
-                                    />
+                        {pageQuestions.map((question, offset) => {
+                            const questionIndex = pageStartIndex + offset;
+                            return (
+                                <div key={question.id} className="group relative">
+                                    <div className="absolute -inset-1 bg-gradient-to-br from-primary/5 to-primary/0 rounded-3xl blur-2xl opacity-50 transition-opacity group-hover:opacity-70" />
+                                    <Card className="relative border-border/40 bg-background/50 backdrop-blur-sm shadow-xl p-8 md:p-10 rounded-3xl overflow-hidden min-h-[400px]">
+                                        <QuestionContent
+                                            question={question}
+                                            index={questionIndex}
+                                            questionNumbering={questionNumbering}
+                                            answerPerRow={answerPerRow}
+                                            selectedAnswers={answers[question.id] || []}
+                                            syncStatus={syncStatus[question.id] || 'idle'}
+                                            onChange={(answerIndices) => setAnswer(question.id, answerIndices)}
+                                        />
 
-                                    <div className="absolute top-6 right-8">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => toggleFlag(activeQuestionIndex)}
-                                            className={flaggedQuestions.has(activeQuestionIndex)
-                                                ? 'bg-amber-100/50 text-amber-500 hover:bg-amber-100 hover:text-amber-600 rounded-full'
-                                                : 'text-muted-foreground hover:bg-muted rounded-full'}
-                                        >
-                                            <Flag className={`h-5 w-5 ${flaggedQuestions.has(activeQuestionIndex) ? 'fill-amber-500' : ''}`} />
-                                        </Button>
-                                    </div>
-                                </Card>
-                            </div>
-                        )}
+                                        <div className="absolute top-6 right-8">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => toggleFlag(questionIndex)}
+                                                className={flaggedQuestions.has(questionIndex)
+                                                    ? 'bg-amber-100/50 text-amber-500 hover:bg-amber-100 hover:text-amber-600 rounded-full'
+                                                    : 'text-muted-foreground hover:bg-muted rounded-full'}
+                                            >
+                                                <Flag className={`h-5 w-5 ${flaggedQuestions.has(questionIndex) ? 'fill-amber-500' : ''}`} />
+                                            </Button>
+                                        </div>
+                                    </Card>
+                                </div>
+                            );
+                        })}
 
                         {/* Premium Navigation Buttons */}
                         <div className="flex items-center justify-between mt-4">
                             <Button
                                 variant="outline"
-                                onClick={() => setActiveQuestionIndex(Math.max(0, activeQuestionIndex - 1))}
-                                disabled={activeQuestionIndex === 0}
+                                onClick={() => setActiveQuestionIndex(Math.max(0, pageStartIndex - questionPerPage))}
+                                disabled={pageStartIndex === 0}
                                 className="h-14 px-8 rounded-2xl border-border bg-background/50 backdrop-blur font-bold group"
                             >
                                 <ChevronLeft className="mr-3 h-5 w-5 transition-transform group-hover:-translate-x-1" />
-                                Câu trước
+                                {questionPerPage > 1 ? "Trang trước" : "Câu trước"}
                             </Button>
 
                             <div className="hidden md:flex gap-1.5">
@@ -361,11 +384,11 @@ const QuizTakingPage = () => {
                             </div>
 
                             <Button
-                                onClick={() => setActiveQuestionIndex(Math.min(totalQuestions - 1, activeQuestionIndex + 1))}
-                                disabled={activeQuestionIndex >= totalQuestions - 1}
+                                onClick={() => setActiveQuestionIndex(Math.min(totalQuestions - 1, pageStartIndex + questionPerPage))}
+                                disabled={pageStartIndex + questionPerPage >= totalQuestions}
                                 className="h-14 px-8 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/10 group"
                             >
-                                Câu tiếp theo
+                                {questionPerPage > 1 ? "Trang tiếp theo" : "Câu tiếp theo"}
                                 <ChevronRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1" />
                             </Button>
                         </div>
@@ -392,6 +415,7 @@ const QuizTakingPage = () => {
                                         totalQuestions={totalQuestions}
                                         onNavigate={setActiveQuestionIndex}
                                         flaggedQuestions={flaggedQuestions}
+                                        getQuestionLabel={getQuestionLabel}
                                     />
                                 </div>
                             </Card>
@@ -434,6 +458,7 @@ const QuizTakingPage = () => {
                                                 // Close sheet (handled automatically by SheetTrigger asChild usually but might need explicit state)
                                             }}
                                             flaggedQuestions={flaggedQuestions}
+                                            getQuestionLabel={getQuestionLabel}
                                         />
                                     </SheetContent>
                                 </Sheet>

@@ -11,3 +11,4 @@ export * from './role.repository';
 export * from './question.repository';
 export * from './question-bank.repository';
 export * from './folder.repository';
+export * from './admin.repository';

@@ -20,6 +20,8 @@ interface QuestionContentProps {
   selectedAnswers: number[];
   syncStatus: SyncStatus;
   onChange: (answerIndices: number[]) => void;
+  questionNumbering?: string;
+  answerPerRow?: number;
 }
 
 export default function QuestionContent({
@@ -28,6 +30,8 @@ export default function QuestionContent({
   selectedAnswers,
   syncStatus,
   onChange,
+  questionNumbering,
+  answerPerRow = 1,
 }: QuestionContentProps) {
   const isMultipleChoice = useMemo(() => {
     // In a real app, this would come from questionType or metadata
@@ -53,13 +57,26 @@ export default function QuestionContent({
     // For now, let's keep it simple.
   };
 
+  const questionLabel = useMemo(() => {
+    if (questionNumbering === 'A, B, C...') {
+      return String.fromCharCode(65 + index);
+    }
+    if (questionNumbering === '1, 2, 3...') {
+      return String(index + 1);
+    }
+    if (questionNumbering === 'none') {
+      return '';
+    }
+    return String(index + 1);
+  }, [index, questionNumbering]);
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Badge variant="secondary" className="px-3 py-1 text-xs font-bold rounded-full bg-primary/10 text-primary border-none">
-              Câu {index + 1}
+              {questionLabel ? `Câu ${questionLabel}` : 'Câu hỏi'}
             </Badge>
             <Badge variant="outline" className="text-[10px] text-muted-foreground uppercase tracking-wider">
               {question.points} Điểm
@@ -101,7 +118,7 @@ export default function QuestionContent({
         </div>
       )}
 
-      <div className="grid gap-3">
+      <div className={answerPerRow === 2 ? "grid grid-cols-2 gap-3" : "grid gap-3"}>
         {(question.answers || []).map((answer) => {
           const isSelected = selectedAnswers.includes(answer.id);
 

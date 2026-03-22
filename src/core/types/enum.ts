@@ -4,11 +4,20 @@ export type Difficulty = 'easy' | 'medium' | 'hard';
 // Group roles
 export type GroupRole = 'HOST' | 'OWNER' | 'ADMIN' | 'MEMBER';
 
-// Question types - Matches BE QuestionReqDTO.questionType
-export type QuestionType = 'text' | 'image';
+// Content types - Matches BE ContentType (Question/Answer content)
+export type ContentType = 'text' | 'image' | 'audio' | 'video';
 
-// Answer types - Matches BE AnswerReqDTO.answerType
-export type AnswerType = 'text' | 'image';
+// Question types - kept for backward compatibility (was QuestionAndAnswer)
+export type QuestionType = ContentType;
+
+// Answer types - Matches BE AnswerType (how users answer a question)
+export type AnswerType =
+  | 'single_choice'
+  | 'multiple_choice'
+  | 'true_false'
+  | 'short_answer'
+  | 'fill_in_blank'
+  | 'matching';
 
 // Quiz visibility levels - Matches BE QuizResDTO.quizVisibility
 export type QuizVisibility = 'public' | 'private' | 'class_only';

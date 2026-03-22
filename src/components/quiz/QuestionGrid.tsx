@@ -13,12 +13,14 @@ interface QuestionGridProps {
   totalQuestions: number;
   onNavigate: (index: number) => void;
   flaggedQuestions?: Set<number>;
+  getQuestionLabel?: (index: number) => string;
 }
 
 export default function QuestionGrid({
   totalQuestions,
   onNavigate,
   flaggedQuestions = new Set(),
+  getQuestionLabel,
 }: QuestionGridProps) {
   const { answers, syncStatus, activeQuestionIndex } = useQuizAttempt();
 
@@ -38,6 +40,8 @@ export default function QuestionGrid({
         {Array.from({ length: totalQuestions }).map((_, idx) => {
           const isCurrent = idx === activeQuestionIndex;
           const isFlagged = flaggedQuestions.has(idx);
+          const label = getQuestionLabel ? getQuestionLabel(idx) : '';
+          const displayLabel = label || String(idx + 1);
 
           // Need to bridge the gap between index and questionId for status
           // This will be handled in QuizTakingPage by passing correct data or 
@@ -58,7 +62,7 @@ export default function QuestionGrid({
                     )}
                     onClick={() => onNavigate(idx)}
                   >
-                    {idx + 1}
+                    {displayLabel}
                   </Button>
 
                   {isFlagged && (
@@ -69,7 +73,7 @@ export default function QuestionGrid({
                 </div>
               </TooltipTrigger>
               <TooltipContent side="top" className="bg-popover/90 backdrop-blur-sm border-border">
-                <p className="text-xs font-medium">Câu số {idx + 1}</p>
+                <p className="text-xs font-medium">Câu số {displayLabel}</p>
               </TooltipContent>
             </Tooltip>
           );

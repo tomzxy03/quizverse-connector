@@ -73,11 +73,12 @@ export class ApiClient {
   ): Promise<T> {
     // Luôn lấy token mới nhất từ localStorage hoặc state nội bộ
     const token = this.token || localStorage.getItem(TOKEN_KEY);
+    const isFormData = options.body instanceof FormData;
     
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
       },
@@ -190,16 +191,18 @@ export class ApiClient {
   }
 
   post<T>(endpoint: string, body?: any) {
+    const isFormData = body instanceof FormData;
     return this.request<T>(endpoint, {
       method: 'POST',
-      body: body ? JSON.stringify(body) : undefined,
+      body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
     });
   }
 
   put<T>(endpoint: string, body?: any) {
+    const isFormData = body instanceof FormData;
     return this.request<T>(endpoint, {
       method: 'PUT',
-      body: body ? JSON.stringify(body) : undefined,
+      body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
     });
   }
 

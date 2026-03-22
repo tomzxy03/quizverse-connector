@@ -1,5 +1,5 @@
 import { apiClient, API_ENDPOINTS } from '@/core/api';
-import { LobbyResDTO, LobbyReqDTO, LobbyQuizResDTO } from '@/domains';
+import { LobbyResDTO, LobbyReqDTO, LobbyQuizResDTO, LobbyInviteCodeResDTO } from '@/domains';
 import { QuizReqDTO } from '@/domains/quiz.types';
 import { NotificationReqDTO } from '@/domains/notification.types';
 import { PageResponse } from '@/core/types';
@@ -46,6 +46,23 @@ export const groupRepository = {
     return apiClient.delete<void>(API_ENDPOINTS.GROUPS.LEAVE(groupId));
   },
 
+  getCodeInvite(groupId: number): Promise<LobbyInviteCodeResDTO> {
+    return apiClient.get<LobbyInviteCodeResDTO>(API_ENDPOINTS.GROUPS.GET_CODE_INVITE(groupId));
+  },
+
+  reloadCodeInvite(groupId: number, lobbyId?: number): Promise<LobbyInviteCodeResDTO> {
+    const body = lobbyId !== undefined ? { lobbyId } : undefined;
+    return apiClient.post<LobbyInviteCodeResDTO>(API_ENDPOINTS.GROUPS.RELOAD_CODE_INVITE(groupId), body);
+  },
+
+  findLobbyByCode(codeInvite: string): Promise<LobbyResDTO> {
+    return apiClient.get<LobbyResDTO>(API_ENDPOINTS.GROUPS.FIND_LOBBY_BY_CODE(codeInvite));
+  },
+
+  joinLobby(lobbyId: number): Promise<LobbyResDTO> {
+    return apiClient.post<LobbyResDTO>(API_ENDPOINTS.GROUPS.JOIN, { lobbyId });
+  },
+
   // ===== Members Management =====
   
   /**
@@ -57,6 +74,10 @@ export const groupRepository = {
    */
   getMembers(groupId: number, page: number = 0, size: number = 10): Promise<PageResponse<any>> {
     return apiClient.get(API_ENDPOINTS.GROUPS.MEMBERS(groupId), { page, size });
+  },
+
+  deleteMember(groupId: number, userId: number): Promise<void> {
+    return apiClient.delete<void>(API_ENDPOINTS.GROUPS.REMOVE_MEMBER(groupId, userId));
   },
 
   removeMember(groupId: number, userId: number): Promise<void> {

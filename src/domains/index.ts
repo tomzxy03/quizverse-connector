@@ -10,4 +10,4 @@ export * from './role.types';
 export * from './question-bank.types';
 export * from './folder.types';
 export * from './group.types';
-
+export * from './admin.types';

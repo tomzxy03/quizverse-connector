@@ -7,8 +7,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { groupService } from '@/services/group.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
 
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import type { LobbyResDTO } from '@/domains';
 
 interface Group {
   id: string;
@@ -19,6 +21,7 @@ interface Group {
 
 const Groups = () => {
   const { groupId } = useParams<{ groupId: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [groups, setGroups] = useState<Group[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -76,6 +79,40 @@ const Groups = () => {
 
   const handleGroupSelect = (group: Group) => {
     setSelectedGroup(group);
+  };
+
+  const handleSearchGroups = async (codeInvite: string): Promise<LobbyResDTO> => {
+    return await groupService.findLobbyByCode(codeInvite);
+  };
+
+  const handleJoinLobby = async (lobbyId: number) => {
+    try {
+      await groupService.joinLobby(lobbyId);
+      toast({ title: 'Tham gia nhóm thành công' });
+      window.location.reload();
+    } catch (error) {
+      toast({ title: 'Tham gia nhóm thất bại', variant: 'destructive' });
+    }
+  };
+
+  const handleLeaveGroup = async (group: Group) => {
+    if (!window.confirm(`Rời nhóm "${group.name}"?`)) {
+      return;
+    }
+
+    try {
+      await groupService.leaveGroup(parseInt(group.id, 10));
+      toast({ title: 'Đã rời nhóm' });
+
+      setGroups((prev) => prev.filter((g) => g.id !== group.id));
+
+      if (selectedGroup?.id === group.id) {
+        setSelectedGroup(null);
+        navigate('/groups');
+      }
+    } catch (error) {
+      toast({ title: 'Rời nhóm thất bại', variant: 'destructive' });
+    }
   };
 
   const handleCreateGroup = () => {
@@ -171,6 +208,9 @@ const Groups = () => {
                 selectedGroup={selectedGroup}
                 onUpdateGroup={handleGroupUpdated}
                 onDeleteGroup={handleGroupDeleted}
+                onLeaveGroup={handleLeaveGroup}
+                onSearchGroups={handleSearchGroups}
+                onJoinLobby={handleJoinLobby}
               />
 
               {selectedGroup ? (

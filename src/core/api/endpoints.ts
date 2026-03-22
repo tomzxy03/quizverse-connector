@@ -20,6 +20,11 @@ export const API_ENDPOINTS = {
     CURRENT_USER: '/auth/me',
   },
 
+  // Dashboard
+  DASHBOARD: {
+    SUMMARY: '/dashboard/summary',
+  },
+
   // Users
   USERS: {
     BASE: '/users',
@@ -78,6 +83,7 @@ export const API_ENDPOINTS = {
     BY_QUIZ: (quizId: number) => `/quizzes/${quizId}/questions`,
     BY_ID: (quizId: number, questionId: number) => `/quizzes/${quizId}/questions/${questionId}`,
     ADD_LIST: (quizId: number) => `/quizzes/${quizId}/questions/add_list`,
+    IMPORT: '/questions/import',
   },
 
   // Answers
@@ -133,6 +139,11 @@ export const API_ENDPOINTS = {
     BY_ID: (groupId: number) => `/groups/${groupId}`,
     OWNED: '/groups/owned',
     JOINED: '/groups/joined',
+    GET_CODE_INVITE: (groupId: number) => `/groups/${groupId}/get-code-invite`,
+    RELOAD_CODE_INVITE: (groupId: number) => `/groups/${groupId}/reload-code-invite`,
+    FIND_LOBBY_BY_CODE: (codeInvite: string) =>
+      `/groups/find-lobby-by-code/${encodeURIComponent(codeInvite)}`,
+    JOIN: '/groups/join',
     // Members endpoints - supports pagination via query params (page, size)
     MEMBERS: (groupId: number) => `/groups/${groupId}/members`,
     REMOVE_MEMBER: (groupId: number, userId: number) => `/groups/${groupId}/members/${userId}`,
@@ -141,12 +152,35 @@ export const API_ENDPOINTS = {
     ADD_QUIZ: (groupId: number) => `/groups/${groupId}/quizzes`,
     UPDATE_QUIZ: (groupId: number, quizId: number) => `/groups/${groupId}/quizzes/${quizId}`,
     REMOVE_QUIZ: (groupId: number, quizId: number) => `/groups/${groupId}/quizzes/${quizId}`,
+    IMPORT_QUESTIONS: (groupId: number) => `/groups/${groupId}/questions/import`,
     // Announcements endpoints - supports pagination via query params (page, size)
     ANNOUNCEMENTS: (groupId: number) => `/groups/${groupId}/announcements`,
-    ADD_ANNOUNCEMENT: (groupId: number) => `/groups/${groupId}/announcements`,
-    UPDATE_ANNOUNCEMENT: (groupId: number, announcementId: number) => `/groups/${groupId}/announcements/${announcementId}`,
-    DELETE_ANNOUNCEMENT: (groupId: number, announcementId: number) => `/groups/${groupId}/announcements/${announcementId}`,
+    ADD_ANNOUNCEMENT: (groupId: number) => `/groups/${groupId}/add-announcement`,
+    UPDATE_ANNOUNCEMENT: (groupId: number, announcementId: number) =>
+      `/groups/${groupId}/announcements/${announcementId}`,
+    DELETE_ANNOUNCEMENT: (groupId: number, announcementId: number) =>
+      `/groups/${groupId}/announcements/${announcementId}`,
     LEAVE: (groupId: number) => `/groups/${groupId}/leave`,
+  },
+
+  // Admin
+  ADMIN: {
+    BASE: '/tomzxyadmin',
+    USERS: '/tomzxyadmin/users',
+    USER: (userId: number) => `/tomzxyadmin/users/${userId}`,
+    GROUPS: '/tomzxyadmin/groups',
+    GROUP: (groupId: number) => `/tomzxyadmin/groups/${groupId}`,
+    QUIZZES: '/tomzxyadmin/quizzes',
+    QUIZ: (quizId: number) => `/tomzxyadmin/quizzes/${quizId}`,
+    RESULTS: '/tomzxyadmin/results',
+    RESULT: (resultId: number) => `/tomzxyadmin/results/${resultId}`,
+    SUBJECTS: '/tomzxyadmin/subjects',
+    SUBJECT: (subjectId: number) => `/tomzxyadmin/subjects/${subjectId}`,
+    ROLES: '/tomzxyadmin/roles',
+    ROLE: (roleId: number) => `/tomzxyadmin/roles/${roleId}`,
+    NOTIFICATIONS: '/tomzxyadmin/notifications',
+    NOTIFICATION: (notificationId: number) => `/tomzxyadmin/notifications/${notificationId}`,
+    QUESTION_BANKS: '/tomzxyadmin/question-banks',
   },
 
   // Roles

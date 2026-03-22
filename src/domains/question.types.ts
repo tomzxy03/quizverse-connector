@@ -1,6 +1,6 @@
-// Question & Answer types – aligned with BE api.json DTOs
+// Question & Answer types – aligned with BE DTOs
 
-import { QuestionType, AnswerType, QuestionLevel } from '@/core/types';
+import { ContentType, AnswerType, QuestionLevel } from '@/core/types';
 
 // === Response DTOs (from BE) ===
 
@@ -8,7 +8,8 @@ import { QuestionType, AnswerType, QuestionLevel } from '@/core/types';
 export interface QuestionResDTO {
   id: number;
   questionName: string;
-  questionType: QuestionType;
+  questionType: ContentType;
+  answerType?: AnswerType;
   level: QuestionLevel;
   bankId: number;
   folderId?: number;
@@ -20,7 +21,7 @@ export interface QuestionResDTO {
 export interface AnswerResDTO {
   id: number;
   answerText: string;
-  answerType: AnswerType;
+  answerType: ContentType;
   orderIndex: number;
 }
 
@@ -35,14 +36,15 @@ export interface QuizQuestionReqDTO {
 // Matches BE QuestionReqDTO
 export interface QuestionReqDTO {
   questionName: string;
-  questionType: QuestionType | 'text' | 'image';
+  questionType: ContentType;
+  answerType?: AnswerType;
   answers: AnswerReqDTO[];
 }
 
 // Matches BE AnswerReqDTO
 export interface AnswerReqDTO {
   answerName: string;
-  answerType: AnswerType | 'text' | 'image';
+  answerType: ContentType;
   answerCorrect: boolean;
 }
 

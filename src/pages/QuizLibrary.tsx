@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SubjectTag from "@/components/shared/SubjectTag";
 import QuizCard from "@/components/quiz/QuizCard";
 import HoverFilter from "@/components/shared/HoverFilter";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { quizService } from "@/services";
 import { Quiz, QuizFilter } from "@/domains";
 import { useNavigate, useParams } from "react-router-dom";
@@ -13,6 +14,7 @@ import { subjectRepository } from "@/repositories";
 import { Subject } from "@/domains/subject/subject.types";
 import { PageResponse } from "@/core/types";
 import { QuizResDTO } from "@/domains";
+import { useAuth } from "@/contexts";
 const categories = {
   questionCount: ["All", "< 10", "10-20", "> 20"],
   duration: ["All", "< 15 min", "15-30 min", "> 30 min"],
@@ -44,6 +46,7 @@ const QuizLibrary = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
   const buildQuizFilter = (): QuizFilter => {
   const questionRange = questionCountMap[selectedCategories.questionCount];
   const durationRange = durationMap[selectedCategories.duration];
@@ -63,6 +66,11 @@ const QuizLibrary = () => {
   };
 };
   const navigate = useNavigate();
+  const canCreatePublicQuiz = user?.roles?.includes("HOST") || user?.roles?.includes("ADMIN");
+
+  useEffect(() => {
+    loadSubjects();
+  }, []);
 
   // ===============================
   // LOAD SUBJECTS
@@ -124,11 +132,23 @@ const QuizLibrary = () => {
       <Header />
 
       <main className="flex-1 container px-4 py-6 max-w-5xl mx-auto">
-        <div className="flex items-center gap-2 text-muted-foreground mb-6">
-          <Search className="h-5 w-5" />
-          <h1 className="text-2xl font-bold text-foreground">
-            Thư viện Quiz
-          </h1>
+        <div className="flex flex-wrap items-center gap-2 text-muted-foreground mb-6">
+          <div className="flex items-center gap-2">
+            <Search className="h-5 w-5" />
+            <h1 className="text-2xl font-bold text-foreground">
+              Thư viện Quiz
+            </h1>
+          </div>
+          {canCreatePublicQuiz && (
+            <Button
+              size="sm"
+              className="ml-auto gap-2"
+              onClick={() => navigate("/library/create")}
+            >
+              <Plus className="h-4 w-4" />
+              Tạo quiz
+            </Button>
+          )}
         </div>
 
         {error && !loading && (

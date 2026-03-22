@@ -139,8 +139,11 @@ const AddQuiz = () => {
       }
 
       toast({ title: editId ? "Đã cập nhật bài kiểm tra" : "Đã tạo bài kiểm tra" });
-      // navigation to group quizzes
-      navigate(`/groups/${groupId}/quizzes`);
+      if (groupId) {
+        navigate(`/groups/${groupId}/quizzes`);
+      } else {
+        navigate("/library");
+      }
     } catch (err) {
       toast({
         title: editId ? "Cập nhật thất bại" : "Tạo bài thất bại",
@@ -180,18 +183,12 @@ const AddQuiz = () => {
             <X className="h-5 w-5" />
           </button>
 
-          <div className="flex space-x-6">
+          <div className="flex space-x-6 ml-20 pl-20"> 
             <button
               type="button"
               className="px-4 py-2 border-b-2 border-primary font-medium text-primary"
             >
               Bài kiểm tra
-            </button>
-            <button
-              type="button"
-              className="px-4 py-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Bài nộp
             </button>
           </div>
 
@@ -245,7 +242,12 @@ const AddQuiz = () => {
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         ) : (
-          <QuizForm ref={formRef} initialData={editId ? initialQuiz ?? undefined : undefined} initialQuestions={editId ? initialQuestions : []} />
+          <QuizForm
+            ref={formRef}
+            initialData={editId ? initialQuiz ?? undefined : undefined}
+            initialQuestions={editId ? initialQuestions : []}
+            groupId={groupId ? Number(groupId) : undefined}
+          />
         )}
       </main>
     </div>

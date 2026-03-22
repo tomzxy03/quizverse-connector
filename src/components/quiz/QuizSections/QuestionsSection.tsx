@@ -1,11 +1,16 @@
 
-import { useState } from "react";
-import { Plus, FileText, UploadCloud, FolderOpen, BrainCircuit, Database, Trash2, ChevronDown } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Plus, FileText, UploadCloud, BrainCircuit, Database, Trash2, ChevronDown, Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { folderService, questionService } from "@/services";
+import { toast } from "@/hooks/use-toast";
 
 interface Question {
   id: string;
@@ -21,6 +26,40 @@ interface QuizSection {
   questions: Question[];
 }
 
+interface BankQuestion {
+  id: string;
+  questionName: string;
+  answers: { text: string; isCorrect: boolean }[];
+  points?: number;
+  folderId?: string;
+}
+
+interface FolderNode {
+  id: string;
+  name: string;
+  children?: FolderNode[];
+}
+
+const mapBackendFolders = (folders: any[]): FolderNode[] => {
+  return folders.map((f) => ({
+    id: String(f.id),
+    name: f.name || "Thư mục không tên",
+    children: f.children ? mapBackendFolders(f.children) : undefined,
+  }));
+};
+
+const getAllFolderIds = (nodes: FolderNode[]): { id: string; name: string }[] => {
+  const out: { id: string; name: string }[] = [];
+  const walk = (list: FolderNode[], prefix = "") => {
+    list.forEach((n) => {
+      if (n.id !== "root") out.push({ id: n.id, name: prefix + n.name });
+      if (n.children?.length) walk(n.children, prefix + n.name + " / ");
+    });
+  };
+  walk(nodes);
+  return out;
+};
+
 interface QuestionsSectionProps {
   sections?: QuizSection[];
   questions?: Question[];
@@ -30,6 +69,7 @@ interface QuestionsSectionProps {
   addQuestion: (sectionIdOrQuestion: string | Question, questionOrIndex?: Question | number, question?: Question) => void;
   updateQuestion: (sectionIdOrIndex: string | number, indexOrQuestion?: number | Question, question?: Question) => void;
   removeQuestion: (sectionIdOrIndex: string | number, index?: number) => void;
+  groupId?: number;
   quizData: {
     questionNumbering: string;
     questionsPerPage: number;
@@ -45,6 +85,19 @@ const safeNum = (v: string, fallback: number) => {
   return Number.isNaN(n) ? fallback : n;
 };
 
+const formatQuestionLabel = (index: number, numbering?: string) => {
+  if (numbering === "A, B, C...") {
+    return String.fromCharCode(65 + index);
+  }
+  if (numbering === "1, 2, 3...") {
+    return String(index + 1);
+  }
+  if (numbering === "none") {
+    return "";
+  }
+  return String(index + 1);
+};
+
 const QuestionsSection = ({ 
   sections: propSections,
   questions: propQuestions,
@@ -54,6 +107,7 @@ const QuestionsSection = ({
   addQuestion, 
   updateQuestion, 
   removeQuestion, 
+  groupId,
   quizData, 
   onChange 
 }: QuestionsSectionProps) => {
@@ -117,6 +171,16 @@ const QuestionsSection = ({
   });
 
   const [selectedOption, setSelectedOption] = useState<string | undefined>(undefined);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [bankDialogOpen, setBankDialogOpen] = useState(false);
+  const [bankQuestions, setBankQuestions] = useState<BankQuestion[]>([]);
+  const [bankFolders, setBankFolders] = useState<FolderNode[]>([]);
+  const [selectedBankFolderId, setSelectedBankFolderId] = useState<string>("root");
+  const [bankLoading, setBankLoading] = useState(false);
+  const [bankSearch, setBankSearch] = useState("");
+  const [selectedBankIds, setSelectedBankIds] = useState<Set<string>>(new Set());
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections((prev) => {
@@ -214,6 +278,147 @@ const QuestionsSection = ({
     });
     setSelectedOption(undefined);
     setEditingIndex(null);
+  };
+
+  const loadBankQuestions = async () => {
+    setBankLoading(true);
+    try {
+      let allQuestionsRaw: any[] = [];
+      const [qRes, foldersRes] = await Promise.all([
+        questionService.getAllQuestionsByBank(0, 1000),
+        folderService.getFolderTree(),
+      ]);
+      if (Array.isArray(qRes)) allQuestionsRaw = qRes;
+      else if (Array.isArray(qRes?.content)) allQuestionsRaw = qRes.content;
+      else if (Array.isArray(qRes?.items)) allQuestionsRaw = qRes.items;
+      else if (qRes?.items?.items && Array.isArray(qRes.items.items)) {
+        allQuestionsRaw = qRes.items.items;
+      }
+
+      const mappedQuestions: BankQuestion[] = allQuestionsRaw.map((raw: any, idx: number) => {
+        const q = raw.question || raw;
+        return {
+          id: q.id != null ? String(q.id) : `tmp-${idx}`,
+          questionName: q.questionName || q.content || "Untitled",
+          points: q.points || 1,
+          folderId: raw.folderId ? String(raw.folderId) : (q.folderId ? String(q.folderId) : "root"),
+          answers: q.answers?.map((a: any) => ({
+            text: a.answerText || a.answerName || a.text || "",
+            isCorrect: a.answerCorrect || a.isCorrect || false,
+          })) ?? [],
+        };
+      });
+      setBankQuestions(mappedQuestions);
+      const mappedFolders = mapBackendFolders(foldersRes || []);
+      setBankFolders([
+        { id: "root", name: "Tất cả câu hỏi", children: mappedFolders },
+      ]);
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Lỗi tải ngân hàng câu hỏi", variant: "destructive" });
+    } finally {
+      setBankLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!bankDialogOpen) return;
+    if (bankQuestions.length === 0) {
+      loadBankQuestions();
+    }
+  }, [bankDialogOpen, bankQuestions.length]);
+
+  const visibleBankQuestions = useMemo(() => {
+    let filtered = bankQuestions;
+    if (selectedBankFolderId !== "root") {
+      filtered = filtered.filter((q) => q.folderId === selectedBankFolderId);
+    }
+    if (!bankSearch.trim()) return filtered;
+    const term = bankSearch.toLowerCase();
+    return filtered.filter((q) => q.questionName.toLowerCase().includes(term));
+  }, [bankQuestions, bankSearch, selectedBankFolderId]);
+
+  const toggleBankSelect = (id: string) => {
+    setSelectedBankIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const mapBankToQuizQuestion = (q: BankQuestion): Question => ({
+    id: `q-bank-${q.id}`,
+    text: q.questionName,
+    options: (q.answers || []).map((a, idx) => ({
+      id: `opt-bank-${q.id}-${idx}`,
+      text: a.text,
+      isCorrect: a.isCorrect,
+    })),
+    points: q.points || 1,
+  });
+
+  const appendQuestionsToActiveSection = (newQuestions: Question[]) => {
+    if (!activeSectionId) {
+      toast({ title: "Vui lòng chọn phần để thêm câu hỏi.", variant: "destructive" });
+      return;
+    }
+
+    if (isLegacyMode) {
+      newQuestions.forEach((q) => addQuestion(q));
+    } else {
+      newQuestions.forEach((q) => addQuestion(activeSectionId, q));
+    }
+
+    setInternalSections((prev) =>
+      prev.map((s) =>
+        s.id === activeSectionId
+          ? { ...s, questions: [...s.questions, ...newQuestions] }
+          : s
+      )
+    );
+  };
+
+  const handleAddSelectedBankQuestions = () => {
+    const selected = bankQuestions.filter((q) => selectedBankIds.has(q.id));
+    if (selected.length === 0) return;
+    const newQuestions = selected.map(mapBankToQuizQuestion);
+    appendQuestionsToActiveSection(newQuestions);
+    setSelectedBankIds(new Set());
+    setBankDialogOpen(false);
+  };
+
+  const handleImportQuestions = async (file: File) => {
+    setIsImporting(true);
+    try {
+      const imported = groupId
+        ? await questionService.importQuestionsFromExcelForGroup(groupId, file)
+        : await questionService.importQuestionsFromExcel(file);
+      const mappedQuestions: Question[] = (imported || []).map((q: any, idx: number) => ({
+        id: q.id != null ? `q-import-${q.id}` : `q-import-${Date.now()}-${idx}`,
+        text: q.questionName || "Untitled",
+        options: (q.answers || []).map((a: any, aIdx: number) => ({
+          id: a.id != null ? `opt-import-${a.id}` : `opt-import-${idx}-${aIdx}`,
+          text: a.answerText || "",
+          isCorrect: a.isCorrect === true,
+        })),
+        points: q.points || 1,
+      }));
+
+      if (mappedQuestions.length === 0) {
+        toast({ title: "File không có câu hỏi hợp lệ.", variant: "destructive" });
+        return;
+      }
+
+      appendQuestionsToActiveSection(mappedQuestions);
+      toast({ title: `Đã nhập ${mappedQuestions.length} câu hỏi.` });
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Không thể nhập file Excel.", variant: "destructive" });
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const handleAddSection = () => {
@@ -366,7 +571,12 @@ const QuestionsSection = ({
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h5 className="font-medium">Câu {index + 1}</h5>
+                        <h5 className="font-medium">
+                          {(() => {
+                            const label = formatQuestionLabel(index, quizData.questionNumbering);
+                            return label ? `Câu ${label}` : "Câu hỏi";
+                          })()}
+                        </h5>
                         <span className="text-xs text-muted-foreground">{q.points} điểm</span>
                       </div>
                       <Button
@@ -400,7 +610,13 @@ const QuestionsSection = ({
                       </Button>
                     </div>
                     <p className="text-sm mb-2">{q.text}</p>
-                    <div className="space-y-1">
+                    <div
+                      className={
+                        quizData.answersPerRow === 2
+                          ? "grid grid-cols-2 gap-x-6 gap-y-1"
+                          : "space-y-1"
+                      }
+                    >
                       {q.options.map((opt, optIndex) => (
                         <div key={opt.id} className="text-xs">
                           <span className="font-medium">{String.fromCharCode(65 + optIndex)}.</span>
@@ -417,7 +633,15 @@ const QuestionsSection = ({
                 {activeSectionId === section.id && (
                   <div className="border-t pt-4 mt-4">
                     <h5 className="font-medium mb-4">
-                      {editingIndex !== null ? `Chỉnh sửa câu ${editingIndex + 1}` : `Câu ${questionNumber}`}
+                      {editingIndex !== null
+                        ? (() => {
+                            const label = formatQuestionLabel(editingIndex, quizData.questionNumbering);
+                            return label ? `Chỉnh sửa câu ${label}` : "Chỉnh sửa câu hỏi";
+                          })()
+                        : (() => {
+                            const label = formatQuestionLabel(questionNumber - 1, quizData.questionNumbering);
+                            return label ? `Câu ${label}` : "Câu hỏi";
+                          })()}
                     </h5>
                     <Input
                       value={currentQuestion.text}
@@ -430,7 +654,11 @@ const QuestionsSection = ({
                     <RadioGroup
                       value={selectedOption}
                       onValueChange={handleOptionSelect}
-                      className="space-y-2 mb-4"
+                      className={
+                        quizData.answersPerRow === 2
+                          ? "grid grid-cols-2 gap-x-6 gap-y-2 mb-4"
+                          : "space-y-2 mb-4"
+                      }
                     >
                       {currentQuestion.options.map((option, idx) => (
                         <div key={option.id} className="flex items-center gap-2">
@@ -506,33 +734,174 @@ const QuestionsSection = ({
             <FileText className="h-4 w-4" />
             <span>Thêm phần</span>
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
+          <Dialog
+            open={bankDialogOpen}
+            onOpenChange={(open) => {
+              if (!open) setSelectedBankIds(new Set());
+              setBankDialogOpen(open);
+            }}
           >
-            <Database className="h-4 w-4" />
-            <span>Ngân hàng câu hỏi</span>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
-          >
-            <UploadCloud className="h-4 w-4" />
-            <span>Tải file lên</span>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
-          >
-            <FolderOpen className="h-4 w-4" />
-            <span>Thư viện</span>
-          </Button>
+            <DialogTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1"
+              >
+                <Database className="h-4 w-4" />
+                <span>Ngân hàng câu hỏi</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Chọn câu hỏi từ ngân hàng</DialogTitle>
+                <DialogDescription>Chọn nhiều câu hỏi và thêm vào phần đang chọn.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <Label className="text-sm text-muted-foreground whitespace-nowrap">Thư mục</Label>
+                  <Select value={selectedBankFolderId} onValueChange={setSelectedBankFolderId}>
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Chọn thư mục" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="root">Tất cả câu hỏi</SelectItem>
+                      {getAllFolderIds(bankFolders).map((f) => (
+                        <SelectItem key={f.id} value={f.id}>
+                          {f.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={bankSearch}
+                    onChange={(e) => setBankSearch(e.target.value)}
+                    placeholder="Tìm câu hỏi..."
+                    className="pl-9"
+                  />
+                </div>
+                <ScrollArea className="h-[360px] rounded-lg border">
+                  <div className="divide-y">
+                    {bankLoading ? (
+                      <div className="flex items-center justify-center gap-2 p-6 text-sm text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Đang tải câu hỏi...
+                      </div>
+                    ) : visibleBankQuestions.length === 0 ? (
+                      <div className="p-6 text-sm text-muted-foreground">Không có câu hỏi phù hợp.</div>
+                    ) : (
+                      visibleBankQuestions.map((q) => (
+                        <div
+                          key={q.id}
+                          className="flex items-start gap-3 p-3 hover:bg-muted/40 cursor-pointer"
+                          onClick={() => toggleBankSelect(q.id)}
+                        >
+                          <Checkbox
+                            checked={selectedBankIds.has(q.id)}
+                            onCheckedChange={() => toggleBankSelect(q.id)}
+                            className="mt-1"
+                          />
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium">{q.questionName}</p>
+                            {q.answers?.length > 0 && (
+                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                {q.answers.map((a, idx) => `${String.fromCharCode(65 + idx)}. ${a.text}`).join(" • ")}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setBankDialogOpen(false)}>
+                  Hủy
+                </Button>
+                <Button
+                  onClick={handleAddSelectedBankQuestions}
+                  disabled={selectedBankIds.size === 0}
+                >
+                  Thêm {selectedBankIds.size} câu hỏi
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1"
+                disabled={isImporting}
+              >
+                <UploadCloud className="h-4 w-4" />
+                <span>{isImporting ? "Đang nhập..." : "Tải file lên"}</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Upload Questions</DialogTitle>
+                <DialogDescription className="sr-only">
+                  Upload file to import questions.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="rounded-xl border border-dashed border-muted-foreground/40 bg-muted/20 p-6 text-center">
+                <Button
+                  type="button"
+                  variant="default"
+                  className="gap-2"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isImporting}
+                >
+                  <UploadCloud className="h-4 w-4" />
+                  <span>{isImporting ? "Uploading..." : "Upload file"}</span>
+                </Button>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Select or drag and drop files
+                </p>
+              </div>
+              <div className="grid gap-3 pt-2 sm:grid-cols-1">
+                <div className="flex items-center justify-between rounded-xl border bg-background p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-12 w-16 place-items-center rounded-lg border bg-muted/30">
+                      <FileText className="h-6 w-6 text-emerald-600" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">Download template</p>
+                      <p className="text-xs text-muted-foreground">Excel (.xlsx)</p>
+                    </div>
+                  </div>
+                  <a
+                    href="/templates/quiz-questions-template.xlsx"
+                    download
+                    className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <span>Download</span>
+                    <span className="text-lg leading-none">↓</span>
+                  </a>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                handleImportQuestions(file);
+                setUploadDialogOpen(false);
+              }
+            }}
+          />
           <Button
             type="button"
             variant="outline"

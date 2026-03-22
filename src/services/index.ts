@@ -10,3 +10,4 @@ export * from './role.service';
 export * from './question.service';
 export * from './question-bank.service';
 export * from './folder.service';
+export * from './admin.service';

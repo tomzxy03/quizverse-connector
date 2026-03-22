@@ -13,6 +13,7 @@ function toQuizQuestionReqDTOs(formQuestions: FormQuestion[]): QuizQuestionReqDT
             questionReqDTO: {
                 questionName: q.text.trim(),
                 questionType: 'text',
+                answerType: 'single_choice',
                 answers: (q.options || []).map((opt) => ({
                     answerName: opt.text.trim(),
                     answerType: 'text',
@@ -28,6 +29,7 @@ function toQuestionReqDTOs(formQuestions: FormQuestion[]): QuestionReqDTO[] {
     return formQuestions.map((q) => ({
         questionName: q.text.trim(),
         questionType: 'text',
+        answerType: 'single_choice',
         answers: (q.options || []).map((opt) => ({
             answerName: opt.text.trim(),
             answerType: 'text',
@@ -63,6 +65,15 @@ export class QuestionService {
     async updateQuestionsToQuiz(quizId: number, formQuestions: FormQuestion[]): Promise<void> {
         const dtos = toQuizQuestionReqDTOs(formQuestions);
         return await quizRepository.updateQuestionsToQuiz(quizId, dtos);
+    }
+
+    /** Import questions from Excel for preview */
+    async importQuestionsFromExcel(file: File): Promise<QuestionResDTO[]> {
+        return await questionRepository.importQuestionsFromExcel(file);
+    }
+    /** Import questions from Excel for group quiz */
+    async importQuestionsFromExcelForGroup(groupId: number, file: File): Promise<QuestionResDTO[]> {
+        return await questionRepository.importQuestionsFromExcelForGroup(groupId, file);
     }
 
     // --- Question Folder / Question Bank Methods ---

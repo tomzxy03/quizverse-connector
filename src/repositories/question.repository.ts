@@ -12,6 +12,19 @@ export const questionRepository = {
         return apiClient.post<QuestionResDTO[]>(API_ENDPOINTS.QUESTIONS.ADD_LIST(quizId), questions);
     },
 
+    /** Import questions from Excel */
+    importQuestionsFromExcel(file: File): Promise<QuestionResDTO[]> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return apiClient.post<QuestionResDTO[]>(API_ENDPOINTS.QUESTIONS.IMPORT, formData);
+    },
+    /** Import questions from Excel for group quiz */
+    importQuestionsFromExcelForGroup(groupId: number, file: File): Promise<QuestionResDTO[]> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return apiClient.post<QuestionResDTO[]>(API_ENDPOINTS.GROUPS.IMPORT_QUESTIONS(groupId), formData);
+    },
+
     // --- Question Folder / Question Bank Methods ---
 
     /** Get paginated list of all questions in my bank */

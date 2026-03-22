@@ -9,6 +9,12 @@ export interface LobbyResDTO {
   id: number;
   lobbyName: string;
   hostName: string;
+  totalMembers?: number;
+}
+
+export interface LobbyInviteCodeResDTO {
+  lobbyId: number;
+  codeInvite: string;
 }
 
 // === Request DTOs (to BE) ===

@@ -132,7 +132,11 @@ const QuizResultPage = () => {
             icon: AlertCircle
         };
     };
-
+    const formatTime = (seconds: number) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    };
     const theme = getScoreTheme(scorePercent);
     const ThemeIcon = theme.icon;
 
@@ -194,7 +198,7 @@ const QuizResultPage = () => {
                                             <Clock className="h-3.5 w-3.5" />
                                             Thời gian:
                                         </span>
-                                        <span className="font-bold text-foreground">{timeSpent} phút</span>
+                                        <span className="font-bold text-foreground">{formatTime(timeSpent)}</span>
                                     </div>
                                     <Progress value={scorePercent} className="h-2 rounded-full" />
                                 </div>

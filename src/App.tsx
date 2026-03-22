@@ -12,6 +12,7 @@ import Groups from "./pages/Groups";
 import AddQuiz from "./pages/AddQuiz";
 import ExamHistory from "./pages/ExamHistory";
 import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 import QuizDetail from "./pages/QuizDetail";
 import QuizTakingPage from "./pages/QuizTaking";
@@ -38,6 +39,14 @@ const App = () => (
               <Route path="/" element={<HomeOrDashboard />} />
               <Route path="/library" element={<QuizLibrary />} />
               <Route path="library/:subjectId" element={<QuizLibrary />} />
+              <Route
+                path="/library/create"
+                element={
+                  <ProtectedRoute requiredRoles={["HOST", "ADMIN"]}>
+                    <AddQuiz />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/api-docs" element={<ApiDocs />} />
@@ -54,6 +63,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tomzxyadmin"
+                element={
+                  <ProtectedRoute requiredRoles={["ADMIN"]}>
+                    <AdminDashboard />
                   </ProtectedRoute>
                 }
               />

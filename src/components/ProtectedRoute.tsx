@@ -3,11 +3,12 @@ import { useAuth } from '@/contexts';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requiredRoles?: string[];
 }
 
 /** Renders children only when user is logged in; otherwise redirects to /login */
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isLoggedIn, isLoading } = useAuth();
+export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps) {
+  const { isLoggedIn, isLoading, user } = useAuth();
   const location = useLocation();
 
   // While validating the token on mount, show a simple loading state
@@ -21,6 +22,13 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!isLoggedIn) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+
+  if (requiredRoles?.length) {
+    const hasRole = user?.roles?.some((r) => requiredRoles.includes(r));
+    if (!hasRole) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return <>{children}</>;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -9,6 +9,8 @@ import {
   ChevronRight,
   BookOpen,
   Trash2,
+  Filter,
+  Sparkles,
 } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +18,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts';
 import { fetchDashboard } from '@/services';
 import type {
@@ -78,6 +86,8 @@ const Dashboard = () => {
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [recentFilter, setRecentFilter] = useState<'ALL' | QuizInstanceStatus>('ALL');
+  const [groupFilter, setGroupFilter] = useState<'ALL' | GroupRole>('ALL');
 
   useEffect(() => {
     if (!user?.id) return;
@@ -103,13 +113,35 @@ const Dashboard = () => {
     data?.groups?.some((g) => g.role === 'OWNER' || g.role === 'HOST' || g.role === 'ADMIN') ?? false;
   const showDrafts = canManageDrafts && (data?.draftQuizzes?.length ?? 0) > 0;
 
+  const filteredRecent = useMemo(() => {
+    if (!data?.recentAndUpcoming) return [];
+    if (recentFilter === 'ALL') return data.recentAndUpcoming;
+    return data.recentAndUpcoming.filter((item) => item.status === recentFilter);
+  }, [data?.recentAndUpcoming, recentFilter]);
+
+  const filteredGroups = useMemo(() => {
+    if (!data?.groups) return [];
+    if (groupFilter === 'ALL') return data.groups;
+    return data.groups.filter((group) => group.role === groupFilter);
+  }, [data?.groups, groupFilter]);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 container px-4 py-6 max-w-5xl mx-auto">
-        <div className="flex items-center gap-2 text-muted-foreground mb-6">
-          <LayoutDashboard className="h-5 w-5" />
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+      <main className="flex-1 container px-4 py-6 max-w-6xl mx-auto">
+        <div className="flex flex-wrap items-center gap-3 text-muted-foreground mb-6">
+          <div className="flex items-center gap-2">
+            <LayoutDashboard className="h-5 w-5" />
+            <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          </div>
+          <div className="ml-auto flex gap-2">
+            <Button asChild size="sm" variant="outline">
+              <Link to="/library">Thư viện</Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link to="/groups">Nhóm học</Link>
+            </Button>
+          </div>
         </div>
 
         {error && (
@@ -123,41 +155,48 @@ const Dashboard = () => {
         ) : data ? (
           <div className="space-y-6">
             {/* 3.1 User summary */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-medium">Tổng quan</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap items-center gap-4">
-                <Avatar className="h-14 w-14">
-                  <AvatarImage src={data.user.avatar} alt={data.user.username} />
-                  <AvatarFallback>
-                    {(data.user.username || data.user.fullName || 'U').slice(0, 1).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold text-lg">
-                    {data.user.fullName || data.user.username}
-                  </p>
-                  <p className="text-sm text-muted-foreground">@{data.user.username}</p>
-                </div>
-                <div className="flex gap-4 ml-auto flex-wrap">
-                  <StatPill
-                    label="Đã tham gia"
-                    value={data.userStats.totalQuizzesTaken}
-                    icon={<BookOpen className="h-4 w-4" />}
-                  />
-                  <StatPill
-                    label="Đang làm"
-                    value={data.userStats.inProgressCount}
-                    icon={<Clock className="h-4 w-4" />}
-                  />
-                  <StatPill
-                    label="Đã hoàn thành"
-                    value={data.userStats.completedCount}
-                    icon={<Play className="h-4 w-4" />}
-                  />
-                </div>
-              </CardContent>
+            <Card className="relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background" />
+              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/10 blur-2xl" />
+              <div className="relative">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-medium flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    Tổng quan
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-wrap items-center gap-4">
+                  <Avatar className="h-14 w-14 border border-primary/20">
+                    <AvatarImage src={data.user.profilePictureUrl} alt={data.user.userName} />
+                    <AvatarFallback>
+                      {(data.user.userName || 'U').slice(0, 1).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold text-lg">
+                      {data.user.userName}
+                    </p>
+                    <p className="text-sm text-muted-foreground">@{data.user.userName}</p>
+                  </div>
+                  <div className="flex gap-4 ml-auto flex-wrap">
+                    <StatPill
+                      label="Đã tham gia"
+                      value={data.userStats.totalQuizzesTaken}
+                      icon={<BookOpen className="h-4 w-4" />}
+                    />
+                    <StatPill
+                      label="Đang làm"
+                      value={data.userStats.inProgressCount}
+                      icon={<Clock className="h-4 w-4" />}
+                    />
+                    <StatPill
+                      label="Đã hoàn thành"
+                      value={data.userStats.completedCount}
+                      icon={<Play className="h-4 w-4" />}
+                    />
+                  </div>
+                </CardContent>
+              </div>
             </Card>
 
             {/* 3.2 Resume in-progress */}
@@ -198,32 +237,64 @@ const Dashboard = () => {
             {data.recentAndUpcoming.length > 0 && (
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-medium">Gần đây & sắp tới</CardTitle>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <CardTitle className="text-base font-medium">Gần đây & sắp tới</CardTitle>
+                    <div className="ml-auto">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="outline" className="gap-2">
+                            <Filter className="h-4 w-4" />
+                            {recentFilter === 'ALL' ? 'Tất cả' : statusLabel(recentFilter)}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setRecentFilter('ALL')}>
+                            Tất cả
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setRecentFilter('DONE')}>
+                            Đã nộp
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setRecentFilter('UPCOMING')}>
+                            Sắp mở
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setRecentFilter('MISSED')}>
+                            Đã hết hạn
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2">
-                    {data.recentAndUpcoming.map((item: QuizRecentItem) => (
-                      <li
-                        key={item.id}
-                        className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-md hover:bg-muted/50"
-                      >
-                        <div>
-                          <p className="font-medium text-sm">{item.quizTitle}</p>
-                          {item.submittedAt && (
-                            <p className="text-xs text-muted-foreground">
-                              Nộp: {new Date(item.submittedAt).toLocaleDateString('vi-VN')}
-                            </p>
-                          )}
-                          {item.startDate && item.status === 'UPCOMING' && (
-                            <p className="text-xs text-muted-foreground">
-                              Mở: {new Date(item.startDate).toLocaleDateString('vi-VN')}
-                            </p>
-                          )}
-                        </div>
-                        <Badge variant={statusVariant(item.status)}>{statusLabel(item.status)}</Badge>
-                      </li>
-                    ))}
-                  </ul>
+                  {filteredRecent.length > 0 ? (
+                    <ul className="space-y-2">
+                      {filteredRecent.map((item: QuizRecentItem) => (
+                        <li
+                          key={item.id}
+                          className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-md hover:bg-muted/50"
+                        >
+                          <div>
+                            <p className="font-medium text-sm">{item.quizTitle}</p>
+                            {item.submittedAt && (
+                              <p className="text-xs text-muted-foreground">
+                                Nộp: {new Date(item.submittedAt).toLocaleDateString('vi-VN')}
+                              </p>
+                            )}
+                            {item.startDate && item.status === 'UPCOMING' && (
+                              <p className="text-xs text-muted-foreground">
+                                Mở: {new Date(item.startDate).toLocaleDateString('vi-VN')}
+                              </p>
+                            )}
+                          </div>
+                          <Badge variant={statusVariant(item.status)}>{statusLabel(item.status)}</Badge>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Không có hoạt động phù hợp với bộ lọc hiện tại.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -232,29 +303,58 @@ const Dashboard = () => {
             {data.groups.length > 0 && (
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-medium flex items-center gap-2">
-                    <Users className="h-4 w-4" /> Nhóm của bạn
-                  </CardTitle>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <CardTitle className="text-base font-medium flex items-center gap-2">
+                      <Users className="h-4 w-4" /> Nhóm của bạn
+                    </CardTitle>
+                    <div className="ml-auto">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="outline" className="gap-2">
+                            <Filter className="h-4 w-4" />
+                            {groupFilter === 'ALL' ? 'Tất cả' : roleLabel(groupFilter)}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setGroupFilter('ALL')}>
+                            Tất cả
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setGroupFilter('OWNER')}>
+                            Chủ nhóm
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setGroupFilter('MEMBER')}>
+                            Thành viên
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2">
-                    {data.groups.map((g) => (
-                      <li key={g.id}>
-                        <Link
-                          to={`/groups?id=${g.id}`}
-                          className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                        >
-                          <div>
-                            <p className="font-medium">{g.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {roleLabel(g.role)} · {g.openQuizzesCount} quiz đang mở
-                            </p>
-                          </div>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                  {filteredGroups.length > 0 ? (
+                    <ul className="space-y-2">
+                      {filteredGroups.map((g) => (
+                        <li key={g.id}>
+                          <Link
+                            to={`/groups?id=${g.id}`}
+                            className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                          >
+                            <div>
+                              <p className="font-medium">{g.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {roleLabel(g.role)} · {g.openQuizzesCount} quiz đang mở
+                              </p>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Không có nhóm phù hợp với bộ lọc hiện tại.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             )}

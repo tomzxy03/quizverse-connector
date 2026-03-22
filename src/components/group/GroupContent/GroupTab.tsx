@@ -1,6 +1,7 @@
 // GroupContent/GroupTabs.tsx
 import { Bell, FileText, Users, Share2 } from 'lucide-react';
 import { ContentTab } from './types';
+import { useNavigate } from 'react-router-dom';
 
 interface Props {
   activeTab: ContentTab;
@@ -38,9 +39,10 @@ const TabButton = ({
 );
 
 const GroupTabs = ({ activeTab, onChange, canManage, groupId }: Props) => {
+  const navigate = useNavigate();
   const handleTabChange = (tab: ContentTab) => {
     onChange(tab);
-    window.history.pushState(null, '', `/groups/${groupId}/${tab}`);
+    navigate(`/groups/${groupId}/${tab}`);
   };
 
   return (

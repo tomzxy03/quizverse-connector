@@ -1,5 +1,5 @@
 import { groupRepository } from '@/repositories';
-import { LobbyResDTO, LobbyReqDTO, LobbyQuizResDTO, NotificationReqDTO } from '@/domains';
+import { LobbyResDTO, LobbyReqDTO, LobbyQuizResDTO, NotificationReqDTO, LobbyInviteCodeResDTO } from '@/domains';
 import { QuizReqDTO } from '@/domains/quiz.types';
 import { PageResponse } from '@/core/types';
 
@@ -57,6 +57,28 @@ export class GroupService {
     return await groupRepository.leaveGroup(groupId);
   }
 
+  async getCodeInvite(groupId: number): Promise<LobbyInviteCodeResDTO> {
+    return await groupRepository.getCodeInvite(groupId);
+  }
+
+  async reloadCodeInvite(groupId: number, lobbyId?: number): Promise<LobbyInviteCodeResDTO> {
+    return await groupRepository.reloadCodeInvite(groupId, lobbyId ?? groupId);
+  }
+
+  async findLobbyByCode(codeInvite: string): Promise<LobbyResDTO> {
+    if (!codeInvite || codeInvite.trim().length === 0) {
+      throw new Error('Invite code is required');
+    }
+    return await groupRepository.findLobbyByCode(codeInvite.trim());
+  }
+
+  async joinLobby(lobbyId: number): Promise<LobbyResDTO> {
+    if (!lobbyId || Number.isNaN(lobbyId)) {
+      throw new Error('Lobby ID is required');
+    }
+    return await groupRepository.joinLobby(lobbyId);
+  }
+
   // ===== Members Management =====
 
   /**
@@ -70,8 +92,12 @@ export class GroupService {
     return await groupRepository.getMembers(groupId, page, size);
   }
 
+  async deleteMember(groupId: number, userId: number): Promise<void> {
+    return await groupRepository.deleteMember(groupId, userId);
+  }
+
   async removeMember(groupId: number, userId: number): Promise<void> {
-    return await groupRepository.removeMember(groupId, userId);
+    return await groupRepository.deleteMember(groupId, userId);
   }
 
   // ===== Quizzes Management =====
