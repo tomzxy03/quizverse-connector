@@ -37,7 +37,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, className = '' }) => {
     >
       {/* TITLE */}
       <h3 className="
-        text-base font-semibold text-slate-900
+        text-base font-medium text-slate-900
         mb-2 leading-snug
         line-clamp-2 min-h-[3rem]
       ">

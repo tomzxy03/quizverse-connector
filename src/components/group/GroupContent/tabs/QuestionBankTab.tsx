@@ -811,7 +811,7 @@ const QuestionBankTab = () => {
   return (
     <div className="flex h-full min-h-[420px] flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-foreground">Ngân hàng câu hỏi</h2>
+        <h2 className="text-lg font-medium text-foreground">Ngân hàng câu hỏi</h2>
       </div>
 
       <div className="flex flex-1 flex-col gap-4 rounded-xl border border-border bg-white p-4 shadow-sm dark:bg-card">

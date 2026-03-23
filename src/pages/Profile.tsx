@@ -327,7 +327,7 @@ const Profile = () => {
                                     {subjectEntries.map(([subject, count]) => (
                                         <div key={subject}>
                                             <div className="flex items-center justify-between mb-1.5">
-                                                <span className="text-sm font-semibold text-foreground">{subject}</span>
+                                                <span className="text-sm font-medium text-foreground">{subject}</span>
                                                 <span className="text-xs font-bold text-muted-foreground">{count} quiz</span>
                                             </div>
                                             <div className="h-2.5 rounded-full bg-muted overflow-hidden">
@@ -368,7 +368,7 @@ const Profile = () => {
                                                 className="flex items-center justify-between gap-3 p-3 rounded-xl border border-border/30 bg-muted/20 hover:bg-muted/40 transition-colors"
                                             >
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-semibold text-sm text-foreground truncate">
+                                                    <p className="font-medium text-sm text-foreground truncate">
                                                         {attempt.title || 'Quiz'}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground mt-0.5">

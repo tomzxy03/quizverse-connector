@@ -173,7 +173,7 @@ const Dashboard = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-semibold text-lg">
+                    <p className="font-medium text-lg">
                       {data.user.userName}
                     </p>
                     <p className="text-sm text-muted-foreground">@{data.user.userName}</p>
@@ -434,7 +434,7 @@ function StatPill({
     <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
       {icon}
       <div>
-        <p className="text-lg font-semibold leading-none">{value}</p>
+        <p className="text-lg font-medium leading-none">{value}</p>
         <p className="text-xs text-muted-foreground">{label}</p>
       </div>
     </div>

@@ -96,7 +96,7 @@ const QuizResultPage = () => {
                             </div>
                             <h2 className="mb-3 text-2xl font-bold text-foreground">{error || 'Không tìm thấy kết quả'}</h2>
                             <p className="text-muted-foreground mb-8">Có lỗi xảy ra khi truy cập kết quả này.</p>
-                            <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={() => navigate(`/quiz/${id}`)}>
+                            <Button className="w-full h-12 rounded-xl text-base font-medium" onClick={() => navigate(`/quiz/${id}`)}>
                                 <ArrowLeft className="mr-2 h-5 w-5" />
                                 Quay lại bài thi
                             </Button>
@@ -254,7 +254,7 @@ const QuizResultPage = () => {
                                                     <div className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${q.correct ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-destructive/5 border-destructive/20'
                                                         }`}>
                                                         <div className={`h-2 w-2 rounded-full ${q.correct ? 'bg-emerald-500' : 'bg-destructive'}`} />
-                                                        <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">Bạn chọn:</span>
+                                                        <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Bạn chọn:</span>
                                                         <span className={`text-sm font-bold ${q.correct ? 'text-emerald-700' : 'text-destructive/80'}`}>{q.userAnswer}</span>
                                                     </div>
                                                 )}
@@ -262,7 +262,7 @@ const QuizResultPage = () => {
                                                 {!q.correct && q.correctAnswer && (
                                                     <div className="flex items-center gap-3 p-3 rounded-2xl border-2 border-emerald-500/10 bg-muted/20">
                                                         <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                                                        <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">Đáp án đúng:</span>
+                                                        <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Đáp án đúng:</span>
                                                         <span className="text-sm font-bold text-emerald-700">{q.correctAnswer}</span>
                                                     </div>
                                                 )}

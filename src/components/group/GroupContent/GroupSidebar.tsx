@@ -281,7 +281,7 @@ const GroupSidebar = ({
               {isSearchOpen && (
                 <div className="rounded-lg border border-border bg-muted/40 p-3 space-y-3 shadow-sm">
                   <div>
-                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       Tìm nhóm bằng mã mời
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -327,7 +327,7 @@ const GroupSidebar = ({
                     )}
                     {searchResult && (
                       <div className="rounded-md border border-border bg-background p-3 space-y-2">
-                        <div className="text-sm font-semibold text-foreground">
+                        <div className="text-sm font-medium text-foreground">
                           {searchResult.lobbyName}
                         </div>
                         <div className="text-xs text-muted-foreground">

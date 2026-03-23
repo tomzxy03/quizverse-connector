@@ -149,7 +149,7 @@ const QuizDetailPage = () => {
           <Card>
             <CardContent className="py-16 text-center">
               <AlertCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
-              <h2 className="mb-2 text-xl font-semibold text-foreground">
+              <h2 className="mb-2 text-xl font-medium text-foreground">
                 {error || 'Không tìm thấy quiz'}
               </h2>
               <Button asChild className="mt-4">
@@ -233,21 +233,21 @@ const QuizDetailPage = () => {
                     <FileQuestion className="mt-0.5 h-5 w-5 text-primary" />
                     <div>
                       <p className="text-sm text-muted-foreground">Số câu hỏi</p>
-                      <p className="text-lg font-semibold text-foreground">{quiz.totalQuestion}</p>
+                      <p className="text-lg font-medium text-foreground">{quiz.totalQuestion}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 rounded-lg bg-muted/30 p-3">
                     <Award className="mt-0.5 h-5 w-5 text-primary" />
                     <div>
                       <p className="text-sm text-muted-foreground">Điểm tối đa (dự kiến)</p>
-                      <p className="text-lg font-semibold text-foreground">{maxScore}</p>
+                      <p className="text-lg font-medium text-foreground">{maxScore}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 rounded-lg bg-muted/30 p-3">
                     <Clock className="mt-0.5 h-5 w-5 text-primary" />
                     <div>
                       <p className="text-sm text-muted-foreground">Giới hạn thời gian</p>
-                      <p className="text-lg font-semibold text-foreground">
+                      <p className="text-lg font-medium text-foreground">
                         {quiz.timeLimitMinutes ? `${quiz.timeLimitMinutes} phút` : 'Không giới hạn'}
                       </p>
                     </div>
@@ -258,7 +258,7 @@ const QuizDetailPage = () => {
                       <p className="text-sm text-muted-foreground">
                         {maxAttempts ? 'Số lần đã làm / Tối đa' : 'Số lần đã làm'}
                       </p>
-                      <p className="text-lg font-semibold text-foreground">
+                      <p className="text-lg font-medium text-foreground">
                         {totalAttempt}
                         {maxAttempts && ` / ${maxAttempts}`}
                       </p>

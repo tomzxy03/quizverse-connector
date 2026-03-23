@@ -157,7 +157,7 @@ const CategoryNavigation: React.FC<CategoryNavigationProps> = ({
                   </div>
 
                   {/* Category Name */}
-                  <h3 className="text-center font-semibold text-slate-900 mb-2">
+                  <h3 className="text-center font-medium text-slate-900 mb-2">
                     {category.name}
                   </h3>
 

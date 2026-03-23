@@ -201,7 +201,7 @@ const SharedTab = ({ group }: { group: Group }) => {
           {searchResult && !searchError && (
             <div className="rounded-lg border bg-background p-4">
               <div className="text-sm text-muted-foreground">Nhóm tìm thấy</div>
-              <div className="mt-2 text-base font-semibold text-foreground">
+              <div className="mt-2 text-base font-medium text-foreground">
                 {searchResult.lobbyName}
               </div>
               <div className="mt-1 text-sm text-muted-foreground">

@@ -154,7 +154,7 @@ const HomePage = () => {
                 <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center mx-auto mb-4">
                   <Zap className="h-6 w-6 text-indigo-600" />
                 </div>
-                <h3 className="font-semibold text-lg mb-2">Không cần đăng nhập</h3>
+                <h3 className="font-medium text-lg mb-2">Không cần đăng nhập</h3>
                 <p className="text-slate-600 text-sm">
                   Làm quiz public ngay lập tức mà không cần tạo tài khoản
                 </p>
@@ -164,7 +164,7 @@ const HomePage = () => {
                 <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center mx-auto mb-4">
                   <TrendingUp className="h-6 w-6 text-green-600" />
                 </div>
-                <h3 className="font-semibold text-lg mb-2">Theo dõi tiến độ</h3>
+                <h3 className="font-medium text-lg mb-2">Theo dõi tiến độ</h3>
                 <p className="text-slate-600 text-sm">
                   Đăng ký để lưu lịch sử và xem chi tiết kết quả học tập
                 </p>
@@ -174,7 +174,7 @@ const HomePage = () => {
                 <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center mx-auto mb-4">
                   <Users className="h-6 w-6 text-purple-600" />
                 </div>
-                <h3 className="font-semibold text-lg mb-2">Học nhóm</h3>
+                <h3 className="font-medium text-lg mb-2">Học nhóm</h3>
                 <p className="text-slate-600 text-sm">
                   Tham gia lớp học và làm quiz chung với bạn bè, giảng viên
                 </p>

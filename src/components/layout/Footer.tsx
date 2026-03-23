@@ -9,7 +9,7 @@ const Footer = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-center md:text-left">
-              <Link to="/" className="text-lg font-semibold text-indigo-600">
+              <Link to="/" className="text-lg font-medium text-indigo-600">
                 Quizory
               </Link>
               <p className="text-sm text-slate-600 mt-1">

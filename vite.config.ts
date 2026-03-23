@@ -19,4 +19,15 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+          query: ["@tanstack/react-query"],
+          ui: ["@radix-ui/react-toast", "@radix-ui/react-tooltip", "@radix-ui/react-dialog"],
+        },
+      },
+    },
+  },
 }));

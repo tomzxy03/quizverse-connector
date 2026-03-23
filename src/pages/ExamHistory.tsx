@@ -68,7 +68,7 @@ const ExamHistory = () => {
                 <User className="h-7 w-7 text-primary" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground">{user?.userName || 'Người dùng'}</h2>
+                <h2 className="text-lg font-medium text-foreground">{user?.userName || 'Người dùng'}</h2>
                 <p className="text-sm text-muted-foreground">{user?.email || ''}</p>
               </div>
             </div>
@@ -113,7 +113,7 @@ const ExamHistory = () => {
                         className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-base font-semibold text-foreground mb-2">
+                          <h3 className="text-base font-medium text-foreground mb-2">
                             {exam.title || 'Quiz'}
                           </h3>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">

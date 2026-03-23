@@ -241,7 +241,7 @@ const QuizTakingPage = () => {
                             </div>
                             <h2 className="mb-3 text-2xl font-bold text-foreground">{error || 'Không tìm thấy bài thi'}</h2>
                             <p className="text-muted-foreground mb-8">Có lỗi xảy ra khi truy cập bài thi này.</p>
-                            <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={() => navigate(`/quiz/${id}`)}>
+                            <Button className="w-full h-12 rounded-xl text-base font-medium" onClick={() => navigate(`/quiz/${id}`)}>
                                 Quay lại trang chi tiết
                             </Button>
                         </div>

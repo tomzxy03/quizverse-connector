@@ -527,7 +527,7 @@ const QuestionsSection = ({
                   }`}
                 />
                 <div>
-                  <h4 className="font-semibold">{section.title}</h4>
+                  <h4 className="font-medium">{section.title}</h4>
                   {section.description && (
                     <p className="text-sm text-muted-foreground">{section.description}</p>
                   )}
@@ -620,7 +620,7 @@ const QuestionsSection = ({
                       {q.options.map((opt, optIndex) => (
                         <div key={opt.id} className="text-xs">
                           <span className="font-medium">{String.fromCharCode(65 + optIndex)}.</span>
-                          <span className={opt.isCorrect ? "font-semibold text-primary ml-1" : " ml-1"}>
+                          <span className={opt.isCorrect ? "font-medium text-primary ml-1" : " ml-1"}>
                             {opt.text}
                           </span>
                         </div>

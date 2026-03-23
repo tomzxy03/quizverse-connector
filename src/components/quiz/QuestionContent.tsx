@@ -141,7 +141,7 @@ export default function QuestionContent({
               </div>
 
               <div className="flex-1">
-                <p className={`text-base leading-snug ${isSelected ? 'font-semibold text-foreground' : 'text-foreground'}`}>
+                <p className={`text-base leading-snug ${isSelected ? 'font-medium text-foreground' : 'text-foreground'}`}>
                   {answer.answerText}
                 </p>
               </div>

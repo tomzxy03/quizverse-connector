@@ -713,7 +713,7 @@ const AdminDashboard = () => {
                     {activeTab === 'SUBJECTS' && (
                       <div className="space-y-4">
                         <div className="rounded-lg border bg-muted/20 p-4">
-                          <h3 className="text-sm font-semibold mb-3">Create subject</h3>
+                          <h3 className="text-sm font-medium mb-3">Create subject</h3>
                           <div className="flex flex-wrap gap-3">
                             <Input
                               value={newSubject.name}
@@ -785,7 +785,7 @@ const AdminDashboard = () => {
                         />
                         {editingSubject && (
                           <div className="rounded-lg border bg-background p-4">
-                            <h3 className="text-sm font-semibold mb-3">Edit subject</h3>
+                            <h3 className="text-sm font-medium mb-3">Edit subject</h3>
                             <div className="flex flex-wrap gap-3">
                               <Input
                                 value={editingSubject.name}
@@ -827,7 +827,7 @@ const AdminDashboard = () => {
                     {activeTab === 'ROLES' && (
                       <div className="space-y-4">
                         <div className="rounded-lg border bg-muted/20 p-4">
-                          <h3 className="text-sm font-semibold mb-3">Create role</h3>
+                          <h3 className="text-sm font-medium mb-3">Create role</h3>
                           <div className="flex flex-wrap gap-3">
                             <Input
                               value={newRole.name}
@@ -898,7 +898,7 @@ const AdminDashboard = () => {
                         />
                         {editingRole && (
                           <div className="rounded-lg border bg-background p-4">
-                            <h3 className="text-sm font-semibold mb-3">Edit role</h3>
+                            <h3 className="text-sm font-medium mb-3">Edit role</h3>
                             <div className="flex flex-wrap gap-3">
                               <Input
                                 value={editingRole.name}
@@ -1003,7 +1003,7 @@ function MetricCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-2xl font-semibold">{value}</p>
+        <p className="text-2xl font-medium">{value}</p>
         <p className="text-xs text-muted-foreground">{delta}</p>
       </CardContent>
     </Card>

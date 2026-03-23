@@ -228,7 +228,7 @@ const Groups = () => {
                     <div className="w-16 h-16 rounded-full bg-primary/10 border border-border flex items-center justify-center mb-4">
                       <PlusCircle className="h-8 w-8 text-primary" />
                     </div>
-                    <h2 className="text-xl font-semibold text-foreground mb-2">
+                    <h2 className="text-xl font-medium text-foreground mb-2">
                       Chọn hoặc tạo nhóm
                     </h2>
                     <p className="text-muted-foreground mb-6 max-w-sm">
@@ -250,7 +250,7 @@ const Groups = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <Card className="w-full max-w-md animate-in fade-in zoom-in-95 duration-200">
             <CardContent className="pt-6">
-              <h2 className="text-xl font-semibold text-foreground mb-4">Tạo nhóm mới</h2>
+              <h2 className="text-xl font-medium text-foreground mb-4">Tạo nhóm mới</h2>
 
               <form
                 className="space-y-4"

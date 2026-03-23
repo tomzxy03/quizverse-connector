@@ -65,7 +65,7 @@ const ApiDocs = () => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center max-w-md">
-          <h2 className="text-xl font-semibold text-red-500 mb-2">Error Loading API Docs</h2>
+          <h2 className="text-xl font-medium text-red-500 mb-2">Error Loading API Docs</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
           <p className="text-sm text-muted-foreground">
             Make sure the backend server is running at <code className="bg-muted px-2 py-1 rounded">http://localhost:8080</code> or check that <code className="bg-muted px-2 py-1 rounded">api1.json</code> exists in the public folder.

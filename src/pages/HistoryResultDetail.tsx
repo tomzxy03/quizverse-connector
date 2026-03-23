@@ -134,7 +134,7 @@ const HistoryResultDetail = () => {
                                 Có lỗi xảy ra khi truy cập dữ liệu bài thi này.
                             </p>
                             <Button
-                                className="w-full h-12 rounded-xl text-base font-semibold"
+                                className="w-full h-12 rounded-xl text-base font-medium"
                                 onClick={() => navigate('/history')}
                             >
                                 <ArrowLeft className="mr-2 h-5 w-5" />
@@ -321,7 +321,7 @@ const HistoryResultDetail = () => {
                                                                     className={`h-2 w-2 rounded-full ${answer.isCorrect ? 'bg-emerald-500' : 'bg-destructive'
                                                                         }`}
                                                                 />
-                                                                <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
+                                                                <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
                                                                     Bạn chọn:
                                                                 </span>
                                                                 <span
@@ -339,7 +339,7 @@ const HistoryResultDetail = () => {
                                                         {!answer.isCorrect && question?.answers && (
                                                             <div className="flex items-center gap-3 p-3 rounded-2xl border-2 border-emerald-500/10 bg-muted/20">
                                                                 <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                                                                <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
+                                                                <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
                                                                     Đáp án đúng:
                                                                 </span>
                                                                 <span className="text-sm font-bold text-emerald-700">
