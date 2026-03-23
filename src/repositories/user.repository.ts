@@ -17,8 +17,8 @@ export const userRepository = {
     return apiClient.post<AuthResDTO>(API_ENDPOINTS.AUTH.SIGNUP, data);
   },
 
-  logout(): Promise<void> {
-    return apiClient.post<void>(API_ENDPOINTS.AUTH.LOGOUT);
+  logout(data: RefreshTokenReqDTO): Promise<void> {
+    return apiClient.post<void>(API_ENDPOINTS.AUTH.LOGOUT, data);
   },
 
   refreshToken(data: RefreshTokenReqDTO): Promise<AuthResDTO> {

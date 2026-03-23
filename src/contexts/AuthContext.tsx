@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { User } from '@/domains';
 import { apiClient } from '@/core/api';
-import { userRepository } from '@/repositories';
+import { userService } from '@/services';
 
 const USER_STORAGE_KEY = 'quizverse_user';
 
@@ -77,8 +77,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
+    const refreshToken = apiClient.getRefreshToken();
+    if (!refreshToken) {
+      clearAuth();
+      return;
+    }
+
     try {
-      await userRepository.logout();
+      await userService.logout({ refreshToken });
     } catch {
       // Backend may already be unreachable — that's fine
     }

@@ -28,8 +28,8 @@ export class UserService {
     return await userRepository.signUp(data);
   }
 
-  async logout(): Promise<void> {
-    return await userRepository.logout();
+  async logout(data: RefreshTokenReqDTO): Promise<void> {
+    return await userRepository.logout(data);
   }
 
   async refreshToken(data: RefreshTokenReqDTO): Promise<AuthResDTO> {
