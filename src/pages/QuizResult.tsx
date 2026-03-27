@@ -26,12 +26,13 @@ const QuizResultPage = () => {
     const { id, instanceId } = useParams<{ id: string; instanceId: string }>();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const isGuest = !user;
     const [result, setResult] = useState<QuizResultDetailResDTO | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!instanceId || !user?.id) {
+        if (!instanceId) {
             setError('Thiếu thông tin kết quả');
             setLoading(false);
             return;
@@ -40,12 +41,12 @@ const QuizResultPage = () => {
     }, [instanceId, user?.id]);
 
     const loadResult = async () => {
-        if (!instanceId || !user?.id) return;
+        if (!instanceId) return;
         setLoading(true);
         setError(null);
 
         try {
-            const data = await quizInstanceRepository.getResult(Number(instanceId), user.id);
+            const data = await quizInstanceRepository.getResult(Number(instanceId), user?.id);
             setResult(data);
         } catch (err) {
             console.error('Failed to load result:', err);
@@ -162,11 +163,11 @@ const QuizResultPage = () => {
                             Chia sẻ
                         </Button>
                         <Button
-                            onClick={() => navigate('/dashboard')}
+                            onClick={() => navigate(isGuest ? '/' : '/dashboard')}
                             className="rounded-xl h-10 px-5 font-bold shadow-lg shadow-primary/10"
                         >
                             <Home className="mr-2 h-4 w-4" />
-                            Về Dashboard
+                            {isGuest ? 'Về trang chủ' : 'Về Dashboard'}
                         </Button>
                     </div>
                 </div>

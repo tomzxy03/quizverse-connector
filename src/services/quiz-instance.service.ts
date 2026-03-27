@@ -15,7 +15,7 @@ export class QuizInstanceService {
     }
 
     /** Get quiz instance by ID */
-    async getById(instanceId: number, userId: number): Promise<QuizInstanceResDTO> {
+    async getById(instanceId: number, userId?: number): Promise<QuizInstanceResDTO> {
         return await quizInstanceRepository.getById(instanceId, userId);
     }
 
@@ -30,7 +30,7 @@ export class QuizInstanceService {
     }
 
     /** Get quiz result after submission */
-    async getResult(instanceId: number, userId: number): Promise<QuizResultDetailResDTO> {
+    async getResult(instanceId: number, userId?: number): Promise<QuizResultDetailResDTO> {
         return await quizInstanceRepository.getResult(instanceId, userId);
     }
 

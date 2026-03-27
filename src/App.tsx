@@ -137,30 +137,9 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/quiz/:id"
-                  element={
-                    <ProtectedRoute>
-                      <QuizDetail />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/quiz/:id/take/:instanceId"
-                  element={
-                    <ProtectedRoute>
-                      <QuizTakingPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/quiz/:id/result/:instanceId"
-                  element={
-                    <ProtectedRoute>
-                      <QuizResultPage />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/quiz/:id" element={<QuizDetail />} />
+                <Route path="/quiz/:id/take/:instanceId" element={<QuizTakingPage />} />
+                <Route path="/quiz/:id/result/:instanceId" element={<QuizResultPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

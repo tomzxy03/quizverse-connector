@@ -30,8 +30,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { quizService } from '@/services';
-import type { QuizResDTO, AttemptState, QuizConfig } from '@/domains';
+import { apiClient } from '@/core/api';
+import { examService, quizService } from '@/services';
+import type { QuizResDTO, AttemptState, QuizConfig, AttemptResDTO } from '@/domains';
 import { useAuth } from '@/contexts';
 import {
   ATTEMPT_STATE_LABELS,
@@ -50,6 +51,9 @@ const QuizDetailPage = () => {
   const [totalAttempt, setTotalAttempt] = useState<number | null>(0);
   const [quizConfig, setQuizConfig] = useState<QuizConfig | null>(null);
   const [startConfirmOpen, setStartConfirmOpen] = useState(false);
+  const [submissions, setSubmissions] = useState<AttemptResDTO[]>([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [submissionsError, setSubmissionsError] = useState<string | null>(null);
 
   const [isStarting, setIsStarting] = useState(false);
 
@@ -125,7 +129,32 @@ const QuizDetailPage = () => {
     setStartConfirmOpen(true);
   };
 
+
   const visibility = quiz?.quizVisibility === 'public' ? 'PUBLIC' : quiz?.quizVisibility === 'class_only' ? 'GROUP' : 'DRAFT';
+  const isGuest = !user;
+  const isGroupQuiz = quiz?.quizVisibility === 'class_only';
+  const isGroupOwner = Boolean(isGroupQuiz && user && quiz?.hostName && user.userName === quiz.hostName);
+
+  useEffect(() => {
+    if (!quiz?.id || !isGroupOwner) return;
+    let cancelled = false;
+    setSubmissionsLoading(true);
+    setSubmissionsError(null);
+    examService.getAllAttempts(undefined, quiz.id)
+      .then((data) => {
+        if (!cancelled) setSubmissions(data || []);
+      })
+      .catch((err) => {
+        console.error('Failed to load submissions:', err);
+        if (!cancelled) setSubmissionsError('Không thể tải danh sách bài nộp.');
+      })
+      .finally(() => {
+        if (!cancelled) setSubmissionsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [quiz?.id, isGroupOwner]);
 
   if (loading) {
     return (
@@ -167,6 +196,11 @@ const QuizDetailPage = () => {
   const canRetry = maxAttempts ? totalAttempt < maxAttempts : true;
   const accessBadgeLabel =
     visibility === 'PUBLIC' ? 'Công khai' : visibility === 'GROUP' ? 'Nhóm' : 'Bản nháp';
+  const formatDateTime = (value?: string) => {
+    if (!value) return '—';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleString('vi-VN');
+  };
 
   const StatusIcon = () => {
     switch (attemptState) {
@@ -296,6 +330,50 @@ const QuizDetailPage = () => {
                 </ul>
               </CardContent>
             </Card>
+
+            {visibility === 'GROUP' && isGroupOwner && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Bài nộp trong nhóm</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {submissionsLoading && (
+                    <p className="text-sm text-muted-foreground">Đang tải danh sách bài nộp...</p>
+                  )}
+                  {!submissionsLoading && submissionsError && (
+                    <p className="text-sm text-destructive">{submissionsError}</p>
+                  )}
+                  {!submissionsLoading && !submissionsError && submissions.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Chưa có bài nộp.</p>
+                  )}
+                  {!submissionsLoading && !submissionsError && submissions.length > 0 && (
+                    <div className="space-y-3">
+                      {submissions.map((attempt) => (
+                        <div key={attempt.id} className="rounded-lg border border-border p-3">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium text-foreground">
+                                User #{attempt.userId}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Nộp lúc: {formatDateTime(attempt.completedAt)}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-semibold text-foreground">{attempt.score}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {attempt.correctAnswers}/{attempt.totalQuestions} đúng
+                              </p>
+                              <p className="text-xs text-muted-foreground">Thời gian: {attempt.duration}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Right column – sticky action panel */}
@@ -323,15 +401,22 @@ const QuizDetailPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* User status from backend attemptState */}
-                  {!user && (
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-foreground">
-                        Bạn đang làm với tư cách khách (kết quả sẽ không được lưu)
-                      </span>
+                  {isGuest ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium text-foreground">
+                          Bạn đang làm với tư cách khách
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusIcon />
+                        <span className="text-sm font-medium text-foreground">
+                          {ATTEMPT_STATE_LABELS[attemptState]}
+                        </span>
+                      </div>
                     </div>
-                  )}
-                  {user && (
+                  ) : (
                     <div className="flex items-center gap-2">
                       <StatusIcon />
                       <span className="text-sm font-medium text-foreground">
@@ -339,6 +424,7 @@ const QuizDetailPage = () => {
                       </span>
                     </div>
                   )}
+
 
                   {/* Start warning */}
                   {attemptState === 'NONE' || attemptState === 'NOT_STARTED' ? (
@@ -351,21 +437,79 @@ const QuizDetailPage = () => {
                   {/* CTA */}
                   <div className="border-t border-border pt-4 space-y-2">
                     {/* Guest users on public quiz */}
-                    {!user && visibility === 'PUBLIC' && (
-                      <Button
-                        onClick={handleStartClick}
-                        disabled={isStarting}
-                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                        size="lg"
-                      >
-                        <Play className="mr-2 h-4 w-4" />
-                        Bắt đầu làm quiz
-                      </Button>
+                    {isGuest && visibility === 'PUBLIC' && (
+                      <>
+                        {(attemptState === 'NONE' || attemptState === 'NOT_STARTED') && (
+                          <Button
+                            onClick={handleStartClick}
+                            disabled={isStarting}
+                            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                            size="lg"
+                          >
+                            <Play className="mr-2 h-4 w-4" />
+                            {isStarting ? 'Đang khởi tạo...' : 'Bắt đầu làm quiz'}
+                          </Button>
+                        )}
+
+                        {attemptState === 'IN_PROGRESS' && (
+                          <Button
+                            onClick={handleContinueQuiz}
+                            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                            size="lg"
+                          >
+                            <Clock className="mr-2 h-4 w-4" />
+                            Tiếp tục làm
+                          </Button>
+                        )}
+
+                        {attemptState === 'SUBMITTED' && (
+                          <>
+                            {instanceId && (
+                              <Button
+                                onClick={handleViewResult}
+                                variant="outline"
+                                className="w-full"
+                                size="lg"
+                              >
+                                <Trophy className="mr-2 h-4 w-4" />
+                                Xem kết quả
+                              </Button>
+                            )}
+                            {canRetry ? (
+                              <Button
+                                onClick={handleRetry}
+                                disabled={isStarting}
+                                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                                size="lg"
+                              >
+                                <RotateCcw className="mr-2 h-4 w-4" />
+                                {isStarting ? 'Đang khởi tạo...' : 'Làm lại'}
+                              </Button>
+                            ) : (
+                              <div className="rounded-lg border border-border bg-muted/50 px-3 py-3 text-center text-sm text-muted-foreground">
+                                Bạn đã đạt giới hạn số lần làm bài ({quiz.maxAttempt} lần)
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        {attemptState === 'EXPIRED' && (
+                          <div className="rounded-lg border border-border bg-muted/50 px-3 py-3 text-center text-sm text-muted-foreground">
+                            Bài thi đã hết hạn
+                          </div>
+                        )}
+                      </>
                     )}
 
                     {!user && visibility === 'GROUP' && (
                       <div className="rounded-lg border border-border bg-muted/50 px-3 py-3 text-center text-sm text-muted-foreground">
                         Đây là quiz trong nhóm. Vui lòng đăng nhập và tham gia nhóm để làm bài.
+                      </div>
+                    )}
+
+                    {!user && visibility === 'DRAFT' && (
+                      <div className="rounded-lg border border-border bg-muted/50 px-3 py-3 text-center text-sm text-muted-foreground">
+                        Quiz này chưa được công khai. Vui lòng đăng nhập để xem.
                       </div>
                     )}
 

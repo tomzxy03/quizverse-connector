@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Code,
@@ -11,100 +12,31 @@ import {
   Languages,
   Cpu
 } from 'lucide-react';
+import { subjectRepository } from '@/repositories';
+import type { Subject } from '@/domains/subject/subject.types';
+import type { SubjectDetailResDTO } from '@/domains/subject/subject.dto';
 
-// Category configurations
-export const categories = [
-  {
-    id: 'programming',
-    name: 'Lập trình',
-    icon: Code,
-    color: 'from-blue-500 to-blue-600',
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-700',
-    count: 248
-  },
-  {
-    id: 'economics',
-    name: 'Kinh tế',
-    icon: Calculator,
-    color: 'from-purple-500 to-purple-600',
-    bgColor: 'bg-purple-50',
-    textColor: 'text-purple-700',
-    count: 156
-  },
-  {
-    id: 'law',
-    name: 'Pháp luật',
-    icon: Scale,
-    color: 'from-amber-500 to-amber-600',
-    bgColor: 'bg-amber-50',
-    textColor: 'text-amber-700',
-    count: 89
-  },
-  {
-    id: 'medicine',
-    name: 'Y khoa',
-    icon: Heart,
-    color: 'from-red-500 to-red-600',
-    bgColor: 'bg-red-50',
-    textColor: 'text-red-700',
-    count: 134
-  },
-  {
-    id: 'business',
-    name: 'Quản trị',
-    icon: Briefcase,
-    color: 'from-teal-500 to-teal-600',
-    bgColor: 'bg-teal-50',
-    textColor: 'text-teal-700',
-    count: 201
-  },
-  {
-    id: 'science',
-    name: 'Khoa học',
-    icon: Beaker,
-    color: 'from-green-500 to-green-600',
-    bgColor: 'bg-green-50',
-    textColor: 'text-green-700',
-    count: 112
-  },
-  {
-    id: 'literature',
-    name: 'Văn học',
-    icon: BookOpen,
-    color: 'from-pink-500 to-pink-600',
-    bgColor: 'bg-pink-50',
-    textColor: 'text-pink-700',
-    count: 78
-  },
-  {
-    id: 'languages',
-    name: 'Ngoại ngữ',
-    icon: Languages,
-    color: 'from-indigo-500 to-indigo-600',
-    bgColor: 'bg-indigo-50',
-    textColor: 'text-indigo-700',
-    count: 167
-  },
-  {
-    id: 'engineering',
-    name: 'Kỹ thuật',
-    icon: Cpu,
-    color: 'from-cyan-500 to-cyan-600',
-    bgColor: 'bg-cyan-50',
-    textColor: 'text-cyan-700',
-    count: 143
-  },
-  {
-    id: 'social',
-    name: 'Xã hội',
-    icon: Globe,
-    color: 'from-orange-500 to-orange-600',
-    bgColor: 'bg-orange-50',
-    textColor: 'text-orange-700',
-    count: 94
-  }
+const CATEGORY_ICONS = [Code, Calculator, Scale, Heart, Briefcase, Beaker, BookOpen, Languages, Cpu, Globe];
+const CATEGORY_COLORS = [
+  'from-blue-500 to-blue-600',
+  'from-purple-500 to-purple-600',
+  'from-amber-500 to-amber-600',
+  'from-red-500 to-red-600',
+  'from-teal-500 to-teal-600',
+  'from-green-500 to-green-600',
+  'from-pink-500 to-pink-600',
+  'from-indigo-500 to-indigo-600',
+  'from-cyan-500 to-cyan-600',
+  'from-orange-500 to-orange-600',
 ];
+
+type CategoryItem = {
+  id: number;
+  name: string;
+  count: number;
+  icon: typeof Code;
+  color: string;
+};
 
 interface CategoryNavigationProps {
   title?: string;
@@ -115,6 +47,41 @@ const CategoryNavigation: React.FC<CategoryNavigationProps> = ({
   title = 'Khám phá theo môn học',
   showCount = true
 }) => {
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [subjects, counts] = await Promise.all([
+          subjectRepository.getAll(),
+          subjectRepository.getQuizCounts(),
+        ]);
+        const countMap = new Map<number, SubjectDetailResDTO>();
+        counts.forEach((c) => countMap.set(c.id, c));
+        const items = subjects.map((subject: Subject, idx: number) => ({
+          id: subject.id,
+          name: subject.name,
+          count: countMap.get(subject.id)?.countQuiz ?? 0,
+          icon: CATEGORY_ICONS[idx % CATEGORY_ICONS.length],
+          color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length],
+        }));
+        if (!cancelled) setCategories(items);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+        if (!cancelled) setCategories([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    loadData();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <section className="py-12 bg-slate-50">
       <div className="container mx-auto px-4">
@@ -130,6 +97,11 @@ const CategoryNavigation: React.FC<CategoryNavigationProps> = ({
 
         {/* Category Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
+          {loading && (
+            <div className="col-span-full text-center text-sm text-slate-500">
+              Đang tải danh mục...
+            </div>
+          )}
           {categories.map((category) => {
             const Icon = category.icon;
             
@@ -169,12 +141,14 @@ const CategoryNavigation: React.FC<CategoryNavigationProps> = ({
                   )}
 
                   {/* Hover Effect Gradient */}
-                  <div className={`
-                    absolute inset-0 
-                    bg-gradient-to-br ${category.color}
-                    opacity-0 group-hover:opacity-5
-                    transition-opacity duration-300
-                  `} />
+                  <div
+                    className={`
+                      absolute inset-0 
+                      bg-gradient-to-br ${category.color}
+                      opacity-0 group-hover:opacity-5
+                      transition-opacity duration-300
+                    `}
+                  />
                 </div>
               </Link>
             );

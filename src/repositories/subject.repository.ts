@@ -1,6 +1,6 @@
 import { apiClient, API_ENDPOINTS } from '@/core/api';
 import { Subject } from '@/domains/subject/subject.types';
-import { SubjectResDTO, SubjectReqDTO } from '@/domains/subject/subject.dto';
+import { SubjectResDTO, SubjectReqDTO, SubjectDetailResDTO } from '@/domains/subject/subject.dto';
 import { dtoToSubject } from '@/domains/subject/subject.mapper';
 
 export const subjectRepository = {
@@ -12,6 +12,11 @@ export const subjectRepository = {
   async getById(id: number): Promise<Subject> {
     const dto = await apiClient.get<SubjectResDTO>(API_ENDPOINTS.SUBJECTS.BY_ID(id));
     return dtoToSubject(dto);
+  },
+
+  async getQuizCounts(): Promise<SubjectDetailResDTO[]> {
+    const dtos = await apiClient.get<SubjectDetailResDTO[]>(API_ENDPOINTS.SUBJECTS.QUIZ_COUNT);
+    return Array.isArray(dtos) ? dtos : [];
   },
 
   create(data: SubjectReqDTO): Promise<void> {

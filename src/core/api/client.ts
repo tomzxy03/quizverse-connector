@@ -8,10 +8,12 @@ export interface ApiError {
 
 const TOKEN_KEY = 'auth_token';
 const REFRESH_TOKEN_KEY = 'auth_refresh_token';
+const GUEST_TOKEN_KEY = 'guest_token';
 
 export class ApiClient {
   private baseURL: string;
   private token: string | null = null;
+  private guestToken: string | null = null;
 
   /** Callback được gọi khi refresh token thất bại — được set bởi AuthProvider */
   onAuthFailure: (() => void) | null = null;
@@ -25,6 +27,10 @@ export class ApiClient {
     this.baseURL = baseURL;
     // Lấy token từ localStorage ngay khi khởi tạo
     this.token = localStorage.getItem(TOKEN_KEY);
+    this.guestToken = localStorage.getItem(GUEST_TOKEN_KEY);
+    if (!this.guestToken) {
+      this.setGuestToken(this.generateGuestToken());
+    }
   }
 
   // ── Token management ──────────────────────────────────────────
@@ -42,6 +48,33 @@ export class ApiClient {
 
   getToken(): string | null {
     return this.token;
+  }
+
+  setGuestToken(token: string) {
+    this.guestToken = token;
+    localStorage.setItem(GUEST_TOKEN_KEY, token);
+  }
+
+  getGuestToken(): string | null {
+    return this.guestToken || localStorage.getItem(GUEST_TOKEN_KEY);
+  }
+
+  clearGuestToken() {
+    this.guestToken = null;
+    localStorage.removeItem(GUEST_TOKEN_KEY);
+  }
+
+  private ensureGuestToken() {
+    if (!this.guestToken && !localStorage.getItem(GUEST_TOKEN_KEY)) {
+      this.setGuestToken(this.generateGuestToken());
+    }
+  }
+
+  private generateGuestToken(): string {
+    const rand = Math.floor(Math.random() * 1_000_000)
+      .toString()
+      .padStart(6, '0');
+    return `GUEST-${Date.now()}-${rand}`;
   }
 
   setRefreshToken(refreshToken: string) {
@@ -73,6 +106,8 @@ export class ApiClient {
   ): Promise<T> {
     // Luôn lấy token mới nhất từ localStorage hoặc state nội bộ
     const token = this.token || localStorage.getItem(TOKEN_KEY);
+    this.ensureGuestToken();
+    const guestToken = this.guestToken || localStorage.getItem(GUEST_TOKEN_KEY);
     const isFormData = options.body instanceof FormData;
     
     const response = await fetch(`${this.baseURL}${endpoint}`, {
@@ -80,6 +115,7 @@ export class ApiClient {
       headers: {
         ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(token && { Authorization: `Bearer ${token}` }),
+        ...(guestToken && { 'X-Guest-Token': guestToken }),
         ...options.headers,
       },
     });

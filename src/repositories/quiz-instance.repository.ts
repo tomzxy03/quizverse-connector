@@ -13,7 +13,7 @@ export const quizInstanceRepository = {
         return apiClient.post<QuizInstanceResDTO>(API_ENDPOINTS.QUIZ_INSTANCES.START, data);
     },
 
-    getById(instanceId: number, userId: number): Promise<QuizInstanceResDTO> {
+    getById(instanceId: number, userId?: number): Promise<QuizInstanceResDTO> {
         return apiClient.get<QuizInstanceResDTO>(API_ENDPOINTS.QUIZ_INSTANCES.BY_ID(instanceId), { userId });
     },
 
@@ -25,7 +25,7 @@ export const quizInstanceRepository = {
         return apiClient.post<QuizResultDetailResDTO>(API_ENDPOINTS.QUIZ_INSTANCES.SUBMIT(instanceId), data);
     },
 
-    getResult(instanceId: number, userId: number): Promise<QuizResultDetailResDTO> {
+    getResult(instanceId: number, userId?: number): Promise<QuizResultDetailResDTO> {
         return apiClient.get<QuizResultDetailResDTO>(API_ENDPOINTS.QUIZ_INSTANCES.RESULT(instanceId), { userId });
     },
 
@@ -43,4 +43,3 @@ export const quizInstanceRepository = {
         return apiClient.get<QuizInstanceStateResDTO>(API_ENDPOINTS.QUIZ_INSTANCES.GET_STATE(instanceId));
     },
 };
-

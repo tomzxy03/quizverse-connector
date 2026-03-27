@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, ChevronDown, LogOut, User, Menu, X } from 'lucide-react';
 import { useAuth } from '@/contexts';
 
 const Header = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isLoggedIn, logout } = useAuth();
@@ -114,9 +115,10 @@ const Header = () => {
                   <div className="border-t border-border my-1"></div>
                   <button
                     className="flex w-full items-center px-4 py-2 text-sm text-destructive hover:bg-muted transition-colors"
-                    onClick={() => {
-                      logout();
+                    onClick={async () => {
+                      await logout();
                       closeMenus();
+                      navigate('/login');
                     }}
                   >
                     <LogOut className="h-4 w-4 mr-2" />
