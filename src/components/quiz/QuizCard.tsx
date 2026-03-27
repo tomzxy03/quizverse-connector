@@ -62,7 +62,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, className = '' }) => {
       {/* TAGS */}
       <div className="flex items-center gap-2 text-xs">
         <span className="text-indigo-700 font-medium">
-          #{quiz.lobbyName || quiz.hostName || 'Quiz'}
+          #{quiz.subjectName || 'Quiz'}
         </span>
 
         <span className="flex items-center gap-1 text-slate-500">

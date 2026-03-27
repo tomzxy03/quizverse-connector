@@ -16,6 +16,7 @@ export interface QuizResDTO {
   status: QuizStatus;
   hostName: string;
   lobbyName?: string;
+  subjectName?: string;
 }
 
 
