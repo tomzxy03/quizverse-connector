@@ -23,6 +23,8 @@ export interface AnswerResDTO {
   answerText: string;
   answerType: ContentType;
   orderIndex: number;
+  isCorrect?: boolean;
+  answerCorrect?: boolean;
 }
 
 // === Request DTOs (to BE) ===

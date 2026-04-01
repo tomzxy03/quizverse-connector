@@ -21,7 +21,7 @@ export const quizInstanceRepository = {
         return apiClient.delete<void>(API_ENDPOINTS.QUIZ_INSTANCES.BY_ID(instanceId));
     },
 
-    submit(instanceId: number, data: QuizSubmissionReqDTO): Promise<QuizResultDetailResDTO> {
+    submit(instanceId: number, data?: QuizSubmissionReqDTO): Promise<QuizResultDetailResDTO> {
         return apiClient.post<QuizResultDetailResDTO>(API_ENDPOINTS.QUIZ_INSTANCES.SUBMIT(instanceId), data);
     },
 

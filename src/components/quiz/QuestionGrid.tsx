@@ -5,7 +5,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useQuizAttempt, SyncStatus } from '@/contexts/QuizAttemptContext';
+import { useQuizAttempt } from '@/contexts/QuizAttemptContext';
 import { cn } from '@/lib/utils';
 import { Flag } from 'lucide-react';
 
@@ -22,17 +22,7 @@ export default function QuestionGrid({
   flaggedQuestions = new Set(),
   getQuestionLabel,
 }: QuestionGridProps) {
-  const { answers, syncStatus, activeQuestionIndex } = useQuizAttempt();
-
-  const getStatusClasses = (idx: number, isCurrent: boolean) => {
-    const questionId = idx; // Assuming indices match or question IDs are handled correctly
-    // In this refactor, we mostly use sequential order for the grid
-
-    // Check if answered (based on answers map in context)
-    // We need to know which question corresponds to which index.
-    // Assuming the parent provides totalQuestions and we know the index.
-    // In QuizTakingPage, questions[idx].id is the key for answers.
-  };
+  const { activeQuestionIndex } = useQuizAttempt();
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -42,10 +32,6 @@ export default function QuestionGrid({
           const isFlagged = flaggedQuestions.has(idx);
           const label = getQuestionLabel ? getQuestionLabel(idx) : '';
           const displayLabel = label || String(idx + 1);
-
-          // Need to bridge the gap between index and questionId for status
-          // This will be handled in QuizTakingPage by passing correct data or 
-          // we can assume the parent map exists.
 
           return (
             <Tooltip key={idx}>

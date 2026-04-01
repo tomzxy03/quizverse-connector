@@ -36,8 +36,8 @@ export default function QuestionContent({
   const isMultipleChoice = useMemo(() => {
     // In a real app, this would come from questionType or metadata
     // For now, we assume if questionType is 'multiple_choice' or similar
-    return question.questionType?.toLowerCase().includes('multiple') || false;
-  }, [question.questionType]);
+    return question.answerType?.toLowerCase().includes('multiple') || false;
+  }, [question.answerType]);
 
   const handleOptionSelect = (optionId: number) => {
     if (isMultipleChoice) {
@@ -111,7 +111,7 @@ export default function QuestionContent({
         </h2>
       </div>
 
-      {question.questionType === 'image' && (
+      {question.type?.toLowerCase() === 'image' && (
         <div className="relative group overflow-hidden rounded-2xl border border-border bg-muted/30 aspect-video flex items-center justify-center">
           <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
           {/* In a real app, img tag with question.questionImage would be here */}
@@ -137,7 +137,7 @@ export default function QuestionContent({
                   : 'border-muted-foreground/20 text-muted-foreground group-hover:border-primary/40'
                   }`}
               >
-                {answer.optionLabel || String.fromCharCode(64 + answer.displayOrder + 1)}
+                {answer.optionLabel || String.fromCharCode(64 + answer.displayOrder)}
               </div>
 
               <div className="flex-1">

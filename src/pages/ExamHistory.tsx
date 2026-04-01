@@ -7,14 +7,28 @@ import { Badge } from '@/components/ui/badge';
 import { BarChart3, User } from 'lucide-react';
 import { examService } from '@/services';
 import type { AttemptResDTO } from '@/domains';
+import type { PageResponse } from '@/core/types';
 import { useAuth } from '@/contexts';
 
 const ExamHistory = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [examHistory, setExamHistory] = useState<AttemptResDTO[]>([]);
+  const [pageInfo, setPageInfo] = useState<PageResponse<AttemptResDTO> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const formatDuration = (value?: number | string) => {
+    if (value == null) return '—';
+    const parsed = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(parsed)) return String(value);
+    const totalSeconds = Math.max(0, Math.floor(parsed / 1000));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+    if (minutes > 0) return `${minutes}m ${seconds}s`;
+    return `${seconds}s`;
+  };
 
   useEffect(() => {
     loadExamHistory();
@@ -31,8 +45,9 @@ const ExamHistory = () => {
     setError(null);
 
     try {
-      const data = await examService.getAttemptsByUserId(user.id);
-      setExamHistory(data);
+      const data = await examService.getMyAttempts(0, 50);
+      setExamHistory(data.items || []);
+      setPageInfo(data);
     } catch (err) {
       setError('Không thể tải lịch sử thi. Vui lòng thử lại.');
       console.error('Failed to load exam history:', err);
@@ -103,7 +118,12 @@ const ExamHistory = () => {
             {examHistory.length > 0 ? (
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-medium">Kết quả luyện thi</CardTitle>
+                  <CardTitle className="text-base font-medium">
+                    Kết quả luyện thi
+                    {pageInfo?.total != null && (
+                      <span className="ml-2 text-xs text-muted-foreground">({pageInfo.total})</span>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
@@ -114,14 +134,14 @@ const ExamHistory = () => {
                       >
                         <div className="flex-1 min-w-0">
                           <h3 className="text-base font-medium text-foreground mb-2">
-                            {exam.title || 'Quiz'}
+                            {exam.quiz?.title || exam.title || 'Quiz'}
                           </h3>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                             <div>
                               <p className="font-medium text-muted-foreground">Ngày làm</p>
                               <p className="text-foreground">{exam.date}</p>
                               <div className="flex gap-2 mt-1 flex-wrap">
-                                {exam.badges.map((badge, idx) => (
+                                {(exam.badges || []).map((badge, idx) => (
                                   <Badge
                                     key={idx}
                                     variant="secondary"
@@ -141,14 +161,14 @@ const ExamHistory = () => {
                             </div>
                             <div>
                               <p className="font-medium text-muted-foreground">Thời gian</p>
-                              <p className="text-foreground">{exam.duration}</p>
+                              <p className="text-foreground">{formatDuration(exam.duration)}</p>
                             </div>
                           </div>
                         </div>
                         <Button
                           variant="link"
                           className="text-primary p-0 shrink-0"
-                          onClick={() => navigate(`/history/${exam.id}`)}
+                          onClick={() => navigate(`/history/${exam.quizInstanceId ?? exam.id}`)}
                         >
                           Xem chi tiết
                         </Button>

@@ -9,25 +9,29 @@ export interface QuizInstanceResDTO {
     id: number;
     quizId: number;
     quizTitle: string;
-    userId: number;
-    userName: string;
+    userId?: number;
+    userName?: string;
     startedAt: string;
     timeLimitMinutes: number;
-    shuffleEnabled: boolean;
-    totalPoints: number;
-    status: string;
+    shuffleEnabled?: boolean;
+    totalPoints?: number;
+    status?: string;
     questions: QuizInstanceQuestionResDTO[];
-    remainingTimeSeconds: number;
+    remainingTimeSeconds?: number;
+    remainingSeconds?: number;
+    totalTimeSeconds?: number;
     questionLayout?: QuestionLayout;
 }
 
 // Matches BE QuizInstanceQuestionResDTO
 export interface QuizInstanceQuestionResDTO {
-    id: number;
+    id?: number | null;
+    snapshotKey: string;
     displayOrder: number;
     points: number;
     questionText: string;
-    questionType: string;
+    type: string;
+    answerType: string;
     answers: QuizInstanceAnswerResDTO[];
 }
 
@@ -44,11 +48,11 @@ export interface QuizResultDetailResDTO {
     quizInstanceId: number;
     quizId: number;
     quizTitle: string;
-    userId: number;
-    userName: string;
+    userId?: number;
+    userName?: string;
     status: string;
     scorePercentage: number;
-    totalTimeSpentMinutes: number;
+    totalTimeSpentMinutes?: number;
     totalPoints: number;
     earnedPoints: number;
     questionResults: QuestionResultResDTO[];
@@ -56,18 +60,20 @@ export interface QuizResultDetailResDTO {
 
 // Matches BE QuestionResultResDTO
 export interface QuestionResultResDTO {
-    questionInstanceId: number;
+    questionInstanceId: number | null;
     displayOrder: number;
     questionText: string;
-    questionType: string;
+    type?: string;
+    answerType?: string;
     points: number;
     earnedPoints: number;
     userAnswer?: string;
     correctAnswer?: string;
+    isCorrect: boolean;
     status: string;
     allAnswers: AnswerResultResDTO[];
-    correct: boolean;
-    skipped: boolean;
+    skipped?: boolean;
+    isSkipped?: boolean;
 }
 
 // Matches BE AnswerResultResDTO
@@ -76,8 +82,8 @@ export interface AnswerResultResDTO {
     displayOrder: number;
     answerText: string;
     optionLabel: string;
-    correct: boolean;
-    userSelected: boolean;
+    isCorrect: boolean;
+    isUserSelected: boolean;
 }
 
 // Matches BE QuizUserResponseResDTO
@@ -139,14 +145,26 @@ export type { QuizAnswerReqDTO } from './quiz.types';
 
 // Response when resuming/reloading quiz
 export interface QuizInstanceStateResDTO {
-    id: number;
-    quizId: number;
-    quizTitle: string;
+    instanceId: number;
     status: string; // IN_PROGRESS, SUBMITTED, TIMED_OUT
-    questions: QuizInstanceQuestionResDTO[];
-    userAnswers: Record<string, number[]>; // questionId -> answer indices
     remainingSeconds: number;
-    totalTimeSeconds: number;
+    questions: QuizInstanceStateQuestionResDTO[];
+}
+
+export interface QuizInstanceStateQuestionResDTO {
+    questionId: string; // snapshot key
+    content: string;
+    type: string;
+    answerType: string;
+    orderIndex: number;
+    points: number;
+    answers: QuizInstanceStateAnswerResDTO[];
+    userAnswer?: number[];
+}
+
+export interface QuizInstanceStateAnswerResDTO {
+    index: number;
+    content: string;
 }
 
 // Response after submitting quiz

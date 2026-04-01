@@ -1,32 +1,43 @@
 import { apiClient, API_ENDPOINTS } from '@/core/api';
-import { AttemptResDTO, AttemptDetailResDTO, CreateAttemptReqDTO, UserStatisticsResDTO } from '@/domains';
+import type { PageResponse } from '@/core/types';
+import { AttemptDetailResDTO, AttemptResDTO, QuizResultDetailResDTO, UserStatisticsResDTO } from '@/domains';
 
 export const examRepository = {
-  getAll(userId?: number, quizId?: number): Promise<AttemptResDTO[]> {
-    return apiClient.get<AttemptResDTO[]>(API_ENDPOINTS.ATTEMPTS.BASE, { userId, quizId });
+  getAttemptResult(quizInstanceId: number): Promise<QuizResultDetailResDTO> {
+    return apiClient.get<QuizResultDetailResDTO>(API_ENDPOINTS.ATTEMPTS.BY_ID(quizInstanceId));
   },
 
-  getById(id: number): Promise<AttemptDetailResDTO> {
-    return apiClient.get<AttemptDetailResDTO>(API_ENDPOINTS.ATTEMPTS.BY_ID(id));
+  getMyAttempts(page = 0, size = 10): Promise<PageResponse<AttemptResDTO>> {
+    return apiClient.get<PageResponse<AttemptResDTO>>(API_ENDPOINTS.ATTEMPTS.ME(), { page, size });
   },
 
-  getByUserId(userId: number): Promise<AttemptResDTO[]> {
-    return apiClient.get<AttemptResDTO[]>(API_ENDPOINTS.ATTEMPTS.BY_USER(userId));
+  getMyAttemptDetail(quizInstanceId: number): Promise<AttemptDetailResDTO> {
+    return apiClient.get<AttemptDetailResDTO>(API_ENDPOINTS.ATTEMPTS.ME_DETAIL(quizInstanceId));
   },
 
-  getByQuizAndUser(quizId: number, userId: number): Promise<AttemptResDTO[]> {
-    return apiClient.get<AttemptResDTO[]>(API_ENDPOINTS.ATTEMPTS.BY_QUIZ_AND_USER(quizId, userId));
+  getQuizAttempts(
+    groupId: number,
+    quizId: number,
+    page = 0,
+    size = 10
+  ): Promise<PageResponse<AttemptResDTO>> {
+    return apiClient.get<PageResponse<AttemptResDTO>>(
+      API_ENDPOINTS.ATTEMPTS.SUBMISSIONS(groupId, quizId),
+      { page, size }
+    );
   },
 
-  getUserStatistics(userId: number): Promise<UserStatisticsResDTO> {
-    return apiClient.get<UserStatisticsResDTO>(API_ENDPOINTS.ATTEMPTS.USER_STATISTICS(userId));
+  getSubmissionDetail(
+    groupId: number,
+    quizId: number,
+    quizInstanceId: number
+  ): Promise<AttemptDetailResDTO> {
+    return apiClient.get<AttemptDetailResDTO>(
+      API_ENDPOINTS.ATTEMPTS.SUBMISSION_DETAIL(groupId, quizId, quizInstanceId)
+    );
   },
 
-  create(data: CreateAttemptReqDTO): Promise<AttemptDetailResDTO> {
-    return apiClient.post<AttemptDetailResDTO>(API_ENDPOINTS.ATTEMPTS.BASE, data);
-  },
-
-  delete(id: number): Promise<void> {
-    return apiClient.delete<void>(API_ENDPOINTS.ATTEMPTS.BY_ID(id));
+  getUserStatistics(): Promise<UserStatisticsResDTO> {
+    return apiClient.get<UserStatisticsResDTO>(API_ENDPOINTS.ATTEMPTS.STATISTICS());
   }
 };

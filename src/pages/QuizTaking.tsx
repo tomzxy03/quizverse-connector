@@ -35,15 +35,13 @@ import {
 import { useQuizTimer } from '@/hooks/useQuizTimer';
 import { quizService } from '@/services';
 import { quizInstanceRepository } from '@/repositories';
-import { useAuth, useQuizAttempt } from '@/contexts';
+import { useQuizAttempt } from '@/contexts';
 import QuestionContent from '@/components/quiz/QuestionContent';
 import QuestionGrid from '@/components/quiz/QuestionGrid';
-import type { QuizSubmissionReqDTO } from '@/domains';
 
 const QuizTakingPage = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { user } = useAuth();
     const {
         instanceId,
         answers,
@@ -127,15 +125,7 @@ const QuizTakingPage = () => {
 
         try {
             await flushPending();
-            const submission: QuizSubmissionReqDTO = {
-                quizInstanceId: instance.id,
-                userId: user?.id,
-                totalTimeSpentSeconds: (instance.totalTimeSeconds || (instance.timeLimitMinutes * 60))
-                    ? (instance.totalTimeSeconds || (instance.timeLimitMinutes * 60)) - timer.remainingSeconds
-                    : undefined,
-                submittedAt: new Date().toISOString(),
-            };
-            await quizInstanceRepository.submit(instance.id, submission);
+            await quizInstanceRepository.submit(instance.id);
             resetStore();
             navigate(`/quiz/${id}/result/${instance.id}`, { replace: true });
         } catch (err) {
@@ -144,7 +134,7 @@ const QuizTakingPage = () => {
             setIsSubmitting(false);
             isSubmittingRef.current = false;
         }
-    }, [instance, user, id, navigate, flushPending, resetStore]);
+    }, [instance, id, navigate, flushPending, resetStore]);
 
     // Timer hook
     const timer = useQuizTimer({
@@ -162,12 +152,7 @@ const QuizTakingPage = () => {
 
         try {
             await flushPending();
-            const submission: QuizSubmissionReqDTO = {
-                quizInstanceId: instance.id,
-                userId: user?.id,
-                submittedAt: new Date().toISOString(),
-            };
-            await quizInstanceRepository.submit(instance.id, submission);
+            await quizInstanceRepository.submit(instance.id);
             resetStore();
             navigate(`/quiz/${id}/result/${instance.id}`, { replace: true });
         } catch (err: any) {
@@ -330,7 +315,7 @@ const QuizTakingPage = () => {
                         {pageQuestions.map((question, offset) => {
                             const questionIndex = pageStartIndex + offset;
                             return (
-                                <div key={question.id} className="group relative">
+                                <div key={question.snapshotKey} className="group relative">
                                     <div className="absolute -inset-1 bg-gradient-to-br from-primary/5 to-primary/0 rounded-3xl blur-2xl opacity-50 transition-opacity group-hover:opacity-70" />
                                     <Card className="relative border-border/40 bg-background/50 backdrop-blur-sm shadow-xl p-8 md:p-10 rounded-3xl overflow-hidden min-h-[400px]">
                                         <QuestionContent
@@ -338,9 +323,9 @@ const QuizTakingPage = () => {
                                             index={questionIndex}
                                             questionNumbering={questionNumbering}
                                             answerPerRow={answerPerRow}
-                                            selectedAnswers={answers[question.id] || []}
-                                            syncStatus={syncStatus[question.id] || 'idle'}
-                                            onChange={(answerIndices) => setAnswer(question.id, answerIndices)}
+                                            selectedAnswers={answers[question.snapshotKey] || []}
+                                            syncStatus={syncStatus[question.snapshotKey] || 'idle'}
+                                            onChange={(answerIndices) => setAnswer(question.snapshotKey, answerIndices)}
                                         />
 
                                         <div className="absolute top-6 right-8">

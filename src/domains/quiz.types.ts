@@ -1,6 +1,7 @@
 // Quiz related types – aligned with BE api.json DTOs
 
 import { QuizVisibility, QuizStatus } from '@/core/types';
+import { QuestionResDTO } from './question.types';
 
 // === Response DTOs (from BE) ===
 
@@ -19,6 +20,11 @@ export interface QuizResDTO {
   subjectName?: string;
 }
 
+// Matches BE QuizQuestionResDTO
+export interface QuizQuestionResDTO {
+  question: QuestionResDTO;
+  correctAnswerIds: number[];
+}
 
 export interface QuizConfig {
   shuffleQuestions?: boolean;
@@ -83,7 +89,7 @@ export interface QuizFilter {
 // Single choice: answer: [0]
 // Multiple choice: answer: [0, 2, 3]
 export interface QuizAnswerReqDTO {
-  questionId: number;
+  questionSnapshotKey: string;
   answer: number[]; // Array of option indices (0-indexed)
 }
 

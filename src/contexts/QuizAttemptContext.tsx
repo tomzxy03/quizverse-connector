@@ -10,11 +10,11 @@ import { quizInstanceRepository } from '@/repositories';
 export type SyncStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export interface AnswerState {
-  [questionId: number]: number[]; // questionId -> array of option indices
+  [questionSnapshotKey: string]: number[]; // snapshotKey -> array of option indices
 }
 
 export interface SyncStatusState {
-  [questionId: number]: SyncStatus;
+  [questionSnapshotKey: string]: SyncStatus;
 }
 
 export interface QuizAttemptContextType {
@@ -27,7 +27,7 @@ export interface QuizAttemptContextType {
 
   // Actions
   initialize: (instanceId: number, initialAnswers?: AnswerState, remaining?: number) => void;
-  setAnswer: (questionId: number, answerIndices: number[]) => void;
+  setAnswer: (questionSnapshotKey: string, answerIndices: number[]) => void;
   setRemainingSeconds: (seconds: number) => void;
   setActiveQuestionIndex: (index: number) => void;
   flushPending: () => Promise<void>;
@@ -52,8 +52,8 @@ export const QuizAttemptProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [isOnline, setIsOnline] = useState(true);
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
 
-  const pendingRef = useRef<Map<number, QuizAnswerReqDTO>>(new Map());
-  const timersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const pendingRef = useRef<Map<string, QuizAnswerReqDTO>>(new Map());
+  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // Listen for online/offline events
   useEffect(() => {
@@ -68,7 +68,7 @@ export const QuizAttemptProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, []);
 
   const saveToServer = useCallback(
-    async (qId: number, data: QuizAnswerReqDTO, retryCount = 0) => {
+    async (qId: string, data: QuizAnswerReqDTO, retryCount = 0) => {
       if (!instanceId) return;
 
       setSyncStatus((prev) => ({ ...prev, [qId]: 'saving' }));
@@ -113,9 +113,9 @@ export const QuizAttemptProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, []);
 
-  const setAnswer = useCallback((questionId: number, answerIndices: number[]) => {
+  const setAnswer = useCallback((questionSnapshotKey: string, answerIndices: number[]) => {
     setAnswers((prev) => {
-      const next = { ...prev, [questionId]: answerIndices };
+      const next = { ...prev, [questionSnapshotKey]: answerIndices };
       if (instanceId) {
         localStorage.setItem(getCacheKey(instanceId), JSON.stringify(next));
       }
@@ -123,19 +123,19 @@ export const QuizAttemptProvider: React.FC<{ children: React.ReactNode }> = ({ c
     });
 
     const apiPayload: QuizAnswerReqDTO = {
-      questionId,
+      questionSnapshotKey,
       answer: answerIndices,
     };
-    pendingRef.current.set(questionId, apiPayload);
+    pendingRef.current.set(questionSnapshotKey, apiPayload);
 
-    const existingTimer = timersRef.current.get(questionId);
+    const existingTimer = timersRef.current.get(questionSnapshotKey);
     if (existingTimer) clearTimeout(existingTimer);
 
     const timer = setTimeout(() => {
-      saveToServer(questionId, apiPayload);
-      timersRef.current.delete(questionId);
+      saveToServer(questionSnapshotKey, apiPayload);
+      timersRef.current.delete(questionSnapshotKey);
     }, DEBOUNCE_MS);
-    timersRef.current.set(questionId, timer);
+    timersRef.current.set(questionSnapshotKey, timer);
   }, [instanceId, saveToServer]);
 
   const flushPending = useCallback(async () => {

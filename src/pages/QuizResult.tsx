@@ -59,14 +59,14 @@ const QuizResultPage = () => {
     const metrics = useMemo(() => {
         if (!result) return null;
         const total = result.questionResults?.length ?? 0;
-        const correct = result.questionResults?.filter((q) => q.correct)?.length ?? 0;
+        const correct = result.questionResults?.filter((q) => q.isCorrect)?.length ?? 0;
         const incorrect = total - correct;
         const scorePercent = result.scorePercentage ?? (
             result.totalPoints > 0
                 ? Math.round((result.earnedPoints / result.totalPoints) * 100)
                 : 0
         );
-        const timeSpent = result.totalTimeSpentMinutes ?? 0;
+        const timeSpent = (result.totalTimeSpentMinutes ?? 0) * 60;
         return { total, correct, incorrect, scorePercent, timeSpent };
     }, [result]);
 
@@ -239,9 +239,9 @@ const QuizResultPage = () => {
                         <div className="space-y-4">
                             {(result.questionResults || []).map((q, idx) => (
                                 <Card key={q.questionInstanceId || idx} className="group relative border-border/30 bg-background/40 backdrop-blur-sm shadow-sm hover:shadow-md transition-all p-6 rounded-3xl overflow-hidden border-2">
-                                    <div className={`absolute top-0 left-0 w-1.5 h-full ${q.correct ? 'bg-emerald-500' : 'bg-destructive/60'}`} />
+                                    <div className={`absolute top-0 left-0 w-1.5 h-full ${q.isCorrect ? 'bg-emerald-500' : 'bg-destructive/60'}`} />
                                     <div className="flex items-start gap-5">
-                                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold shadow-sm transition-transform group-hover:scale-105 ${q.correct
+                                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold shadow-sm transition-transform group-hover:scale-105 ${q.isCorrect
                                             ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
                                             : 'bg-destructive/10 text-destructive border border-destructive/20'
                                             }`}>
@@ -252,15 +252,15 @@ const QuizResultPage = () => {
 
                                             <div className="grid gap-3 mb-4">
                                                 {q.userAnswer && (
-                                                    <div className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${q.correct ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-destructive/5 border-destructive/20'
+                                                    <div className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${q.isCorrect ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-destructive/5 border-destructive/20'
                                                         }`}>
-                                                        <div className={`h-2 w-2 rounded-full ${q.correct ? 'bg-emerald-500' : 'bg-destructive'}`} />
+                                                        <div className={`h-2 w-2 rounded-full ${q.isCorrect ? 'bg-emerald-500' : 'bg-destructive'}`} />
                                                         <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Bạn chọn:</span>
-                                                        <span className={`text-sm font-bold ${q.correct ? 'text-emerald-700' : 'text-destructive/80'}`}>{q.userAnswer}</span>
+                                                        <span className={`text-sm font-bold ${q.isCorrect ? 'text-emerald-700' : 'text-destructive/80'}`}>{q.userAnswer}</span>
                                                     </div>
                                                 )}
 
-                                                {!q.correct && q.correctAnswer && (
+                                                {!q.isCorrect && q.correctAnswer && (
                                                     <div className="flex items-center gap-3 p-3 rounded-2xl border-2 border-emerald-500/10 bg-muted/20">
                                                         <div className="h-2 w-2 rounded-full bg-emerald-500" />
                                                         <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Đáp án đúng:</span>
@@ -276,7 +276,7 @@ const QuizResultPage = () => {
                                             </div>
                                         </div>
                                         <div className="shrink-0 mt-1">
-                                            {q.correct ? (
+                                            {q.isCorrect ? (
                                                 <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
                                                     <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                                                 </div>

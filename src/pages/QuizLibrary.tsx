@@ -48,25 +48,25 @@ const QuizLibrary = () => {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const buildQuizFilter = (): QuizFilter => {
-  const questionRange = questionCountMap[selectedCategories.questionCount];
-  const durationRange = durationMap[selectedCategories.duration];
+    const questionRange = questionCountMap[selectedCategories.questionCount];
+    const durationRange = durationMap[selectedCategories.duration];
 
-  return {
-    subjectId: subjectId ? Number(subjectId) : undefined,
-    search: searchQuery || undefined,
+    return {
+      subjectId: subjectId ? Number(subjectId) : undefined,
+      search: searchQuery || undefined,
 
-    minQuestions: questionRange.min,
-    maxQuestions: questionRange.max,
+      minQuestions: questionRange.min,
+      maxQuestions: questionRange.max,
 
-    minDuration: durationRange.min,
-    maxDuration: durationRange.max,
+      minDuration: durationRange.min,
+      maxDuration: durationRange.max,
 
-    page: 1,
-    size: 10,
+      page: 1,
+      size: 10,
+    };
   };
-};
   const navigate = useNavigate();
-  const canCreatePublicQuiz = user?.roles?.includes("HOST") || user?.roles?.includes("ADMIN");
+  const canCreatePublicQuiz = user?.roles?.includes("ADMIN");
 
   useEffect(() => {
     loadSubjects();
@@ -75,14 +75,14 @@ const QuizLibrary = () => {
   // ===============================
   // LOAD SUBJECTS
   // ===============================
-  useEffect(() => {
-  loadQuizzes();
-}, [
-  subjectId,
-  searchQuery,
-  selectedCategories.questionCount,
-  selectedCategories.duration
-]);
+  //   useEffect(() => {
+  //   loadQuizzes();
+  // }, [
+  //   subjectId,
+  //   searchQuery,
+  //   selectedCategories.questionCount,
+  //   selectedCategories.duration
+  // ]);
 
   const loadSubjects = async () => {
     try {
@@ -101,24 +101,24 @@ const QuizLibrary = () => {
   }, [subjectId, searchQuery, selectedCategories]);
 
   const loadQuizzes = async () => {
-  setLoading(true);
-  setError(null);
+    setLoading(true);
+    setError(null);
 
-  try {
-    const filter = buildQuizFilter();
+    try {
+      const filter = buildQuizFilter();
 
-    const data = await quizService.getAllQuizzesByFilter(filter);
+      const data = await quizService.getAllQuizzesByFilter(filter);
 
-    setQuizzes(data.items);
-    setPageData(data);
+      setQuizzes(data.items);
+      setPageData(data);
 
-  } catch (err) {
-    setError("Không thể tải danh sách quiz. Vui lòng thử lại.");
-    console.error("Failed to load quizzes:", err);
-  } finally {
-    setLoading(false);
-  }
-};
+    } catch (err) {
+      setError("Không thể tải danh sách quiz. Vui lòng thử lại.");
+      console.error("Failed to load quizzes:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCategorySelect = (category: string, value: string) => {
     setSelectedCategories((prev) => ({
@@ -240,7 +240,11 @@ const QuizLibrary = () => {
                 {quizzes.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {quizzes.map((quiz) => (
-                      <QuizCard key={quiz.id} quiz={quiz} />
+                      <QuizCard
+                        key={quiz.id}
+                        quiz={quiz}
+                        onClick={() => navigate(`/quiz/${quiz.id}`)}
+                      />
                     ))}
                   </div>
                 ) : (

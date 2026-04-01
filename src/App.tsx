@@ -114,6 +114,38 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="/groups/:groupId/quizzes/:id"
+                  element={
+                    <ProtectedRoute>
+                      <QuizDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/groups/:groupId/quizzes/:id/submissions/:attemptId"
+                  element={
+                    <ProtectedRoute>
+                      <HistoryResultDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/groups/:groupId/quizzes/:id/take/:instanceId"
+                  element={
+                    <ProtectedRoute>
+                      <QuizTakingPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/groups/:groupId/quizzes/:id/result/:instanceId"
+                  element={
+                    <ProtectedRoute>
+                      <QuizResultPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/profile"
                   element={
                     <ProtectedRoute>

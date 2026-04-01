@@ -12,14 +12,15 @@ import type { QuizResDTO } from '@/domains';
 interface QuizCardProps {
   quiz: QuizResDTO;
   className?: string;
+  onClick?: () => void;
 }
 
 
-const QuizCard: React.FC<QuizCardProps> = ({ quiz, className = '' }) => {
+const QuizCard: React.FC<QuizCardProps> = ({ quiz, className = '', onClick }) => {
 
   return (
-    <Link
-      to={`/quiz/${quiz.id}`}
+    <div
+      onClick={onClick}
       className={`
         group block
         bg-slate-50
@@ -30,6 +31,8 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, className = '' }) => {
         hover:bg-white
         hover:border-indigo-300
         hover:shadow-sm
+        select-none
+        cursor-pointer
         focus:outline-none
         focus:ring-2 focus:ring-indigo-500/20
         ${className}
@@ -57,6 +60,11 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, className = '' }) => {
           <FileQuestion className="h-3.5 w-3.5" />
           {quiz.totalQuestion} câu
         </div>
+        <div className="flex items-center gap-1">
+          <Clock className="h-3.5 w-3.5" />
+          {quiz.timeLimitMinutes} phút
+        </div>
+
       </div>
 
       {/* TAGS */}
@@ -94,7 +102,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, className = '' }) => {
       ">
         Chi tiết &rarr;
       </div>
-    </Link>
+    </div>
   );
 };
 

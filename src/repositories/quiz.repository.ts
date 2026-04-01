@@ -1,5 +1,5 @@
 import { apiClient, API_ENDPOINTS } from '@/core/api';
-import { QuizResDTO, QuizReqDTO, QuizFilter, QuizDetailResDTO, QuestionResDTO, QuestionReqDTO, QuizQuestionReqDTO, LobbyQuizResDTO } from '@/domains';
+import { QuizResDTO, QuizReqDTO, QuizFilter, QuizDetailResDTO, QuestionResDTO, QuestionReqDTO, QuizQuestionReqDTO, LobbyQuizResDTO, QuizQuestionResDTO } from '@/domains';
 import { QuizInstanceResDTO } from '@/domains';
 import { PageResponse } from '@/core/types';
 
@@ -27,7 +27,7 @@ export const quizRepository = {
 
   /** Start or resume a quiz attempt */
   startQuiz(quizId: number): Promise<QuizInstanceResDTO> {
-    return apiClient.post<QuizInstanceResDTO>(API_ENDPOINTS.QUIZZES.START(quizId));
+    return apiClient.post<QuizInstanceResDTO>(API_ENDPOINTS.QUIZ_INSTANCES.START, { quizId });
   },
 
   /** Get current active (in-progress) instance for a quiz */
@@ -48,8 +48,8 @@ export const quizRepository = {
   },
 
   /** Fetch questions belonging to a quiz */
-  getQuestions(quizId: number): Promise<QuestionResDTO[]> {
-    return apiClient.get<QuestionResDTO[]>(API_ENDPOINTS.QUESTIONS.BY_QUIZ(quizId));
+  getQuestions(quizId: number): Promise<QuizQuestionResDTO[]> {
+    return apiClient.get<QuizQuestionResDTO[]>(API_ENDPOINTS.QUESTIONS.BY_QUIZ(quizId));
   },
 
   addQuestionsToQuiz(quizId: number, questions: QuizQuestionReqDTO[]): Promise<void> {

@@ -1,7 +1,8 @@
 // Exam attempt types – aligned with BE api.json DTOs
 
 import { QuizResDTO } from './quiz.types';
-import { QuestionResDTO } from './question.types';
+import { AnswerResDTO } from './question.types';
+import { AnswerType, ContentType } from '@/core/types';
 
 // === Response DTOs (from BE) ===
 
@@ -9,31 +10,35 @@ import { QuestionResDTO } from './question.types';
 export interface AttemptResDTO {
   id: number;
   quizId: number;
+  quizInstanceId?: number;
   userId: number;
   quiz?: QuizResDTO;
   title?: string;
   date?: string;
-  score: string;
+  score: number | string;
   totalQuestions: number;
   correctAnswers: number;
   points?: number;
-  duration: string;
+  duration: number | string;
   completedAt: string;
-  badges: string[];
-  badgeColors: string[];
+  badges?: string[];
+  badgeColors?: string[];
 }
 
 // Matches BE AttemptDetailResDTO
-export interface AttemptDetailResDTO extends AttemptResDTO {
+export interface AttemptDetailResDTO {
+  attemptInfo: AttemptResDTO;
   answers: UserAnswerResDTO[];
 }
 
 // Matches BE UserAnswerResDTO
 export interface UserAnswerResDTO {
   id: number;
-  attemptId: number;
   questionId: number;
-  question?: QuestionResDTO;
+  questionName: string;
+  type: ContentType;
+  answerType: AnswerType;
+  options: AnswerResDTO[];
   selectedOptionIds: number[];
   answerText?: string;
   isCorrect: boolean;

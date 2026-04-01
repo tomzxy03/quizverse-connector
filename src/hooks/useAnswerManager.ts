@@ -16,24 +16,24 @@ interface AnswerEntry {
 
 interface UseAnswerManagerOptions {
     instanceId: number;
-    onSaveError?: (questionId: number, error: unknown) => void;
+    onSaveError?: (questionSnapshotKey: string, error: unknown) => void;
 }
 
 interface UseAnswerManagerReturn {
-    /** Current answers map: questionId → answer indices */
-    answers: Map<number, number[]>;
+    /** Current answers map: snapshotKey → answer indices */
+    answers: Map<string, number[]>;
     /** Save status per question */
-    saveStatuses: Map<number, SaveStatus>;
+    saveStatuses: Map<string, SaveStatus>;
     /** Select answer indices for a question (single: [0], multiple: [0,2,3]) */
-    selectAnswer: (questionId: number, answerIndices: number[]) => void;
+    selectAnswer: (questionSnapshotKey: string, answerIndices: number[]) => void;
     /** Skip a question (clear its answer) */
-    skipQuestion: (questionId: number) => void;
+    skipQuestion: (questionSnapshotKey: string) => void;
     /** Flush all pending saves immediately (used before submit) */
     flushPending: () => Promise<void>;
     /** Whether there are unsaved changes */
     hasPendingChanges: boolean;
     /** Load answers from localStorage cache */
-    loadCachedAnswers: () => Map<number, number[]>;
+    loadCachedAnswers: () => Map<string, number[]>;
     /** Clear all cached answers (on submit) */
     clearCache: () => void;
 }
@@ -42,18 +42,18 @@ function getCacheKey(instanceId: number): string {
     return `quiz_answers_${instanceId}`;
 }
 
-function readCache(instanceId: number): Map<number, number[]> {
+function readCache(instanceId: number): Map<string, number[]> {
     try {
         const raw = localStorage.getItem(getCacheKey(instanceId));
         if (!raw) return new Map();
         const parsed = JSON.parse(raw);
-        return new Map(Object.entries(parsed).map(([k, v]) => [Number(k), v as number[]]));
+        return new Map(Object.entries(parsed).map(([k, v]) => [String(k), v as number[]]));
     } catch {
         return new Map();
     }
 }
 
-function writeCache(instanceId: number, answers: Map<number, number[]>) {
+function writeCache(instanceId: number, answers: Map<string, number[]>) {
     try {
         const obj = Object.fromEntries(answers);
         localStorage.setItem(getCacheKey(instanceId), JSON.stringify(obj));
@@ -80,10 +80,10 @@ export function useAnswerManager({
     instanceId,
     onSaveError,
 }: UseAnswerManagerOptions): UseAnswerManagerReturn {
-    const [answers, setAnswers] = useState<Map<number, number[]>>(() => readCache(instanceId));
-    const [saveStatuses, setSaveStatuses] = useState<Map<number, SaveStatus>>(new Map());
-    const pendingRef = useRef<Map<number, QuizAnswerReqDTO>>(new Map());
-    const timersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+    const [answers, setAnswers] = useState<Map<string, number[]>>(() => readCache(instanceId));
+    const [saveStatuses, setSaveStatuses] = useState<Map<string, SaveStatus>>(new Map());
+    const pendingRef = useRef<Map<string, QuizAnswerReqDTO>>(new Map());
+    const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
     // Reload cache when instanceId changes
     useEffect(() => {
@@ -94,20 +94,20 @@ export function useAnswerManager({
     }, [instanceId]);
 
     const saveToServer = useCallback(
-        async (questionId: number, data: QuizAnswerReqDTO, retryCount = 0) => {
-            setSaveStatuses((prev) => new Map(prev).set(questionId, 'saving'));
+        async (questionSnapshotKey: string, data: QuizAnswerReqDTO, retryCount = 0) => {
+            setSaveStatuses((prev) => new Map(prev).set(questionSnapshotKey, 'saving'));
 
             try {
                 await quizInstanceRepository.saveAnswer(instanceId, data);
-                setSaveStatuses((prev) => new Map(prev).set(questionId, 'saved'));
-                pendingRef.current.delete(questionId);
+                setSaveStatuses((prev) => new Map(prev).set(questionSnapshotKey, 'saved'));
+                pendingRef.current.delete(questionSnapshotKey);
             } catch (err) {
                 if (retryCount < MAX_RETRIES) {
                     const delay = RETRY_BASE_MS * Math.pow(2, retryCount);
-                    setTimeout(() => saveToServer(questionId, data, retryCount + 1), delay);
+                    setTimeout(() => saveToServer(questionSnapshotKey, data, retryCount + 1), delay);
                 } else {
-                    setSaveStatuses((prev) => new Map(prev).set(questionId, 'error'));
-                    onSaveError?.(questionId, err);
+                    setSaveStatuses((prev) => new Map(prev).set(questionSnapshotKey, 'error'));
+                    onSaveError?.(questionSnapshotKey, err);
                 }
             }
         },
@@ -115,11 +115,11 @@ export function useAnswerManager({
     );
 
     const selectAnswer = useCallback(
-        (questionId: number, answerIndices: number[]) => {
+        (questionSnapshotKey: string, answerIndices: number[]) => {
             // 1. Update local state immediately
             setAnswers((prev) => {
                 const next = new Map(prev);
-                next.set(questionId, answerIndices);
+                next.set(questionSnapshotKey, answerIndices);
                 // 2. Write to localStorage immediately
                 writeCache(instanceId, next);
                 return next;
@@ -127,44 +127,44 @@ export function useAnswerManager({
 
             // 3. Debounce the API call with new format
             const apiPayload: QuizAnswerReqDTO = {
-                questionId,
+                questionSnapshotKey,
                 answer: answerIndices, // New index-based format
             };
-            pendingRef.current.set(questionId, apiPayload);
+            pendingRef.current.set(questionSnapshotKey, apiPayload);
 
             // Clear existing timer for this question
-            const existingTimer = timersRef.current.get(questionId);
+            const existingTimer = timersRef.current.get(questionSnapshotKey);
             if (existingTimer) clearTimeout(existingTimer);
 
             const timer = setTimeout(() => {
-                saveToServer(questionId, apiPayload);
-                timersRef.current.delete(questionId);
+                saveToServer(questionSnapshotKey, apiPayload);
+                timersRef.current.delete(questionSnapshotKey);
             }, DEBOUNCE_MS);
-            timersRef.current.set(questionId, timer);
+            timersRef.current.set(questionSnapshotKey, timer);
         },
         [instanceId, saveToServer]
     );
 
     const skipQuestion = useCallback(
-        (questionId: number) => {
+        (questionSnapshotKey: string) => {
             // Clear answer for skipped question
             setAnswers((prev) => {
                 const next = new Map(prev);
-                next.delete(questionId);
+                next.delete(questionSnapshotKey);
                 writeCache(instanceId, next);
                 return next;
             });
 
             // Clear pending save
-            pendingRef.current.delete(questionId);
-            const existingTimer = timersRef.current.get(questionId);
+            pendingRef.current.delete(questionSnapshotKey);
+            const existingTimer = timersRef.current.get(questionSnapshotKey);
             if (existingTimer) clearTimeout(existingTimer);
-            timersRef.current.delete(questionId);
+            timersRef.current.delete(questionSnapshotKey);
 
             // Update UI status
             setSaveStatuses((prev) => {
                 const next = new Map(prev);
-                next.delete(questionId);
+                next.delete(questionSnapshotKey);
                 return next;
             });
         },
@@ -181,7 +181,7 @@ export function useAnswerManager({
         if (pending.length === 0) return;
 
         await Promise.allSettled(
-            pending.map(([questionId, data]) => saveToServer(questionId, data))
+            pending.map(([questionSnapshotKey, data]) => saveToServer(questionSnapshotKey, data))
         );
     }, [saveToServer]);
 

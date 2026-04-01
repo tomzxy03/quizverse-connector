@@ -94,7 +94,16 @@ const QuizzesTab = ({ canManage, groupId: propGroupId }: { canManage: boolean; g
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {quizzes.map((q) => (
               <div key={q.id} className="relative group">
-                <QuizCard quiz={q} />
+                <QuizCard
+                  quiz={q}
+                  onClick={() => {
+                    if (propGroupId) {
+                      navigate(`/groups/${propGroupId}/quizzes/${q.id}`);
+                    } else {
+                      navigate(`/quiz/${q.id}`);
+                    }
+                  }}
+                />
                 {canManage && (
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                     <DropdownMenu>

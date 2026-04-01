@@ -30,8 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { apiClient } from '@/core/api';
-import { examService, quizService } from '@/services';
+import { examService, quizService, groupService } from '@/services';
 import type { QuizResDTO, AttemptState, QuizConfig, AttemptResDTO } from '@/domains';
 import { useAuth } from '@/contexts';
 import {
@@ -40,7 +39,7 @@ import {
   getAttemptStateBadgeVariant,
 } from '@/core/constants';
 const QuizDetailPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const {  id, groupId } = useParams<{ groupId: string; id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [quiz, setQuiz] = useState<QuizResDTO | null>(null);
@@ -54,6 +53,9 @@ const QuizDetailPage = () => {
   const [submissions, setSubmissions] = useState<AttemptResDTO[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [submissionsError, setSubmissionsError] = useState<string | null>(null);
+  const [submissionsTotal, setSubmissionsTotal] = useState<number | null>(null);
+  const [activeSection, setActiveSection] = useState<'overview' | 'submissions'>('overview');
+  const [groupHostName, setGroupHostName] = useState<string | null>(null);
 
   const [isStarting, setIsStarting] = useState(false);
 
@@ -128,21 +130,51 @@ const QuizDetailPage = () => {
   const handleRetry = () => {
     setStartConfirmOpen(true);
   };
+  const handleOpenSubmission = (attemptId: number) => {
+    if (!groupId || !quiz?.id) return;
+    navigate(`/groups/${groupId}/quizzes/${quiz.id}/submissions/${attemptId}`);
+  };
 
 
   const visibility = quiz?.quizVisibility === 'public' ? 'PUBLIC' : quiz?.quizVisibility === 'class_only' ? 'GROUP' : 'DRAFT';
   const isGuest = !user;
   const isGroupQuiz = quiz?.quizVisibility === 'class_only';
-  const isGroupOwner = Boolean(isGroupQuiz && user && quiz?.hostName && user.userName === quiz.hostName);
+  const ownerName = groupHostName ?? quiz?.hostName;
+  const isGroupOwner = Boolean(isGroupQuiz && user && ownerName && user.userName === ownerName);
 
   useEffect(() => {
-    if (!quiz?.id || !isGroupOwner) return;
+    if (!groupId) {
+      setGroupHostName(null);
+      return;
+    }
+    let cancelled = false;
+    groupService.getGroupById(Number(groupId))
+      .then((group) => {
+        if (!cancelled) {
+          setGroupHostName(group?.hostName ?? null);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load group info:', err);
+        if (!cancelled) setGroupHostName(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [groupId]);
+
+  useEffect(() => {
+    if (!quiz?.id || !isGroupOwner || !groupId) return;
     let cancelled = false;
     setSubmissionsLoading(true);
     setSubmissionsError(null);
-    examService.getAllAttempts(undefined, quiz.id)
+    setSubmissionsTotal(null);
+    examService.getQuizAttempts(Number(groupId), quiz.id, 0, 20)
       .then((data) => {
-        if (!cancelled) setSubmissions(data || []);
+        if (!cancelled) {
+          setSubmissions(data.items || []);
+          setSubmissionsTotal(typeof data.total === 'number' ? data.total : null);
+        }
       })
       .catch((err) => {
         console.error('Failed to load submissions:', err);
@@ -154,7 +186,7 @@ const QuizDetailPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [quiz?.id, isGroupOwner]);
+  }, [quiz?.id, isGroupOwner, groupId]);
 
   if (loading) {
     return (
@@ -201,6 +233,31 @@ const QuizDetailPage = () => {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? value : date.toLocaleString('vi-VN');
   };
+  const formatScore = (value: number | string) => {
+    if (typeof value === 'number') {
+      return value.toLocaleString('vi-VN', { maximumFractionDigits: 2 });
+    }
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed.toLocaleString('vi-VN', { maximumFractionDigits: 2 });
+    }
+    return value;
+  };
+  const formatDuration = (value: number | string) => {
+    const parsed = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(parsed)) return String(value);
+    const totalSeconds = Math.max(0, Math.floor(parsed / 1000));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${seconds}s`;
+    }
+    if (minutes > 0) {
+      return `${minutes}m ${seconds}s`;
+    }
+    return `${seconds}s`;
+  };
 
   const StatusIcon = () => {
     switch (attemptState) {
@@ -241,10 +298,48 @@ const QuizDetailPage = () => {
           </div>
         </div>
 
+        {visibility === 'GROUP' && isGroupOwner && (
+          <div className="mb-6">
+            <div className="rounded-2xl border border-border/60 bg-muted/30 p-2 shadow-sm">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection('overview')}
+                  className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
+                    activeSection === 'overview'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <FileQuestion className="h-4 w-4" />
+                  Tổng quan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSection('submissions')}
+                  className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
+                    activeSection === 'submissions'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Trophy className="h-4 w-4" />
+                  Bài nộp
+                  <span className={`ml-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    activeSection === 'submissions' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {submissionsLoading ? '...' : (submissionsTotal ?? submissions.length)}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Left column */}
           <div className="space-y-6 lg:col-span-2">
-            {quiz.description && (
+            {activeSection === 'overview' && quiz.description && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Mô tả</CardTitle>
@@ -257,7 +352,8 @@ const QuizDetailPage = () => {
               </Card>
             )}
 
-            <Card>
+            {activeSection === 'overview' && (
+              <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Thông tin quiz</CardTitle>
               </CardHeader>
@@ -316,22 +412,25 @@ const QuizDetailPage = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Quy định & trải nghiệm</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="list-inside list-disc space-y-2 text-sm text-foreground">
-                  <li>Thời gian sẽ bắt đầu ngay khi bạn bắt đầu làm bài.</li>
-                  <li>Bài làm sẽ tự động nộp khi hết giờ (nếu có giới hạn thời gian).</li>
-                  <li>Câu trả lời được tự động lưu sau mỗi lần chọn.</li>
-                  <li>Hãy đảm bảo kết nối internet ổn định trong khi làm bài.</li>
-                </ul>
-              </CardContent>
-            </Card>
+            {activeSection === 'overview' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Quy định & trải nghiệm</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="list-inside list-disc space-y-2 text-sm text-foreground">
+                    <li>Thời gian sẽ bắt đầu ngay khi bạn bắt đầu làm bài.</li>
+                    <li>Bài làm sẽ tự động nộp khi hết giờ (nếu có giới hạn thời gian).</li>
+                    <li>Câu trả lời được tự động lưu sau mỗi lần chọn.</li>
+                    <li>Hãy đảm bảo kết nối internet ổn định trong khi làm bài.</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
 
-            {visibility === 'GROUP' && isGroupOwner && (
+            {visibility === 'GROUP' && isGroupOwner && activeSection === 'submissions' && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Bài nộp trong nhóm</CardTitle>
@@ -349,22 +448,37 @@ const QuizDetailPage = () => {
                   {!submissionsLoading && !submissionsError && submissions.length > 0 && (
                     <div className="space-y-3">
                       {submissions.map((attempt) => (
-                        <div key={attempt.id} className="rounded-lg border border-border p-3">
+                        <div
+                          key={attempt.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => handleOpenSubmission(attempt.id)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              handleOpenSubmission(attempt.id);
+                            }
+                          }}
+                          className="rounded-lg border border-border p-3 transition-colors hover:bg-muted/40 cursor-pointer"
+                        >
                           <div className="flex items-start justify-between gap-4">
                             <div className="space-y-1">
                               <p className="text-sm font-medium text-foreground">
-                                User #{attempt.userId}
+                                {attempt.title || `User #${attempt.userId}`}
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 Nộp lúc: {formatDateTime(attempt.completedAt)}
                               </p>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-semibold text-foreground">{attempt.score}</p>
+                              <p className="text-sm font-semibold text-foreground">{formatScore(attempt.score)}</p>
+                              {attempt.points != null && (
+                                <p className="text-xs text-muted-foreground">Điểm: {formatScore(attempt.points)}</p>
+                              )}
                               <p className="text-xs text-muted-foreground">
                                 {attempt.correctAnswers}/{attempt.totalQuestions} đúng
                               </p>
-                              <p className="text-xs text-muted-foreground">Thời gian: {attempt.duration}</p>
+                              <p className="text-xs text-muted-foreground">Thời gian: {formatDuration(attempt.duration)}</p>
                             </div>
                           </div>
                         </div>

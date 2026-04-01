@@ -47,7 +47,7 @@ const Profile = () => {
         if (!user?.id) return;
         setLoadingStats(true);
         try {
-            const data = await examService.getUserStatistics(user.id);
+            const data = await examService.getUserStatistics();
             setStats(data);
         } catch (err) {
             console.error('Failed to load statistics:', err);
@@ -95,6 +95,18 @@ const Profile = () => {
         const h = Math.floor(mins / 60);
         const m = mins % 60;
         return m > 0 ? `${h}h ${m}m` : `${h} giờ`;
+    };
+    const formatDuration = (value?: number | string) => {
+        if (value == null) return '—';
+        const parsed = typeof value === 'number' ? value : Number(value);
+        if (!Number.isFinite(parsed)) return String(value);
+        const totalSeconds = Math.max(0, Math.floor(parsed / 1000));
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+        if (minutes > 0) return `${minutes}m ${seconds}s`;
+        return `${seconds}s`;
     };
 
     const subjectEntries = stats?.quizzesBySubject ? Object.entries(stats.quizzesBySubject) : [];
@@ -372,7 +384,7 @@ const Profile = () => {
                                                         {attempt.title || 'Quiz'}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground mt-0.5">
-                                                        {attempt.date} · {attempt.duration}
+                                                        {attempt.date} · {formatDuration(attempt.duration)}
                                                     </p>
                                                 </div>
                                                 <div className="flex items-center gap-2 shrink-0">
@@ -383,7 +395,7 @@ const Profile = () => {
                                                         {attempt.score}
                                                     </Badge>
                                                     <Button variant="ghost" size="sm" asChild className="rounded-lg h-8 px-2">
-                                                        <Link to={`/history/${attempt.id}`}>
+                                                        <Link to={`/history/${attempt.quizInstanceId ?? attempt.id}`}>
                                                             <ChevronRight className="h-4 w-4" />
                                                         </Link>
                                                     </Button>

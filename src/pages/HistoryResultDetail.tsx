@@ -20,7 +20,7 @@ import { examService } from '@/services';
 import type { AttemptDetailResDTO } from '@/domains';
 
 const HistoryResultDetail = () => {
-    const { attemptId } = useParams<{ attemptId: string }>();
+    const { attemptId, groupId, id: quizId } = useParams<{ attemptId: string; groupId?: string; id?: string }>();
     const navigate = useNavigate();
     const [detail, setDetail] = useState<AttemptDetailResDTO | null>(null);
     const [loading, setLoading] = useState(true);
@@ -40,7 +40,9 @@ const HistoryResultDetail = () => {
         setLoading(true);
         setError(null);
         try {
-            const data = await examService.getAttemptById(Number(attemptId));
+            const data = groupId && quizId
+                ? await examService.getSubmissionDetail(Number(groupId), Number(quizId), Number(attemptId))
+                : await examService.getMyAttemptDetail(Number(attemptId));
             setDetail(data);
         } catch (err) {
             console.error('Failed to load attempt detail:', err);
@@ -52,23 +54,12 @@ const HistoryResultDetail = () => {
 
     const metrics = useMemo(() => {
         if (!detail) return null;
-        const total = detail.totalQuestions;
-        const correct = detail.correctAnswers;
+        const attemptInfo = detail.attemptInfo;
+        const total = attemptInfo.totalQuestions ?? 0;
+        const correct = attemptInfo.correctAnswers ?? 0;
         const incorrect = total - correct;
-        // Parse score string like "8/10" or percentage
-        let scorePercent = 0;
-        if (detail.score) {
-            if (detail.score.includes('/')) {
-                const [numerator, denominator] = detail.score.split('/').map(Number);
-                scorePercent = denominator > 0 ? Math.round((numerator / denominator) * 100) : 0;
-            } else if (detail.score.includes('%')) {
-                scorePercent = parseInt(detail.score, 10);
-            } else {
-                scorePercent = total > 0 ? Math.round((correct / total) * 100) : 0;
-            }
-        } else {
-            scorePercent = total > 0 ? Math.round((correct / total) * 100) : 0;
-        }
+        const parsedScore = typeof attemptInfo.score === 'number' ? attemptInfo.score : Number(attemptInfo.score);
+        const scorePercent = Number.isFinite(parsedScore) ? Math.round(parsedScore) : (total > 0 ? Math.round((correct / total) * 100) : 0);
         return { total, correct, incorrect, scorePercent };
     }, [detail]);
 
@@ -115,6 +106,8 @@ const HistoryResultDetail = () => {
         );
     }
 
+    const backPath = groupId && quizId ? `/groups/${groupId}/quizzes/${quizId}` : '/history';
+
     /* ── Error ── */
     if (error || !detail || !metrics) {
         return (
@@ -135,10 +128,10 @@ const HistoryResultDetail = () => {
                             </p>
                             <Button
                                 className="w-full h-12 rounded-xl text-base font-medium"
-                                onClick={() => navigate('/history')}
+                                onClick={() => navigate(backPath)}
                             >
                                 <ArrowLeft className="mr-2 h-5 w-5" />
-                                Quay lại lịch sử thi
+                                Quay lại
                             </Button>
                         </div>
                     </Card>
@@ -146,6 +139,21 @@ const HistoryResultDetail = () => {
             </div>
         );
     }
+
+    const formatDuration = (value?: number | string) => {
+        if (value == null) return '—';
+        const parsed = typeof value === 'number' ? value : Number(value);
+        if (!Number.isFinite(parsed)) return String(value);
+        const totalSeconds = Math.max(0, Math.floor(parsed / 1000));
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+        if (minutes > 0) return `${minutes}m ${seconds}s`;
+        return `${seconds}s`;
+    };
+
+    const attemptInfo = detail.attemptInfo;
 
     const { scorePercent, correct, incorrect, total } = metrics;
     const theme = getScoreTheme(scorePercent);
@@ -160,7 +168,7 @@ const HistoryResultDetail = () => {
                         <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => navigate('/history')}
+                            onClick={() => navigate(backPath)}
                             className="rounded-full hover:bg-muted"
                         >
                             <ArrowLeft className="h-5 w-5" />
@@ -170,7 +178,7 @@ const HistoryResultDetail = () => {
                                 Chi tiết bài thi
                             </h1>
                             <p className="text-xs text-muted-foreground">
-                                {detail.title || 'Quiz'} · {detail.date || detail.completedAt}
+                                {attemptInfo.title || 'Quiz'}
                             </p>
                         </div>
                     </div>
@@ -208,21 +216,19 @@ const HistoryResultDetail = () => {
 
                                 <div className="w-full mt-8 space-y-4">
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="font-medium text-muted-foreground">Kết quả:</span>
-                                        <span className="font-bold text-foreground">{detail.score}</span>
+                                        <span className="font-medium text-muted-foreground">Điểm số:</span>
+                                        <span className="font-bold text-foreground">
+                                            {attemptInfo.points ?? 0}
+                                        </span>
                                     </div>
-                                    {detail.points != null && (
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="font-medium text-muted-foreground">Điểm:</span>
-                                            <span className="font-bold text-foreground">{detail.points}</span>
-                                        </div>
-                                    )}
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="font-medium text-muted-foreground flex items-center gap-1.5">
                                             <Clock className="h-3.5 w-3.5" />
                                             Thời gian:
                                         </span>
-                                        <span className="font-bold text-foreground">{detail.duration}</span>
+                                        <span className="font-bold text-foreground">
+                                            {formatDuration(attemptInfo.duration)}
+                                        </span>
                                     </div>
                                     <Progress value={scorePercent} className="h-2 rounded-full" />
                                 </div>
@@ -242,24 +248,11 @@ const HistoryResultDetail = () => {
                                     </div>
                                 </div>
 
-                                {/* Badges */}
-                                {detail.badges && detail.badges.length > 0 && (
-                                    <div className="flex gap-2 mt-6 flex-wrap justify-center">
-                                        {detail.badges.map((badge, idx) => (
-                                            <Badge
-                                                key={idx}
-                                                variant="secondary"
-                                                className={
-                                                    detail.badgeColors?.[idx]
-                                                        ? `${detail.badgeColors[idx]} text-white border-0`
-                                                        : ''
-                                                }
-                                            >
-                                                {badge}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                )}
+                                <div className="flex gap-2 mt-6 flex-wrap justify-center">
+                                    <Badge variant="secondary" className="uppercase tracking-wide text-[10px]">
+                                        Đã nộp
+                                    </Badge>
+                                </div>
                             </Card>
                         </div>
                     </div>
@@ -279,7 +272,9 @@ const HistoryResultDetail = () => {
                         {detail.answers && detail.answers.length > 0 ? (
                             <div className="space-y-4">
                                 {detail.answers.map((answer, idx) => {
-                                    const question = answer.question;
+                                    const selectedSet = new Set(answer.selectedOptionIds || []);
+                                    const selectedOptions = (answer.options || []).filter((opt) => selectedSet.has(opt.id));
+                                    const selectedText = answer.answerText || selectedOptions.map((opt) => opt.answerText).join(', ');
                                     return (
                                         <Card
                                             key={answer.id || idx}
@@ -305,12 +300,12 @@ const HistoryResultDetail = () => {
                                                 {/* Content */}
                                                 <div className="flex-1 min-w-0 pt-1">
                                                     <p className="font-bold text-foreground leading-snug mb-4">
-                                                        {question?.questionName || `Câu hỏi ${idx + 1}`}
+                                                        {answer.questionName || `Câu hỏi ${idx + 1}`}
                                                     </p>
 
                                                     <div className="grid gap-3 mb-4">
                                                         {/* User's answer */}
-                                                        {answer.answerText && (
+                                                        {selectedText ? (
                                                             <div
                                                                 className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${answer.isCorrect
                                                                         ? 'bg-emerald-500/5 border-emerald-500/20'
@@ -330,26 +325,37 @@ const HistoryResultDetail = () => {
                                                                             : 'text-destructive/80'
                                                                         }`}
                                                                 >
-                                                                    {answer.answerText}
+                                                                    {selectedText}
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center gap-3 p-3 rounded-2xl border-2 border-muted/40 bg-muted/20">
+                                                                <div className="h-2 w-2 rounded-full bg-muted-foreground/60" />
+                                                                <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+                                                                    Bạn chọn:
+                                                                </span>
+                                                                <span className="text-sm font-bold text-muted-foreground">
+                                                                    Chưa trả lời
                                                                 </span>
                                                             </div>
                                                         )}
-
-                                                        {/* Show correct answer if user got it wrong */}
-                                                        {!answer.isCorrect && question?.answers && (
-                                                            <div className="flex items-center gap-3 p-3 rounded-2xl border-2 border-emerald-500/10 bg-muted/20">
-                                                                <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                                                                <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-                                                                    Đáp án đúng:
-                                                                </span>
-                                                                <span className="text-sm font-bold text-emerald-700">
-                                                                    {question.answers
-                                                                        .filter(
-                                                                            (a) => a.answerType === 'text' && (a as any).answerCorrect
-                                                                        )
-                                                                        .map((a) => a.answerText)
-                                                                        .join(', ') || '—'}
-                                                                </span>
+                                                        {answer.options && answer.options.length > 0 && (
+                                                            <div className="grid gap-2">
+                                                                {answer.options.map((option) => {
+                                                                    const isSelected = selectedSet.has(option.id);
+                                                                    return (
+                                                                        <div
+                                                                            key={option.id}
+                                                                            className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${isSelected
+                                                                                    ? 'border-primary/40 bg-primary/5 text-foreground'
+                                                                                    : 'border-border/40 bg-muted/10 text-muted-foreground'
+                                                                                }`}
+                                                                        >
+                                                                            <span className={`h-2 w-2 rounded-full ${isSelected ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
+                                                                            <span className="font-medium">{option.answerText}</span>
+                                                                        </div>
+                                                                    );
+                                                                })}
                                                             </div>
                                                         )}
                                                     </div>

@@ -1,39 +1,39 @@
 import { examRepository } from '@/repositories';
-import { AttemptResDTO, AttemptDetailResDTO, CreateAttemptReqDTO, UserStatisticsResDTO } from '@/domains';
+import type { PageResponse } from '@/core/types';
+import { AttemptDetailResDTO, AttemptResDTO, QuizResultDetailResDTO, UserStatisticsResDTO } from '@/domains';
 
 export class ExamService {
-  async getAllAttempts(userId?: number, quizId?: number): Promise<AttemptResDTO[]> {
-    return await examRepository.getAll(userId, quizId);
+  async getAttemptResult(quizInstanceId: number): Promise<QuizResultDetailResDTO> {
+    return await examRepository.getAttemptResult(quizInstanceId);
   }
 
-  async getAttemptById(id: number): Promise<AttemptDetailResDTO> {
-    return await examRepository.getById(id);
+  async getMyAttempts(page = 0, size = 10): Promise<PageResponse<AttemptResDTO>> {
+    return await examRepository.getMyAttempts(page, size);
   }
 
-  async getAttemptsByUserId(userId: number): Promise<AttemptResDTO[]> {
-    return await examRepository.getByUserId(userId);
+  async getMyAttemptDetail(quizInstanceId: number): Promise<AttemptDetailResDTO> {
+    return await examRepository.getMyAttemptDetail(quizInstanceId);
   }
 
-  async getAttemptsByQuizAndUser(quizId: number, userId: number): Promise<AttemptResDTO[]> {
-    return await examRepository.getByQuizAndUser(quizId, userId);
+  async getQuizAttempts(
+    groupId: number,
+    quizId: number,
+    page = 0,
+    size = 10
+  ): Promise<PageResponse<AttemptResDTO>> {
+    return await examRepository.getQuizAttempts(groupId, quizId, page, size);
   }
 
-  async createAttempt(data: CreateAttemptReqDTO): Promise<AttemptDetailResDTO> {
-    if (!data.quizId) {
-      throw new Error('Quiz ID is required');
-    }
-    if (!data.answers || data.answers.length === 0) {
-      throw new Error('No answers provided');
-    }
-    return await examRepository.create(data);
+  async getSubmissionDetail(
+    groupId: number,
+    quizId: number,
+    quizInstanceId: number
+  ): Promise<AttemptDetailResDTO> {
+    return await examRepository.getSubmissionDetail(groupId, quizId, quizInstanceId);
   }
 
-  async deleteAttempt(id: number): Promise<void> {
-    return await examRepository.delete(id);
-  }
-
-  async getUserStatistics(userId: number): Promise<UserStatisticsResDTO> {
-    return await examRepository.getUserStatistics(userId);
+  async getUserStatistics(): Promise<UserStatisticsResDTO> {
+    return await examRepository.getUserStatistics();
   }
 }
 

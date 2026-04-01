@@ -104,33 +104,40 @@ export const API_ENDPOINTS = {
   },
 
   // Quiz User Responses
-  QUIZ_USER_RESPONSES: {
-    BASE: '/quiz-user-responses',
-    BY_ID: (id: number) => `/quiz-user-responses/${id}`,
-    UPDATE_ANSWER: (responseId: number) => `/quiz-user-responses/${responseId}/answer`,
-    SUBMIT: '/quiz-user-responses/submit',
-    SKIP: '/quiz-user-responses/skip',
-    BY_USER: (userId: number) => `/quiz-user-responses/user/${userId}`,
-    BY_USER_PAGE: (userId: number) => `/quiz-user-responses/user/${userId}/page`,
-    BY_QUIZ_INSTANCE: (quizInstanceId: number) => `/quiz-user-responses/quiz-instance/${quizInstanceId}`,
-    BY_QUIZ_INSTANCE_USER: (quizInstanceId: number, userId: number) =>
-      `/quiz-user-responses/quiz-instance/${quizInstanceId}/user/${userId}`,
-    CORRECT: '/quiz-user-responses/correct',
-    CORRECT_PAGE: '/quiz-user-responses/correct/page',
-    ANSWERED: '/quiz-user-responses/answered',
-    SKIPPED: '/quiz-user-responses/skipped',
-    RECENT: '/quiz-user-responses/recent',
-    DATE_RANGE: '/quiz-user-responses/date-range',
-    TIME_RANGE: '/quiz-user-responses/time-range',
-  },
+  // QUIZ_USER_RESPONSES: {
+  //   BASE: '/quiz-user-responses',
+  //   BY_ID: (id: number) => `/quiz-user-responses/${id}`,
+  //   UPDATE_ANSWER: (responseId: number) => `/quiz-user-responses/${responseId}/answer`,
+  //   SUBMIT: '/quiz-user-responses/submit',
+  //   SKIP: '/quiz-user-responses/skip',
+  //   BY_USER: (userId: number) => `/quiz-user-responses/user/${userId}`,
+  //   BY_USER_PAGE: (userId: number) => `/quiz-user-responses/user/${userId}/page`,
+  //   BY_QUIZ_INSTANCE: (quizInstanceId: number) => `/quiz-user-responses/quiz-instance/${quizInstanceId}`,
+  //   BY_QUIZ_INSTANCE_USER: (quizInstanceId: number, userId: number) =>
+  //     `/quiz-user-responses/quiz-instance/${quizInstanceId}/user/${userId}`,
+  //   CORRECT: '/quiz-user-responses/correct',
+  //   CORRECT_PAGE: '/quiz-user-responses/correct/page',
+  //   ANSWERED: '/quiz-user-responses/answered',
+  //   SKIPPED: '/quiz-user-responses/skipped',
+  //   RECENT: '/quiz-user-responses/recent',
+  //   DATE_RANGE: '/quiz-user-responses/date-range',
+  //   TIME_RANGE: '/quiz-user-responses/time-range',
+  // },
 
   // Exam Attempts
   ATTEMPTS: {
     BASE: '/attempts',
-    BY_ID: (id: number) => `/attempts/${id}`,
-    BY_USER: (userId: number) => `/attempts/user/${userId}`,
-    BY_QUIZ_AND_USER: (quizId: number, userId: number) => `/attempts/quiz/${quizId}/user/${userId}`,
-    USER_STATISTICS: (userId: number) => `/attempts/user/${userId}/statistics`,
+    BY_ID: (quizInstanceId: number) => `/attempts/${quizInstanceId}`,
+    // current user's attempts (paged via query params)
+    ME: () => `/attempts/me`,
+    ME_DETAIL: (quizInstanceId: number) => `/attempts/me/${quizInstanceId}`,
+    // submissions by group/quiz (host only)
+    SUBMISSIONS: (groupId: number, quizId: number) =>
+      `/attempts/groups/${groupId}/quizzes/${quizId}/submissions`,
+    SUBMISSION_DETAIL: (groupId: number, quizId: number, quizInstanceId: number) =>
+      `/attempts/groups/${groupId}/quizzes/${quizId}/submissions/${quizInstanceId}`,
+    // statistics
+    STATISTICS: () => `/attempts/me/statistics`,
   },
 
   // Groups (Lobby)

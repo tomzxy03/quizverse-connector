@@ -156,12 +156,15 @@ export class ApiClient {
 
     /**
      * Xử lý dữ liệu trả về linh hoạt:
-     * 1. Nếu data có bọc trong field 'items' (DataResDTO), trả về data.items
-     * 2. Nếu không (ví dụ /auth/me trả về trực tiếp user), trả về chính data
+     * 1. Nếu data có bọc trong field 'items' + 'code'/'message' (DataResDTO), trả về data.items
+     * 2. Nếu không (ví dụ PageResponse có field items), trả về chính data
      */
-    const result = (data && typeof data === 'object' && 'items' in data) 
-      ? data.items 
-      : data;
+    const isDataResDTO =
+      data &&
+      typeof data === 'object' &&
+      'items' in data &&
+      ('code' in data || 'message' in data);
+    const result = isDataResDTO ? data.items : data;
 
     return result as T;
   }

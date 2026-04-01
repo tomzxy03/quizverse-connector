@@ -1,5 +1,5 @@
 import { quizRepository } from '@/repositories';
-import { QuizResDTO, QuizReqDTO, QuizFilter, QuizDetailResDTO, QuestionResDTO } from '@/domains';
+import { QuizResDTO, QuizReqDTO, QuizFilter, QuizDetailResDTO, QuestionResDTO, QuizQuestionResDTO } from '@/domains';
 import { QuizInstanceResDTO } from '@/domains';
 import { PageResponse } from '@/core/types';
 
@@ -48,7 +48,18 @@ export class QuizService {
 
   /** Fetch questions belonging to a quiz (for edit mode) */
   async getQuizQuestions(quizId: number): Promise<QuestionResDTO[]> {
-    return await quizRepository.getQuestions(quizId);
+    const data = await quizRepository.getQuestions(quizId);
+    return (data || []).map((item: QuizQuestionResDTO) => {
+      const correctSet = new Set(item.correctAnswerIds || []);
+      return {
+        ...item.question,
+        answers: (item.question.answers || []).map((answer) => ({
+          ...answer,
+          answerCorrect: correctSet.has(answer.id),
+          isCorrect: correctSet.has(answer.id),
+        })),
+      };
+    });
   }
 
 createGroupQuiz(groupId: number, data: QuizReqDTO) {
@@ -57,4 +68,3 @@ createGroupQuiz(groupId: number, data: QuizReqDTO) {
 }
 
 export const quizService = new QuizService();
-

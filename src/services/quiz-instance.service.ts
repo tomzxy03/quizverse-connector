@@ -25,7 +25,7 @@ export class QuizInstanceService {
     }
 
     /** Submit quiz (final submission) */
-    async submitQuiz(instanceId: number, data: QuizSubmissionReqDTO): Promise<QuizResultDetailResDTO> {
+    async submitQuiz(instanceId: number, data?: QuizSubmissionReqDTO): Promise<QuizResultDetailResDTO> {
         return await quizInstanceRepository.submit(instanceId, data);
     }
 
@@ -40,9 +40,9 @@ export class QuizInstanceService {
     }
 
     /** Save a single answer to Redis (per-answer save) */
-    async saveAnswer(instanceId: number, questionId: number, answer: number[]): Promise<void> {
+    async saveAnswer(instanceId: number, questionSnapshotKey: string, answer: number[]): Promise<void> {
         const data: QuizAnswerReqDTO = {
-            questionId,
+            questionSnapshotKey,
             answer
         };
         return await quizInstanceRepository.saveAnswer(instanceId, data);

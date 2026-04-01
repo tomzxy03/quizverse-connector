@@ -64,7 +64,7 @@ function mapBackendQuestions(questions: QuestionResDTO[]): FormQuestion[] {
     options: (q.answers || []).map((a, aIdx) => ({
       id: `opt-be-${a.id}`,
       text: a.answerText,
-      isCorrect: a.answerType === 'text' && (a as any).answerCorrect === true,
+      isCorrect: Boolean((a as any).answerCorrect ?? (a as any).isCorrect),
     })),
     points: 1,
   }));
