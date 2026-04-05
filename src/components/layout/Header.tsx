@@ -1,17 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, ChevronDown, LogOut, User, Menu, X } from 'lucide-react';
 import { useAuth } from '@/contexts';
+import AboutModal from './AboutModal';
 
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const { isLoggedIn, logout } = useAuth();
 
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
+  const toggleAbout = () => setAboutOpen(!aboutOpen);
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -20,7 +23,17 @@ const Header = () => {
   const closeMenus = () => {
     setDropdownOpen(false);
     setMobileMenuOpen(false);
+    setAboutOpen(false);
   };
+
+  useEffect(() => {
+    const seenFlag = 'quizory_about_seen_v1';
+    const hasSeen = localStorage.getItem(seenFlag);
+    if (!hasSeen) {
+      setAboutOpen(true);
+      localStorage.setItem(seenFlag, 'true');
+    }
+  }, []);
 
   return (
     <header className="w-full bg-white border-b border-border sticky top-0 z-50">
@@ -65,6 +78,13 @@ const Header = () => {
             <Link to="/question-bank" className={`nav-link ${isActive('/question-bank') ? 'active' : ''}`}>
               Ngân hàng câu hỏi
             </Link>
+            <button
+              type="button"
+              className="nav-link"
+              onClick={toggleAbout}
+            >
+              About
+            </button>
           </nav>
         </div>
 
@@ -189,9 +209,18 @@ const Header = () => {
             >
               Ngân hàng câu hỏi
             </Link>
+            <button
+              type="button"
+              className="block text-left px-4 py-3 rounded-md transition-colors text-foreground hover:bg-muted"
+              onClick={toggleAbout}
+            >
+              About
+            </button>
           </nav>
         </div>
       )}
+
+      <AboutModal isOpen={aboutOpen} onClose={closeMenus} />
     </header>
   );
 };
