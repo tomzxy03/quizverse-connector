@@ -1,48 +1,57 @@
 # QuizVerse Connector
 
-Frontend for the QuizVerse quiz platform. Connects to a Spring Boot backend via REST API.
+Frontend for the QuizVerse quiz platform. This app talks to a Spring Boot backend over REST and provides quiz browsing, group management, quiz taking, and admin views.
 
-## What’s inside
+You can visit Backend by <https://github.com/tomzxy03/webquiz.git>
 
-- Vite + React + TypeScript app
-- Tailwind + shadcn/ui + Radix UI components
-- React Query for group tabs (prefetch + cache)
-- Quiz taking flow with autosave, offline retry, and countdown sync
+## Highlights
+
+- Vite + React + TypeScript
+- Tailwind CSS with shadcn/ui and Radix UI primitives
+- React Router + React Query for routing and data fetching
+- Auth with access + refresh tokens, plus a guest token for anonymous flows
+- Quiz-taking flow with timer, autosave, and offline retry queue
+- Built-in Swagger UI viewer at `/api-docs`
 
 ## Project structure
 
-The project uses a layered structure:
-
-- `src/core/` – API client, endpoints, shared types (enums, pagination, API DTOs)
-- `src/domains/` – Domain types and DTOs (quiz, group, user, exam, subject)
-- `src/repositories/` – Data access (calls `core/api`, maps to domain)
-- `src/services/` – Application logic (uses repositories, consumed by UI)
+- `src/core/` – API client, endpoints, shared constants and base types
+- `src/domains/` – Domain models, DTOs, and mappers
+- `src/repositories/` – Data access layer (API calls + mapping)
+- `src/services/` – Application logic on top of repositories
+- `src/contexts/` – Auth and quiz attempt state
+- `src/hooks/` – Reusable hooks (quiz timer, autosave, group tab prefetch, etc.)
 - `src/pages/` – Route-level pages
-- `src/components/` – `layout/`, `ui/`, `quiz/`, `group/`, `shared/`
-- `src/hooks/`, `src/lib/` – Shared hooks and utilities
+- `src/components/` – Reusable UI and feature components
 
 ## Setup
 
-1. Copy `.env.example` to `.env.local` and set `VITE_API_BASE_URL`.
-2. Install dependencies and start dev server:
+1. Copy `.env.example` to `.env.local` and update values as needed.
+2. Install dependencies and start the dev server:
 
 ```bash
 npm install
 npm run dev
 ```
 
+## Environment variables
+
+- `VITE_API_BASE_URL` – Backend base URL used by the API client. Defaults to `http://localhost:8080/api`.
+- `VITE_ENV` – Environment label (used for client-side checks only).
+- `VITE_DEBUG` – Optional debug flag (string `true`/`false`).
+
 ## Scripts
 
-- `npm run dev` – Development server
+- `npm run dev` – Start Vite dev server
 - `npm run build` – Production build
 - `npm run build:dev` – Development-mode build
 - `npm run preview` – Preview production build
-- `npm run lint` – Lint
+- `npm run lint` – Lint the codebase
 
-## Documentation
+## API docs
 
-- `docs/README.md` – Documentation index (React Query migration)
-- `docs/REACT_QUERY_QUICK_REFERENCE.md` – Quick usage guide for hooks
-- `docs/REACT_QUERY_ARCHITECTURE.md` – React Query architecture and data flow
-- `docs/QUICK_START.md` – Quiz taking page quick start
-- `docs/QUIZ_TAKING_DESIGN.md` – Quiz taking architecture & UX behavior
+- Route: `/api-docs`
+- Primary source: `http://localhost:8080/v3/api-docs` (backend must be running)
+- Fallback: `public/api1.json`
+
+There is also an OpenAPI snapshot at `api.json` in the repo root.
