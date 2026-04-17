@@ -10,7 +10,8 @@ const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, logout, user } = useAuth();
+  const isAdmin = user?.roles?.includes('ADMIN');
 
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
@@ -118,13 +119,15 @@ const Header = () => {
                   >
                     Profile
                   </Link>
-                  <Link
-                    to="/tomzxyadmin"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-muted transition-colors"
-                    onClick={closeMenus}
-                  >
-                    Quản trị viên
-                  </Link>
+                  {isAdmin && (
+                    <Link
+                      to="/tomzxyadmin"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-muted transition-colors"
+                      onClick={closeMenus}
+                    >
+                      Quản trị viên
+                    </Link>
+                  )}
                   <Link
                     to="/settings"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-muted transition-colors"

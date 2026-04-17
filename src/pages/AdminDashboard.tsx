@@ -22,6 +22,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +39,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { adminService } from '@/services';
+import { AVAILABLE_PERMISSIONS, PERMISSION_ACTIONS, PERMISSION_MATRIX, type PermissionAction } from '@/core/constants';
 import type {
   AdminDashboardResDTO,
   AdminGroupPageResDTO,
@@ -59,6 +68,14 @@ const tabConfig: { key: AdminTabKey; label: string; icon: ReactNode }[] = [
   { key: 'ROLES', label: 'Roles', icon: <KeyRound className="h-4 w-4" /> },
 ];
 
+const AVAILABLE_PERMISSION_SET = new Set(AVAILABLE_PERMISSIONS);
+const PERMISSION_ACTION_LABELS: Record<PermissionAction, string> = {
+  CREATE: 'Create',
+  VIEW: 'View',
+  UPDATE: 'Update',
+  DELETE: 'Delete',
+};
+
 const AdminDashboard = () => {
   const [dashboard, setDashboard] = useState<AdminDashboardResDTO | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,11 +92,32 @@ const AdminDashboard = () => {
   const [roles, setRoles] = useState<AdminRoleResDTO[] | null>(null);
   const [editingSubject, setEditingSubject] = useState<AdminSubjectResDTO | null>(null);
   const [editingRole, setEditingRole] = useState<AdminRoleResDTO | null>(null);
+  const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
+  const [roleFilter, setRoleFilter] = useState('');
   const [newSubject, setNewSubject] = useState<AdminSubjectReqDTO>({ name: '', description: '' });
   const [newRole, setNewRole] = useState<AdminRoleReqDTO>({ name: '', permissions: [] });
-  const [rolePermissionsInput, setRolePermissionsInput] = useState('');
   const [updatingKey, setUpdatingKey] = useState<string | null>(null);
   const isMountedRef = useRef(true);
+  const visibleRoles = useMemo(() => {
+    if (!roles?.length) return [];
+    const filter = roleFilter.trim().toLowerCase();
+    if (!filter) return roles;
+    return roles.filter((role) => role.name.toLowerCase().includes(filter));
+  }, [roles, roleFilter]);
+
+  useEffect(() => {
+    if (!visibleRoles.length) {
+      setSelectedRoleId(null);
+      setEditingRole(null);
+      return;
+    }
+    if (selectedRoleId && visibleRoles.some((role) => role.id === selectedRoleId)) {
+      return;
+    }
+    const nextRole = visibleRoles[0];
+    setSelectedRoleId(nextRole.id);
+    setEditingRole({ ...nextRole });
+  }, [visibleRoles, selectedRoleId]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -294,10 +332,7 @@ const AdminDashboard = () => {
       setError('Vui lòng nhập tên role.');
       return;
     }
-    const permissions = rolePermissionsInput
-      .split(',')
-      .map((p) => p.trim())
-      .filter(Boolean);
+    const permissions = newRole.permissions.map((p) => p.trim()).filter(Boolean);
     const key = 'ROLE-CREATE';
     if (isMountedRef.current) {
       setUpdatingKey(key);
@@ -307,7 +342,6 @@ const AdminDashboard = () => {
       await adminService.createRole({ name: newRole.name.trim(), permissions });
       if (isMountedRef.current) {
         setNewRole({ name: '', permissions: [] });
-        setRolePermissionsInput('');
       }
       await fetchList();
     } catch (err: any) {
@@ -835,12 +869,6 @@ const AdminDashboard = () => {
                               placeholder="Role name"
                               className="min-w-[200px]"
                             />
-                            <Input
-                              value={rolePermissionsInput}
-                              onChange={(e) => setRolePermissionsInput(e.target.value)}
-                              placeholder="Permissions (comma separated)"
-                              className="min-w-[260px]"
-                            />
                             <Button
                               size="sm"
                               onClick={handleCreateRole}
@@ -849,92 +877,102 @@ const AdminDashboard = () => {
                               Create
                             </Button>
                           </div>
+                          
                         </div>
-                        <AdminTable
-                          headers={['Role', 'Users', 'Permissions', 'Actions']}
-                          rows={(roles || []).map((r) => [
-                            r.name,
-                            String(r.userCount ?? 0),
-                            r.permissions?.join(', ') || '—',
-                            <DropdownMenu key={`r-action-${r.id}`}>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8"
-                                  disabled={
-                                    updatingKey === `ROLE-${r.id}-DELETE` ||
-                                    updatingKey === `ROLE-${r.id}-UPDATE`
-                                  }
-                                >
-                                  Manage
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  disabled={updatingKey === `ROLE-${r.id}-UPDATE`}
-                                  onClick={() => setEditingRole({ ...r })}
-                                >
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  disabled={updatingKey === `ROLE-${r.id}-DELETE`}
-                                  onClick={() =>
-                                    handleDelete(
-                                      `ROLE-${r.id}-DELETE`,
-                                      () => adminService.deleteRole(r.id),
-                                      'Không xóa được role.'
-                                    )
-                                  }
-                                >
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>,
-                          ])}
-                          emptyLabel="No roles found."
-                        />
-                        {editingRole && (
-                          <div className="rounded-lg border bg-background p-4">
-                            <h3 className="text-sm font-medium mb-3">Edit role</h3>
-                            <div className="flex flex-wrap gap-3">
-                              <Input
-                                value={editingRole.name}
-                                onChange={(e) =>
-                                  setEditingRole((prev) => (prev ? { ...prev, name: e.target.value } : prev))
-                                }
-                                placeholder="Role name"
-                                className="min-w-[200px]"
-                              />
-                              <Input
-                                value={editingRole.permissions.join(', ')}
-                                onChange={(e) =>
-                                  setEditingRole((prev) =>
-                                    prev ? { ...prev, permissions: e.target.value.split(',').map((p) => p.trim()) } : prev
-                                  )
-                                }
-                                placeholder="Permissions (comma separated)"
-                                className="min-w-[260px]"
-                              />
-                              <Button
-                                size="sm"
-                                onClick={handleUpdateRole}
-                                disabled={updatingKey === `ROLE-${editingRole.id}-UPDATE`}
+                        <div className="rounded-lg border bg-background p-4">
+                          <h3 className="text-sm font-medium mb-3">Role permissions</h3>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <Input
+                              value={roleFilter}
+                              onChange={(e) => setRoleFilter(e.target.value)}
+                              placeholder="Filter roles"
+                              className="min-w-[200px]"
+                            />
+                            <div className="min-w-[220px]">
+                              <Select
+                                value={selectedRoleId ? String(selectedRoleId) : undefined}
+                                onValueChange={(value) => {
+                                  const roleId = Number(value);
+                                  setSelectedRoleId(roleId);
+                                  const nextRole = roles?.find((role) => role.id === roleId);
+                                  setEditingRole(nextRole ? { ...nextRole } : null);
+                                }}
+                                disabled={!visibleRoles.length}
                               >
-                                Save
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setEditingRole(null)}
-                              >
-                                Cancel
-                              </Button>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {visibleRoles.map((role) => (
+                                    <SelectItem key={role.id} value={String(role.id)}>
+                                      {role.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
+                            <Button
+                              size="sm"
+                              onClick={handleUpdateRole}
+                              disabled={
+                                !editingRole ||
+                                updatingKey === (editingRole ? `ROLE-${editingRole.id}-UPDATE` : '')
+                              }
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const source = roles?.find((role) => role.id === selectedRoleId);
+                                setEditingRole(source ? { ...source } : null);
+                              }}
+                              disabled={!selectedRoleId}
+                            >
+                              Reset
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              disabled={!selectedRoleId || updatingKey === `ROLE-${selectedRoleId}-DELETE`}
+                              onClick={() => {
+                                if (!selectedRoleId) return;
+                                handleDelete(
+                                  `ROLE-${selectedRoleId}-DELETE`,
+                                  () => adminService.deleteRole(selectedRoleId),
+                                  'Không xóa được role.'
+                                );
+                              }}
+                            >
+                              Delete
+                            </Button>
                           </div>
-                        )}
+                          {editingRole ? (
+                            <>
+                              <div className="mt-4">
+                                <Input
+                                  value={editingRole.name}
+                                  onChange={(e) =>
+                                    setEditingRole((prev) => (prev ? { ...prev, name: e.target.value } : prev))
+                                  }
+                                  placeholder="Role name"
+                                  className="min-w-[200px]"
+                                />
+                              </div>
+                              <div className="mt-4">
+                                <PermissionMatrix
+                                  value={editingRole.permissions}
+                                  onChange={(permissions) =>
+                                    setEditingRole((prev) => (prev ? { ...prev, permissions } : prev))
+                                  }
+                                />
+                              </div>
+                            </>
+                          ) : (
+                            <p className="mt-4 text-sm text-muted-foreground">No roles found.</p>
+                          )}
+                        </div>
                       </div>
                     )}
                   </>
@@ -1046,6 +1084,92 @@ function AdminTable({
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function PermissionMatrix({
+  value,
+  onChange,
+}: {
+  value: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const [objectFilter, setObjectFilter] = useState('');
+  const togglePermission = (permission: string) => {
+    if (value.includes(permission)) {
+      onChange(value.filter((p) => p !== permission));
+      return;
+    }
+    onChange([...value, permission]);
+  };
+
+  const unknownPermissions = value.filter((permission) => !AVAILABLE_PERMISSION_SET.has(permission as any));
+  const filteredRows = useMemo(() => {
+    const filter = objectFilter.trim().toLowerCase();
+    if (!filter) return PERMISSION_MATRIX;
+    return PERMISSION_MATRIX.filter((row) => {
+      if (row.resourceLabel.toLowerCase().includes(filter)) return true;
+      if (row.resourceKey.toLowerCase().includes(filter)) return true;
+      return Object.values(row.permissions).some((perm) => perm?.toLowerCase().includes(filter));
+    });
+  }, [objectFilter]);
+
+  return (
+    <div className="space-y-3">
+      <Input
+        value={objectFilter}
+        onChange={(e) => setObjectFilter(e.target.value)}
+        placeholder="Filter objects (e.g., user, quiz, subject)"
+        className="max-w-xs"
+      />
+      <div className="overflow-x-auto rounded-lg border">
+        <table className="min-w-full text-sm">
+          <thead className="bg-muted/50 text-muted-foreground">
+            <tr>
+              <th className="px-3 py-2 text-left font-medium">Object</th>
+              {PERMISSION_ACTIONS.map((action) => (
+                <th key={action} className="px-3 py-2 text-center font-medium">
+                  {PERMISSION_ACTION_LABELS[action]}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filteredRows.map((row) => (
+              <tr key={row.resourceKey} className="border-t">
+                <td className="px-3 py-2 font-medium">{row.resourceLabel}</td>
+                {PERMISSION_ACTIONS.map((action) => {
+                  const permission = row.permissions[action];
+                  if (!permission) {
+                    return (
+                      <td key={`${row.resourceKey}-${action}`} className="px-3 py-2 text-center text-muted-foreground">
+                        —
+                      </td>
+                    );
+                  }
+                  const isSelected = value.includes(permission);
+                  return (
+                    <td key={`${row.resourceKey}-${action}`} className="px-3 py-2 text-center">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => togglePermission(permission)}
+                        aria-label={`${isSelected ? 'Revoke' : 'Grant'} ${PERMISSION_ACTION_LABELS[action]} ${row.resourceLabel}`}
+                        className="h-4 w-4 border-muted-foreground/40 data-[state=checked]:border-blue-500 data-[state=checked]:bg-blue-500 data-[state=checked]:text-white"
+                      />
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {unknownPermissions.length > 0 && (
+        <div className="rounded-lg border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          Extra permissions: {unknownPermissions.join(', ')}
+        </div>
+      )}
     </div>
   );
 }

@@ -61,7 +61,7 @@ const QuizLibrary = () => {
       minDuration: durationRange.min,
       maxDuration: durationRange.max,
 
-      page: 1,
+      page: 0,
       size: 10,
     };
   };
